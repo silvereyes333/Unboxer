@@ -1,4 +1,4 @@
-## Title: Unboxer
+## Title: |c00AAFFUn|cAADDFFboxer|r
 ## Author: nobody
 ## Description: Automatically opens containers.
 ## Version: 1.0.0
@@ -24,8 +24,7 @@ lib\LibAddonMenu-2.0\controls\slider.lua
 lib\LibAddonMenu-2.0\controls\texture.lua
 lib\LibAddonMenu-2.0\controls\iconpicker.lua
 
-languages\strings.lua
 languages\$(language).lua
 
-Bindings.xml
 Unboxer.lua
+Bindings.xml
