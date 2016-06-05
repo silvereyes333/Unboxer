@@ -2,7 +2,7 @@ local addon = {
 	name = "Unboxer",
 	title = GetString(SI_UNBOXER),
 	author = "nobody",
-	version = "1.0.0",
+	version = "1.0.2",
 	defaults =
 	{
 		verbose = true,
