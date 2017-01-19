@@ -1,8 +1,9 @@
-## Title: |c00AAFFUn|cAADDFFboxer|r
-## Author: nobody
-## Description: Automatically opens containers.
-## Version: 1.0.2
-## APIVersion: 100015
+## Title: Unboxer
+## Author: |c99CCEFsilvereyes|r
+## Description: Adds an Unbox All command that loots all containers of a configured type in the player inventory.
+## Version: 1.1.0
+## APIVersion: 100017 100018
+## OptionalDependsOn: LibStub LibAddonMenu-2.0 DolgubonsLazyWritCreator
 ## SavedVariables: Unboxer_Data
 
 ## This Add-On is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates. The Elder Scrolls® and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the United States and/or other countries. All rights reserved.
