@@ -70,8 +70,8 @@ local function IsItemUnboxable(bagId, slotIndex)
         if not addon.settings.trials then
             return false
         end
-    elseif string.find(name, "the crafter's") ~= nil or string.find(name, "the traveled") ~= nil or string.find(name, "the alchemist's") ~= nil  then
-        if not addon.settings.ptsCrafter then
+    elseif string.find(name, "the crafter's") ~= nil or string.find(name, "the traveled") ~= nil or string.find(name, "the alchemist's") ~= nil or string.find(name, "the cozy") ~= nil or string.find(name, "the furnisher's") ~= nil or string.find(name, "pantry") ~= nil then
+        if not addon.settings.ptsCrafting then
             return false
         end
     elseif string.find(name, "alchemist's vessel") ~= nil then
@@ -132,6 +132,7 @@ local function AbortAction(...)
     dbug("AbortAction")
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_CLOSED)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_RECEIVED)
+    EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_CHATTER_BEGIN)
     EVENT_MANAGER:UnregisterForUpdate(addon.name)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_UPDATED)
     addon.running = false
@@ -180,6 +181,7 @@ local function HandleEventLootReceived(eventCode, receivedBy, itemName, quantity
     lootReceived = true
     dbug("LootReceived("..tostring(eventCode)..", "..tostring(receivedBy)..", "..tostring(itemName)..", "..tostring(quantity)..", "..tostring(itemSound)..", "..tostring(lootType)..", "..tostring(self)..", "..tostring(isPickpocketLoot)..", "..tostring(questItemIcon)..", "..tostring(itemId)..")")
 end
+local HandleInteractWindowShown
 local InventoryStateChange
 local unboxAllOnInventoryOpen = false
 local function OpenInventory()
@@ -191,6 +193,8 @@ local function HandleEventLootClosed(eventCode)
     dbug("LootClosed("..tostring(eventCode)..")")
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_CLOSED)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_RECEIVED)
+    INTERACT_WINDOW:UnregisterCallback("Shown", HandleInteractWindowShown)
+    EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_CHATTER_END)
     local menuBarState = BACKPACK_MENU_BAR_LAYOUT_FRAGMENT:GetState()
     if menuBarState == SCENE_HIDDEN then
         unboxAllOnInventoryOpen = true
@@ -236,8 +240,25 @@ local function LootAllItemsTimeout()
         LOOT_SHARED:LootAllItems()
     end
 end
+local function HandleMasterWritQuestRejected(eventCode)
+    OpenInventory()
+end
+local function CloseInteractionWindow()
+    local obj = SYSTEMS:GetObjectBasedOnCurrentScene(ZO_INTERACTION_SYSTEM_NAME)
+    obj:CloseChatter()
+end
+HandleInteractWindowShown = function()
+    -- Stop listening for quest offering
+    INTERACT_WINDOW:UnregisterCallback("Shown", HandleInteractWindowShown)
+    unboxAllOnInventoryOpen = true
+    -- Listen for interaction window closed event
+    EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_CHATTER_END, HandleMasterWritQuestRejected)
+    -- Reject the master writ quest
+    CloseInteractionWindow()
+end
 local function HandleEventLootUpdated(eventCode)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_UPDATED)
+    INTERACT_WINDOW:RegisterCallback("Shown", HandleInteractWindowShown)
     table.insert(timeoutItemUniqueIds, GetItemUniqueId(BAG_BACKPACK, slotIndex))
     zo_callLater(LootAllItemsTimeout, 1500) -- If still not looted after 1.5 secs, try to loot again
     LOOT_SHARED:LootAllItems()
@@ -341,7 +362,7 @@ function addon:SetupSettings()
         -- registerForRefresh = true,
         registerForDefaults = true,
     }
-    LAM2:RegisterAddonPanel(addon.name, panelData)
+    LAM2:RegisterAddonPanel(addon.name.."Options", panelData)
 
     local optionsTable = {
         {
@@ -480,7 +501,7 @@ function addon:SetupSettings()
             default = self.defaults.other,
         },
     }
-    LAM2:RegisterOptionControls(addon.name, optionsTable)
+    LAM2:RegisterOptionControls(addon.name.."Options", optionsTable)
 end
 
 --------------- End Settings ---------------------
