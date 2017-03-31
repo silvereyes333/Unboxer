@@ -2,7 +2,7 @@ local addon = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "|c99CCEFsilvereyes|r",
-    version = "1.1.0",
+    version = "1.1.1",
     defaults =
     {
         verbose = true,
@@ -340,9 +340,9 @@ function addon:AddKeyBind()
     INVENTORY_FRAGMENT:RegisterCallback("StateChange", InventoryStateChange)
     
     -- Disable the autoloot functionality of Dolgubon's Lazy Writ Crafter
-    if WritCreater then
-        EVENT_MANAGER:UnregisterForEvent(WritCreater.name, EVENT_LOOT_UPDATED )
-    end
+    --if WritCreater then
+    --    EVENT_MANAGER:UnregisterForEvent(WritCreater.name, EVENT_LOOT_UPDATED )
+    --end
 end
 
 
