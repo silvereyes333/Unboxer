@@ -2,7 +2,7 @@
 -- thanks to: baertram & circonian
 
 -- Register with LibStub
-local MAJOR, MINOR = "LibCustomMenu", 4
+local MAJOR, MINOR = "LibCustomMenu", 4.2
 local lib, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end -- the same or newer version of this lib is already loaded into memory
 
@@ -81,10 +81,10 @@ function Submenu:Initialize(name)
 	submenuControl:SetMouseEnabled(true)
 	submenuControl:SetHidden(true)
 	-- OnMouseEnter: Stop hiding of submenu initiated by mouse exit of parent
-	submenuControl:SetHandler("OnMouseEnter", function(control) ClearTimeout() end)
-	submenuControl:SetHandler("OnMouseExit", function(control)
-		SetTimeout( function() self.parent:OnSelect(SUBMENU_ITEM_MOUSE_EXIT) end)
-	end )
+	submenuControl:SetHandler("OnMouseEnter", ClearTimeout)
+
+	local function ExitSubMenu() if self.parent and self.parent.OnSelect then self.parent:OnSelect(SUBMENU_ITEM_MOUSE_EXIT) end end
+	submenuControl:SetHandler("OnMouseExit", function(control) SetTimeout(ExitSubMenu) end)
 
 	submenuControl:SetHandler("OnHide", function(control) ClearTimeout() self:Clear() end)
 	submenuControl:SetDrawLevel(ZO_Menu:GetDrawLevel() + 1)
@@ -462,6 +462,20 @@ local function HookClearMenu()
 	end
 end
 
+local function HookAddSlotAction()
+	function ZO_InventorySlotActions:AddCustomSlotAction(...)
+		local orgItemPool = ZO_Menu.itemPool
+		local orgCheckboxItemPool = ZO_Menu.checkBoxPool
+
+		ZO_Menu.itemPool = lib.itemPool
+		ZO_Menu.checkBoxPool = lib.checkBoxPool
+
+		self:AddSlotAction(...)
+
+		ZO_Menu.itemPool = orgItemPool
+		ZO_Menu.checkBoxPool = orgCheckboxItemPool
+	end
+end
 --[[
 -- uncomment this, if you want to see where and when "insecure" controls get re-used.
 function AddCustomMenuItem(mytext, myfunction, itemType, myfont, normalColor, highlightColor, itemYPad)
@@ -491,6 +505,7 @@ local function OnAddonLoaded(event, name)
 	lib.dividerPool = ZO_ObjectPool:New(DividerFactory, ResetMenuItem)
 	lib.submenu = Submenu:New("LibCustomMenuSubmenu")
 	HookClearMenu()
+	HookAddSlotAction()
 end
 
 EVENT_MANAGER:UnregisterForEvent(MAJOR, EVENT_ADD_ON_LOADED)

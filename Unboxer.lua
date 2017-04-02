@@ -2,30 +2,60 @@ local addon = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "|c99CCEFsilvereyes|r",
-    version = "1.1.2",
+    version = "1.2.0",
     defaults =
     {
         verbose = true,
-        gunnySacks = true,
-        enchantments = true,
-        weapons = true,
+        other = true,
+        
+        -- Gear
+        monster = true,
         armor = true,
-        potions = true,
+        weapons = true,
         accessories = true,
+        overworld = true,
+        dungeon = true,
+        trials = true,
+        cyrodiil = true,
+        imperialCity = true,
+        darkBrotherhood = true,
+        nonSet = true,
+        
+        -- Loot
+        potions = true,
+        enchantments = true,
+        giftBoxes = true,
+        gunnySacks = true,
         rewards = true,
+        runeBoxes = true,
+        thief = true,
+        treasureMaps = true,
+        
+        -- Crafting
         alchemist = true,
         blacksmith = true,
         clothier = true,
         enchanter = true,
         provisioner = true,
         woodworker = true,
-        giftBoxes = true,
+        
+        -- Housing
+        furnisher = true,
+        mageGuildReprints = true,
+        
+        -- PTS
+        ptsCollectibles = true,
+        ptsConsumables = false,
         ptsCrafting = true,
-        other = true
+        ptsCurrency = true,
+        ptsGear = false,
+        ptsHousing = false,
+        ptsSkills = false,
+        ptsOther = false,
     },
-    debugMode = false
+    filters = {},
+    debugMode = false,
 }
-
 
 -- Output formatted message to chat window, if configured
 local function pOutput(input)
@@ -41,7 +71,13 @@ local function dbug(input)
     end
     pOutput(input)
 end
-
+-- Extracting item ids from item links
+local function GetItemIdFromLink(itemLink)
+    local itemId = select(4, ZO_LinkHandler_ParseLink(itemLink))
+    if itemId and itemId ~= "" then
+        return tonumber(itemId)
+    end
+end
 local useCallProtectedFunction = IsProtectedFunction("UseItem")
 local function IsItemUnboxable(bagId, slotIndex)
     if bagId ~= BAG_BACKPACK then return false end
@@ -49,67 +85,168 @@ local function IsItemUnboxable(bagId, slotIndex)
     local itemType = GetItemType(bagId, slotIndex)
     if itemType ~= ITEMTYPE_CONTAINER then return false end
     
-    local name = string.lower(GetItemName(bagId, slotIndex))
-    if name == "wet gunny sack" then
-        if not addon.settings.gunnySacks then
-            return false
-        end
-    elseif string.find(name, "enchantment") ~= nil then
-        if not addon.settings.enchantment then
-            return false
-        end
-    elseif string.find(name, "weapon") ~= nil or string.find(name, "staff") ~= nil then
-        if not addon.settings.weapons then
-            return false
-        end
-    elseif string.find(name, "armor") ~= nil then
-        if not addon.settings.armor then
-            return false
-        end
-    elseif string.find(name, "dragonstar") ~= nil or string.find(name, "undaunted") ~= nil or string.find(name, "mage") ~= nil or string.find(name, "warrior") ~= nil or string.find(name, "serpent") ~= nil then
-        if not addon.settings.trials then
-            return false
-        end
-    elseif string.find(name, "the crafter's") ~= nil or string.find(name, "the traveled") ~= nil or string.find(name, "the alchemist's") ~= nil or string.find(name, "the cozy") ~= nil or string.find(name, "the furnisher's") ~= nil or string.find(name, "pantry") ~= nil then
-        if not addon.settings.ptsCrafting then
-            return false
-        end
-    elseif string.find(name, "alchemist's vessel") ~= nil then
+    local itemId = GetItemIdFromLink(GetItemLink(bagId, slotIndex))
+    
+    -- not sure why there's no item id, but return false to be safe
+    if not itemId then return false end
+    
+    --[ CRAFTING FILTERS ]--
+    if addon.filters.crafting.alchemy[itemId] then -- alchemy ingredients
         if not addon.settings.alchemist then
             return false
         end
-    elseif string.find(name, "alchemist") ~= nil then
-        if not addon.settings.potions then
-            return false
-        end
-    elseif string.find(name, "blacksmith") ~= nil or string.find(name, "ingot") ~= nil then
+    elseif addon.filters.crafting.blacksmithing[itemId] then -- blacksmithing mats
         if not addon.settings.blacksmith then
             return false
         end
-    elseif string.find(name, "cloth") then
+    elseif addon.filters.crafting.clothier[itemId] then -- clothier mats
         if not addon.settings.clothier then
             return false
         end
-    elseif string.find(name, "enchanter") ~= nil then
+    elseif addon.filters.crafting.enchanting[itemId] then -- enchanting mats
         if not addon.settings.enchanter then
             return false
         end
-    elseif string.find(name, "woodworker") ~= nil or string.find(name, "shipment") then
-        if not addon.settings.woodworker then
-            return false
-        end
-    elseif string.find(name, "brewer") ~= nil or string.find(name, "cooking") ~= nil or string.find(name, "provisioner") ~= nil  then
+    elseif addon.filters.crafting.provisioning[itemId] then -- provisioning mats
         if not addon.settings.provisioner then
             return false
         end
-    elseif string.find(name, "accessory") ~= nil or string.find(name, "jewelry") ~= nil  then
+    elseif addon.filters.crafting.woodworking[itemId] then -- woodworking mats
+        if not addon.settings.woodworker then
+            return false
+        end
+    
+    --[ GEAR FILTERS ]--
+    elseif addon.filters.gear.monster[itemId] then -- monster set containers
+        if not addon.settings.monster then
+            return false
+        end
+    elseif addon.filters.gear.armor[itemId] then -- armor
+        if not addon.settings.armor then
+            return false
+        end
+    elseif addon.filters.gear.weapons[itemId] then -- weapons
+        if not addon.settings.weapons then
+            return false
+        end
+    elseif addon.filters.gear.jewelry[itemId] then -- jewelry
         if not addon.settings.accessories then
             return false
         end
-    elseif string.find(name, "gift") ~= nil then
+    elseif addon.filters.gear.overworld[itemId] then -- overworld set containers
+        if not addon.settings.overworld then
+            return false
+        end
+    elseif addon.filters.gear.dungeon[itemId] then -- dungeon set containers
+        if not addon.settings.dungeon then
+            return false
+        end
+    elseif addon.filters.gear.trials[itemId] then -- trials set containers
+        if not addon.settings.trials then
+            return false
+        end
+    elseif addon.filters.gear.cyrodiil[itemId] then -- cyrodiil set containers
+        if not addon.settings.cyrodiil then
+            return false
+        end
+    elseif addon.filters.gear.imperialCity[itemId] then -- imperial city gear
+        if not addon.settings.imperialCity then
+            return false
+        end
+    elseif addon.filters.gear.darkBrotherhood[itemId] then -- dark brotherhood set gear
+        if not addon.settings.darkBrotherhood then
+            return false
+        end
+    elseif addon.filters.gear.nonSet[itemId] then -- non-set equipment chests
+        if not addon.settings.nonSet then
+            return false
+        end
+
+
+    --[ LOOT ]--
+
+    elseif addon.filters.loot.rewards[itemId] then -- daily/weekly rewards
+        if not addon.settings.trials then
+            return false
+        end
+    elseif addon.filters.loot.festival[itemId] then -- festival boxes
         if not addon.settings.giftBoxes then
             return false
         end
+    elseif addon.filters.loot.generic[itemId] then  -- gunny sacks and other generic containers
+        if not addon.settings.gunnySacks then
+            return false
+        end
+    elseif addon.filters.loot.consumables[itemId] then -- consumables containers
+        if not addon.settings.potions then
+            return false
+        end
+    elseif addon.filters.loot.enchantments[itemId] then -- enchants
+        if not addon.settings.enchantment then
+            return false
+        end
+    elseif addon.filters.loot.runeboxes[itemId] ~= nil then -- runeboxes
+        if not addon.settings.runeBoxes then
+            return false
+        end
+        local collectibleId = addon.filters.loot.runeboxes[itemId]
+        if type(collectibleId) == "number" and IsCollectibleUnlocked(collectibleId) then
+            return false
+        end
+    elseif addon.filters.loot.thief[itemId] then -- stolen boxes
+        if not addon.settings.thief then
+            return false
+        end
+    elseif addon.filters.loot.treasureMaps[itemId] then -- treasure maps
+        if not addon.settings.treasureMaps then
+            return false
+        end
+        
+    --[ HOUSING ]--
+    elseif addon.filters.housing.furnisher[itemId] then -- furniture recipe containers
+        if not addon.settings.furnisher then
+            return false
+        end
+        
+    elseif addon.filters.housing.mageGuildReprints[itemId] then -- mage's guild lorebook reprints
+        if not addon.settings.mageGuildReprints then
+            return false
+        end
+        
+    --[ PTS ]--
+    elseif addon.filters.pts.collectibles[itemId] then -- pts collectibles
+        if not addon.settings.ptsCollectibles then
+            return false
+        end
+    elseif addon.filters.pts.consumables[itemId] then -- pts consumables
+        if not addon.settings.ptsConsumables then
+            return false
+        end
+    elseif addon.filters.pts.crafting[itemId] then -- pts crafting items
+        if not addon.settings.ptsCrafting then
+            return false
+        end
+    elseif addon.filters.pts.currency[itemId] then -- pts currency boxes
+        if not addon.settings.ptsCurrency then
+            return false
+        end
+    elseif addon.filters.pts.gear[itemId] then -- pts gear chests
+        if not addon.settings.ptsGear then
+            return false
+        end
+    elseif addon.filters.pts.housing[itemId] then -- pts housing item boxes
+        if not addon.settings.ptsHousing then
+            return false
+        end
+    elseif addon.filters.pts.skills[itemId] then -- pts skill boosters
+        if not addon.settings.ptsSkills then
+            return false
+        end
+    elseif addon.filters.pts.other[itemId] then -- pts non-specific containers
+        if not addon.settings.ptsOther then
+            return false
+        end
+        
     else
         if not addon.settings.other then
             return false
@@ -135,6 +272,7 @@ local function AbortAction(...)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_CHATTER_BEGIN)
     EVENT_MANAGER:UnregisterForUpdate(addon.name)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_UPDATED)
+    EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_COLLECTIBLE_NOTIFICATION_NEW)
     addon.running = false
     KEYBIND_STRIP:UpdateKeybindButtonGroup(addon.unboxAllKeybindButtonGroup)
 end
@@ -193,6 +331,7 @@ local function HandleEventLootClosed(eventCode)
     dbug("LootClosed("..tostring(eventCode)..")")
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_CLOSED)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_RECEIVED)
+    EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_COLLECTIBLE_NOTIFICATION_NEW)
     INTERACT_WINDOW:UnregisterCallback("Shown", HandleInteractWindowShown)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_CHATTER_END)
     local menuBarState = BACKPACK_MENU_BAR_LAYOUT_FRAGMENT:GetState()
@@ -264,7 +403,10 @@ local function HandleEventLootUpdated(eventCode)
     LOOT_SHARED:LootAllItems()
     dbug("LootUpdated("..tostring(eventCode)..")")
 end
-
+local function HandleEventNewCollectible(eventCode, collectibleId)
+    lootReceived = true
+    HandleEventLootClosed(eventCode)
+end
 UnboxCurrent = function()
     addon.running = true
     EVENT_MANAGER:UnregisterForUpdate(addon.name)
@@ -283,6 +425,7 @@ UnboxCurrent = function()
             EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_LOOT_RECEIVED, HandleEventLootReceived)
             EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_LOOT_UPDATED, HandleEventLootUpdated)
             EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_LOOT_CLOSED, HandleEventLootClosed)
+            EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_COLLECTIBLE_NOTIFICATION_NEW, HandleEventNewCollectible)
             if useCallProtectedFunction then
                 if not CallSecureProtected("UseItem", BAG_BACKPACK, slotIndex) then
                     AbortAction()
@@ -338,173 +481,7 @@ function addon:AddKeyBind()
         end
     end )
     INVENTORY_FRAGMENT:RegisterCallback("StateChange", InventoryStateChange)
-    
-    -- Disable the autoloot functionality of Dolgubon's Lazy Writ Crafter
-    --if WritCreater then
-    --    EVENT_MANAGER:UnregisterForEvent(WritCreater.name, EVENT_LOOT_UPDATED )
-    --end
 end
-
-
-
------------------ Settings -----------------------
-function addon:SetupSettings()
-    local LAM2 = LibStub("LibAddonMenu-2.0")
-    if not LAM2 then return end
-
-    local panelData = {
-        type = "panel",
-        name = addon.title,
-        displayName = addon.title,
-        author = addon.author,
-        version = addon.version,
-        slashCommand = "/unboxer",
-        -- registerForRefresh = true,
-        registerForDefaults = true,
-    }
-    LAM2:RegisterAddonPanel(addon.name.."Options", panelData)
-
-    local optionsTable = {
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_VERBOSE),
-            tooltip = GetString(SI_UNBOXER_VERBOSE_TOOLTIP),
-            getFunc = function() return addon.settings.verbose end,
-            setFunc = function(value) addon.settings.verbose = value end,
-            default = self.defaults.verbose,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_ARMOR),
-            tooltip = GetString(SI_UNBOXER_ARMOR_TOOLTIP),
-            getFunc = function() return addon.settings.armor end,
-            setFunc = function(value) addon.settings.armor = value end,
-            default = self.defaults.armor,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_WEAPONS),
-            tooltip = GetString(SI_UNBOXER_WEAPONS_TOOLTIP),
-            getFunc = function() return addon.settings.weapons end,
-            setFunc = function(value) addon.settings.weapons = value end,
-            default = self.defaults.weapons,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_REWARDS),
-            tooltip = GetString(SI_UNBOXER_REWARDS_TOOLTIP),
-            getFunc = function() return addon.settings.rewards end,
-            setFunc = function(value) addon.settings.rewards = value end,
-            default = self.defaults.rewards,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_ACCESSORIES),
-            tooltip = GetString(SI_UNBOXER_ACCESSORIES_TOOLTIP),
-            getFunc = function() return addon.settings.accessories end,
-            setFunc = function(value) addon.settings.accessories = value end,
-            default = self.defaults.accessories,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_GIFTBOXES),
-            tooltip = GetString(SI_UNBOXER_GIFTBOXES_TOOLTIP),
-            getFunc = function() return addon.settings.giftBoxes end,
-            setFunc = function(value) addon.settings.giftBoxes = value end,
-            default = self.defaults.giftBoxes,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_GUNNYSACKS),
-            tooltip = GetString(SI_UNBOXER_GUNNYSACKS_TOOLTIP),
-            getFunc = function() return addon.settings.gunnySacks end,
-            setFunc = function(value) addon.settings.gunnySacks = value end,
-            default = self.defaults.gunnySacks,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_ENCHANTMENTS),
-            tooltip = GetString(SI_UNBOXER_ENCHANTMENTS_TOOLTIP),
-            getFunc = function() return addon.settings.enchantments end,
-            setFunc = function(value) addon.settings.enchantments = value end,
-            default = self.defaults.enchantments,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_POTIONS),
-            tooltip = GetString(SI_UNBOXER_POTIONS_TOOLTIP),
-            getFunc = function() return addon.settings.potions end,
-            setFunc = function(value) addon.settings.potions = value end,
-            default = self.defaults.potions,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_ALCHEMIST),
-            tooltip = GetString(SI_UNBOXER_ALCHEMIST_TOOLTIP),
-            getFunc = function() return addon.settings.alchemist end,
-            setFunc = function(value) addon.settings.alchemist = value end,
-            default = self.defaults.alchemist,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_BLACKSMITH),
-            tooltip = GetString(SI_UNBOXER_BLACKSMITH_TOOLTIP),
-            getFunc = function() return addon.settings.blacksmith end,
-            setFunc = function(value) addon.settings.blacksmith = value end,
-            default = self.defaults.blacksmith,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_CLOTHIER),
-            tooltip = GetString(SI_UNBOXER_CLOTHIER_TOOLTIP),
-            getFunc = function() return addon.settings.clothier end,
-            setFunc = function(value) addon.settings.clothier = value end,
-            default = self.defaults.clothier,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_ENCHANTER),
-            tooltip = GetString(SI_UNBOXER_ENCHANTER_TOOLTIP),
-            getFunc = function() return addon.settings.enchanter end,
-            setFunc = function(value) addon.settings.enchanter = value end,
-            default = self.defaults.enchanter,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_PROVISIONER),
-            tooltip = GetString(SI_UNBOXER_PROVISIONER_TOOLTIP),
-            getFunc = function() return addon.settings.provisioner end,
-            setFunc = function(value) addon.settings.provisioner = value end,
-            default = self.defaults.provisioner,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_WOODWORKER),
-            tooltip = GetString(SI_UNBOXER_WOODWORKER_TOOLTIP),
-            getFunc = function() return addon.settings.woodworker end,
-            setFunc = function(value) addon.settings.woodworker = value end,
-            default = self.defaults.woodworker,
-        },
-        {
-            type = "checkbox",
-            name = "Crafting: PTS Template Materials",
-            getFunc = function() return addon.settings.ptsCrafting end,
-            setFunc = function(value) addon.settings.ptsCrafting = value end,
-            default = self.defaults.ptsCrafting,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_OTHER),
-            tooltip = GetString(SI_UNBOXER_OTHER_TOOLTIP),
-            getFunc = function() return addon.settings.other end,
-            setFunc = function(value) addon.settings.other = value end,
-            default = self.defaults.other,
-        },
-    }
-    LAM2:RegisterOptionControls(addon.name.."Options", optionsTable)
-end
-
---------------- End Settings ---------------------
 
 
 local function OnAddonLoaded(event, name)
