@@ -145,3 +145,13 @@ Unboxer.filters.pts = {
     ["skills"]       = ptsSkills,
     ["other"]        = ptsOther,
 }
+Unboxer.filtersToSettingsMap.pts = {
+    ["collectibles"] = "ptsCollectibles",
+    ["consumables"]  = "ptsConsumables",
+    ["crafting"]     = "ptsCrafting",
+    ["currency"]     = "ptsCurrency",
+    ["gear"]         = "ptsGear",
+    ["housing"]      = "ptsHousing",
+    ["skills"]       = "ptsSkills",
+    ["other"]        = "ptsOther",
+}

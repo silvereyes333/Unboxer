@@ -127,3 +127,10 @@ Unboxer.filters.crafting = {
     ["provisioning"]  = provisioning,
     ["woodworking"]   = woodworking,
 }
+Unboxer.filtersToSettingsMap.crafting = {
+    ["alchemy"]       = "alchemist",
+    ["blacksmithing"] = "blacksmith",
+    ["enchanting"]    = "enchanter",
+    ["provisioning"]  = "provisioner",
+    ["woodworking"]   = "woodworker",
+}

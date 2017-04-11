@@ -1,7 +1,7 @@
 ## Title: Unboxer
 ## Author: |c99CCEFsilvereyes|r
 ## Description: Adds an Unbox All command that loots all containers of a configured type in the player inventory.
-## Version: 1.2.0
+## Version: 1.3.0
 ## APIVersion: 100018
 ## OptionalDependsOn: LibStub LibAddonMenu-2.0 DolgubonsLazyWritCreator
 ## SavedVariables: Unboxer_Data
@@ -13,6 +13,7 @@ lib\LibCustomMenu\LibCustomMenu.lua
 lib\LibAddonMenu-2.0\LibAddonMenu-2.0.lua
 lib\LibAddonMenu-2.0\controls\panel.lua
 lib\LibAddonMenu-2.0\controls\checkbox.lua
+lib\LibLootSummary\LibLootSummary.lua
 
 localization\EN.lua
 localization\$(language).lua

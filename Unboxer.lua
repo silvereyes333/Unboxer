@@ -2,7 +2,7 @@ local addon = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "|c99CCEFsilvereyes|r",
-    version = "1.2.0",
+    version = "1.3.0",
     defaults =
     {
         verbose = true,
@@ -20,6 +20,17 @@ local addon = {
         imperialCity = true,
         darkBrotherhood = true,
         nonSet = true,
+        monsterSummary = false,
+        armorSummary = false,
+        weaponsSummary = false,
+        accessoriesSummary = false,
+        overworldSummary = false,
+        dungeonSummary = false,
+        trialsSummary = false,
+        cyrodiilSummary = false,
+        imperialCitySummary = false,
+        darkBrotherhoodSummary = false,
+        nonSetSummary = false,
         
         -- Loot
         potions = true,
@@ -28,8 +39,16 @@ local addon = {
         gunnySacks = true,
         rewards = true,
         runeBoxes = true,
-        thief = true,
+        thief = false, -- Changed to false in version 1.3.0, to avoid unexpected bounties
         treasureMaps = true,
+        potionsSummary = false,
+        enchantmentsSummary = false,
+        giftBoxesSummary = false,
+        gunnySacksSummary = false,
+        rewardsSummary = false,
+        runeBoxesSummary = false,
+        thiefSummary = false,
+        treasureMapsSummary = false,
         
         -- Crafting
         alchemist = true,
@@ -38,10 +57,18 @@ local addon = {
         enchanter = true,
         provisioner = true,
         woodworker = true,
+        alchemistSummary = false,
+        blacksmithSummary = false,
+        clothierSummary = false,
+        enchanterSummary = false,
+        provisionerSummary = false,
+        woodworkerSummary = false,
         
         -- Housing
         furnisher = true,
         mageGuildReprints = true,
+        furnisherSummary = false,
+        mageGuildReprintsSummary = false,
         
         -- PTS
         ptsCollectibles = true,
@@ -52,17 +79,29 @@ local addon = {
         ptsHousing = false,
         ptsSkills = false,
         ptsOther = false,
+        ptsCollectiblesSummary = false,
+        ptsConsumablesSummary = false,
+        ptsCraftingSummary = false,
+        ptsCurrencySummary = false,
+        ptsGearSummary = false,
+        ptsHousingSummary = false,
+        ptsSkillsSummary = false,
+        ptsOtherSummary = false,
     },
     filters = {},
+    filtersToSettingsMap = {},
     debugMode = false,
 }
+
+local LLS = LibStub("LibLootSummary")
+local prefix = zo_strformat("<<1>>|cFFFFFF: ", addon.title)
 
 -- Output formatted message to chat window, if configured
 local function pOutput(input)
     if not addon.settings.verbose then
         return
     end
-    local output = zo_strformat("<<1>>|cFFFFFF: <<2>>|r", addon.title, input)
+    local output = zo_strformat(prefix .. "<<1>>|r", input)
     d(output)
 end
 local function dbug(input)
@@ -90,172 +129,56 @@ local function IsItemUnboxable(bagId, slotIndex)
     -- not sure why there's no item id, but return false to be safe
     if not itemId then return false end
     
-    --[ CRAFTING FILTERS ]--
-    if addon.filters.crafting.alchemy[itemId] then -- alchemy ingredients
-        if not addon.settings.alchemist then
-            return false
+    -- perform filtering
+    local filterMatched = false
+    for filterCategory, filters in pairs(addon.filters) do
+        for subcategory, subFilters in pairs(filters) do
+            local settingName
+            -- Unmapped settings names are the same as the subcategory name
+            if not addon.filtersToSettingsMap[filterCategory] 
+               or addon.filtersToSettingsMap[filterCategory][subcategory] == nil
+            then
+                settingName = subcategory
+            -- Exclude special cases
+            elseif addon.filtersToSettingsMap[filterCategory][subcategory] == false then
+                settingName = nil
+            -- Mapped settings names
+            else
+                settingName = addon.filtersToSettingsMap[filterCategory][subcategory]
+            end
+            if settingName and subFilters[itemId] ~= nil then
+                if not addon.settings[settingName] then
+                    return false
+                end
+                filterMatched = settingName
+                break
+            end
         end
-    elseif addon.filters.crafting.blacksmithing[itemId] then -- blacksmithing mats
-        if not addon.settings.blacksmith then
-            return false
+        if filterMatched then
+            break
         end
-    elseif addon.filters.crafting.clothier[itemId] then -- clothier mats
-        if not addon.settings.clothier then
-            return false
-        end
-    elseif addon.filters.crafting.enchanting[itemId] then -- enchanting mats
-        if not addon.settings.enchanter then
-            return false
-        end
-    elseif addon.filters.crafting.provisioning[itemId] then -- provisioning mats
-        if not addon.settings.provisioner then
-            return false
-        end
-    elseif addon.filters.crafting.woodworking[itemId] then -- woodworking mats
-        if not addon.settings.woodworker then
-            return false
-        end
+    end
     
-    --[ GEAR FILTERS ]--
-    elseif addon.filters.gear.monster[itemId] then -- monster set containers
-        if not addon.settings.monster then
-            return false
-        end
-    elseif addon.filters.gear.armor[itemId] then -- armor
-        if not addon.settings.armor then
-            return false
-        end
-    elseif addon.filters.gear.weapons[itemId] then -- weapons
-        if not addon.settings.weapons then
-            return false
-        end
-    elseif addon.filters.gear.jewelry[itemId] then -- jewelry
-        if not addon.settings.accessories then
-            return false
-        end
-    elseif addon.filters.gear.overworld[itemId] then -- overworld set containers
-        if not addon.settings.overworld then
-            return false
-        end
-    elseif addon.filters.gear.dungeon[itemId] then -- dungeon set containers
-        if not addon.settings.dungeon then
-            return false
-        end
-    elseif addon.filters.gear.trials[itemId] then -- trials set containers
-        if not addon.settings.trials then
-            return false
-        end
-    elseif addon.filters.gear.cyrodiil[itemId] then -- cyrodiil set containers
-        if not addon.settings.cyrodiil then
-            return false
-        end
-    elseif addon.filters.gear.imperialCity[itemId] then -- imperial city gear
-        if not addon.settings.imperialCity then
-            return false
-        end
-    elseif addon.filters.gear.darkBrotherhood[itemId] then -- dark brotherhood set gear
-        if not addon.settings.darkBrotherhood then
-            return false
-        end
-    elseif addon.filters.gear.nonSet[itemId] then -- non-set equipment chests
-        if not addon.settings.nonSet then
-            return false
-        end
-
-
-    --[ LOOT ]--
-
-    elseif addon.filters.loot.rewards[itemId] then -- daily/weekly rewards
-        if not addon.settings.trials then
-            return false
-        end
-    elseif addon.filters.loot.festival[itemId] then -- festival boxes
-        if not addon.settings.giftBoxes then
-            return false
-        end
-    elseif addon.filters.loot.generic[itemId] then  -- gunny sacks and other generic containers
-        if not addon.settings.gunnySacks then
-            return false
-        end
-    elseif addon.filters.loot.consumables[itemId] then -- consumables containers
-        if not addon.settings.potions then
-            return false
-        end
-    elseif addon.filters.loot.enchantments[itemId] then -- enchants
-        if not addon.settings.enchantment then
-            return false
-        end
-    elseif addon.filters.loot.runeboxes[itemId] ~= nil then -- runeboxes
-        if not addon.settings.runeBoxes then
-            return false
-        end
-        local collectibleId = addon.filters.loot.runeboxes[itemId]
-        if type(collectibleId) == "number" and IsCollectibleUnlocked(collectibleId) then
-            return false
-        end
-    elseif addon.filters.loot.thief[itemId] then -- stolen boxes
-        if not addon.settings.thief then
-            return false
-        end
-    elseif addon.filters.loot.treasureMaps[itemId] then -- treasure maps
-        if not addon.settings.treasureMaps then
-            return false
-        end
-        
-    --[ HOUSING ]--
-    elseif addon.filters.housing.furnisher[itemId] then -- furniture recipe containers
-        if not addon.settings.furnisher then
-            return false
-        end
-        
-    elseif addon.filters.housing.mageGuildReprints[itemId] then -- mage's guild lorebook reprints
-        if not addon.settings.mageGuildReprints then
-            return false
-        end
-        
-    --[ PTS ]--
-    elseif addon.filters.pts.collectibles[itemId] then -- pts collectibles
-        if not addon.settings.ptsCollectibles then
-            return false
-        end
-    elseif addon.filters.pts.consumables[itemId] then -- pts consumables
-        if not addon.settings.ptsConsumables then
-            return false
-        end
-    elseif addon.filters.pts.crafting[itemId] then -- pts crafting items
-        if not addon.settings.ptsCrafting then
-            return false
-        end
-    elseif addon.filters.pts.currency[itemId] then -- pts currency boxes
-        if not addon.settings.ptsCurrency then
-            return false
-        end
-    elseif addon.filters.pts.gear[itemId] then -- pts gear chests
-        if not addon.settings.ptsGear then
-            return false
-        end
-    elseif addon.filters.pts.housing[itemId] then -- pts housing item boxes
-        if not addon.settings.ptsHousing then
-            return false
-        end
-    elseif addon.filters.pts.skills[itemId] then -- pts skill boosters
-        if not addon.settings.ptsSkills then
-            return false
-        end
-    elseif addon.filters.pts.other[itemId] then -- pts non-specific containers
-        if not addon.settings.ptsOther then
-            return false
-        end
-        
-    else
-        if not addon.settings.other then
+    -- No filters matched.  Handle special cases and catch-all...
+    if not filterMatched then
+        if addon.filters.loot.runeboxes[itemId] ~= nil then -- runeboxes
+            if not addon.settings.runeBoxes then
+                return false
+            end
+            filterMatched = "runeBoxes"
+            local collectibleId = addon.filters.loot.runeboxes[itemId]
+            if type(collectibleId) == "number" and IsCollectibleUnlocked(collectibleId) then
+                return false
+            end
+        elseif not addon.settings.other then -- catch all
+            filterMatched = "other"
             return false
         end
     end
     
     local usable, onlyFromActionSlot = IsItemUsable(bagId, slotIndex)
     local canInteractWithItem = CanInteractWithItem(bagId, slotIndex)
-    return usable and not onlyFromActionSlot and canInteractWithItem
+    return usable and not onlyFromActionSlot and canInteractWithItem, filterMatched
 end
 
 local UnboxCurrent
@@ -264,6 +187,7 @@ local slotIndex
 local timeoutItemUniqueIds = {}
 local updateExpected = false
 local lootReceived = false
+local filterSetting
 
 local function AbortAction(...)
     dbug("AbortAction")
@@ -274,7 +198,14 @@ local function AbortAction(...)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_UPDATED)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_COLLECTIBLE_NOTIFICATION_NEW)
     addon.running = false
+    lootReceived = false
+    updateExpected = false
+    filterSetting = nil
     KEYBIND_STRIP:UpdateKeybindButtonGroup(addon.unboxAllKeybindButtonGroup)
+    -- Print summary
+    if LLS then
+        LLS:Print()
+    end
 end
 
 
@@ -312,11 +243,16 @@ local function GetNextItemToUnbox()
         end
     end
     dbug("No unboxable items found")
+    
     return false
 end
-
-local function HandleEventLootReceived(eventCode, receivedBy, itemName, quantity, itemSound, lootType, self, isPickpocketLoot, questItemIcon, itemId)
+local function HandleEventLootReceived(eventCode, receivedBy, itemLink, quantity, itemSound, lootType, lootedBySelf, isPickpocketLoot, questItemIcon, itemId)
     lootReceived = true
+    if LLS and filterSetting and lootedBySelf and lootType == LOOT_TYPE_ITEM then
+        if addon.settings[filterSetting .. "Summary"] then
+            LLS:AddItemLink(itemLink, quantity)
+        end
+    end
     dbug("LootReceived("..tostring(eventCode)..", "..tostring(receivedBy)..", "..tostring(itemName)..", "..tostring(quantity)..", "..tostring(itemSound)..", "..tostring(lootType)..", "..tostring(self)..", "..tostring(isPickpocketLoot)..", "..tostring(questItemIcon)..", "..tostring(itemId)..")")
 end
 local HandleInteractWindowShown
@@ -409,6 +345,9 @@ local function HandleEventNewCollectible(eventCode, collectibleId)
 end
 UnboxCurrent = function()
     addon.running = true
+    if LLS then
+        LLS:SetPrefix(prefix)
+    end
     EVENT_MANAGER:UnregisterForUpdate(addon.name)
     if not CheckInventorySpaceSilently(2) then
         AbortAction()
@@ -417,7 +356,9 @@ UnboxCurrent = function()
         return false
     end
     local remaining = GetItemCooldownInfo(BAG_BACKPACK, slotIndex)
-    if IsItemUnboxable(BAG_BACKPACK, slotIndex) then
+    local isUnboxable
+    isUnboxable, filterSetting = IsItemUnboxable(BAG_BACKPACK, slotIndex)
+    if isUnboxable then
         if remaining > 0 then
             EVENT_MANAGER:RegisterForUpdate(addon.name, remaining, UnboxCurrent)
         else
