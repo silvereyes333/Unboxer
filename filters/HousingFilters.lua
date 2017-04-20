@@ -1,5 +1,6 @@
 local housingFurnisher = {
     [121364] = true,
+    [127106] = true,
 }
 local mageGuildReprints = {
     [120377] = true,
@@ -31,6 +32,7 @@ local mageGuildReprints = {
     [120403] = true,
     [120404] = true,
     [120405] = true,
+    [126792] = true,
 }
 Unboxer.filters.housing = {
     ["furnisher"]         = housingFurnisher,

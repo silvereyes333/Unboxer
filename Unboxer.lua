@@ -2,7 +2,7 @@ local addon = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "|c99CCEFsilvereyes|r",
-    version = "1.3.0",
+    version = "1.4.0",
     defaults =
     {
         verbose = true,
@@ -18,6 +18,7 @@ local addon = {
         trials = true,
         cyrodiil = true,
         imperialCity = true,
+        battlegrounds = true,
         darkBrotherhood = true,
         nonSet = true,
         monsterSummary = false,
@@ -29,6 +30,7 @@ local addon = {
         trialsSummary = false,
         cyrodiilSummary = false,
         imperialCitySummary = false,
+        battlegroundsSummary = false,
         darkBrotherhoodSummary = false,
         nonSetSummary = false,
         

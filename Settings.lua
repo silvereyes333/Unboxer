@@ -183,6 +183,23 @@ function addon:SetupSettings()
         },
         {
             type = "checkbox",
+            name = GetString(SI_UNBOXER_BATTLEGRNDS),
+            tooltip = GetString(SI_UNBOXER_BATTLEGRNDS_TOOLTIP),
+            getFunc = function() return addon.settings.battlegrounds end,
+            setFunc = function(value) addon.settings.battlegrounds = value end,
+            default = self.defaults.battlegrounds,
+        },
+        {
+            type = "checkbox",
+            name = GetString(SI_UNBOXER_SUMMARY),
+            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
+            getFunc = function() return addon.settings.battlegroundsSummary end,
+            setFunc = function(value) addon.settings.battlegroundsSummary = value end,
+            default = self.defaults.battlegroundsSummary,
+            disabled = function() return not addon.settings.battlegrounds end,
+        },
+        {
+            type = "checkbox",
             name = GetString(SI_UNBOXER_DB),
             tooltip = GetString(SI_UNBOXER_DB_TOOLTIP),
             getFunc = function() return addon.settings.darkBrotherhood end,

@@ -30,6 +30,7 @@ local generic = {
     [79503] = true,
     [79504] = true,
     [54993] = true,
+    [126012] = true,    
 }
 local rewards = {
     [54993] = true,
@@ -87,6 +88,10 @@ local rewards = {
     [119553] = true,
     [119554] = true,
     [121220] = true,
+    [126030] = true,
+    [126031] = true,
+    [126032] = true,
+    [126033] = true,    
 }
 local runeboxes = {
     [79329] = 148,
@@ -100,6 +105,8 @@ local runeboxes = {
     [96952] = 755,
     [96953] = 754,
     [119692] = 1108,
+    [124658] = 1230,
+    [124659] = 1232,
 }
 local thief = {
     [74651] = true,
