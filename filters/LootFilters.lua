@@ -21,6 +21,7 @@ local festival = {
     [96390] = true,
     [114949] = true,
     [115023] = true,
+    [121526] = true,
 }
 local generic = {
     [43757] = true,
