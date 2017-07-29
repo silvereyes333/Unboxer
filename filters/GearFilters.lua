@@ -441,12 +441,14 @@ local overworld = {
     [118546] = true,
 }
 local dungeon = {
-    [87713] = true,
-    [87721] = true,
-    [87726] = true,
-    [87730] = true,
-    [87738] = true,
-    [87741] = true,
+    [87713]  = true,
+    [87721]  = true,
+    [87726]  = true,
+    [87730]  = true,
+    [87738]  = true,
+    [87741]  = true,
+    [128356] = true,
+    [128357] = true,
 }
 local trials = {
     [126130] = true,
