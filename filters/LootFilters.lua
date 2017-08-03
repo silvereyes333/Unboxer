@@ -136,9 +136,3 @@ Unboxer.filters.loot = {
     ["thief"]        = thief,
     ["treasureMaps"] = treasureMaps,
 }
-Unboxer.filtersToSettingsMap.loot = {
-    ["consumables"]  = "potions",
-    ["festival"]     = "giftBoxes",
-    ["generic"]      = "gunnySacks",
-    ["runeboxes"]    = false, -- runeboxes are special cases. skip generic filter.
-}

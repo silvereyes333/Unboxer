@@ -1,9 +1,61 @@
 local addon = Unboxer
 
+local AddSettingOptions
+local AddSettingsForFilterCategory
+local DisableWritCreaterAutoloot
+local UpgradeSettings
+
 ----------------- Settings -----------------------
 function addon:SetupSettings()
     local LAM2 = LibStub("LibAddonMenu-2.0")
     if not LAM2 then return end
+    
+    self.defaults = 
+    {
+        autoloot = tonumber(GetSetting(SETTING_TYPE_LOOT,LOOT_SETTING_AUTO_LOOT)) ~= 0,
+        verbose = true,
+        other = true,
+        monster = true,
+        armor = true,
+        weapons = true,
+        jewelry = true,
+        overworld = true,
+        dungeon = true,
+        trials = true,
+        cyrodiil = true,
+        imperialCity = true,
+        battlegrounds = true,
+        darkBrotherhood = true,
+        nonSet = true,
+        consumables = true,
+        enchantments = true,
+        festival = true,
+        generic = true,
+        rewards = true,
+        runeBoxes = true,
+        treasureMaps = true,
+        alchemy = true,
+        blacksmithing = true,
+        clothier = true,
+        enchanting = true,
+        provisioning = true,
+        woodworking = true,
+        furnisher = true,
+        mageGuildReprints = true,
+    }
+    
+    for filterCategory, subfilters in pairs(self.filters) do
+       for settingName in pairs(subfilters) do
+            if not self.defaults[settingName] then
+                self.defaults[settingName] = false
+            end
+            self.defaults[settingName .. "Autoloot"] = self.defaults[settingName]
+            self.defaults[settingName .. "Summary"] = false
+        end
+    end
+
+    self.settings = ZO_SavedVars:NewAccountWide("Unboxer_Data", 1, nil, self.defaults)
+    UpgradeSettings(self.settings)
 
     local panelData = {
         type = "panel",
@@ -15,590 +67,179 @@ function addon:SetupSettings()
         registerForRefresh = true,
         registerForDefaults = true,
     }
-    LAM2:RegisterAddonPanel(addon.name.."Options", panelData)
+    LAM2:RegisterAddonPanel(self.name.."Options", panelData)
 
     local optionsTable = {
         {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_VERBOSE),
+            type    = "checkbox",
+            name    = GetString(SI_UNBOXER_VERBOSE),
             tooltip = GetString(SI_UNBOXER_VERBOSE_TOOLTIP),
             getFunc = function() return addon.settings.verbose end,
             setFunc = function(value) addon.settings.verbose = value end,
             default = self.defaults.verbose,
         },
-        
-        --[ GEAR ]--
         {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_MONSTER),
-            tooltip = GetString(SI_UNBOXER_MONSTER_TOOLTIP),
-            getFunc = function() return addon.settings.monster end,
-            setFunc = function(value) addon.settings.monster = value end,
-            default = self.defaults.monster,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.monsterSummary end,
-            setFunc = function(value) addon.settings.monsterSummary = value end,
-            default = self.defaults.monsterSummary,
-            disabled = function() return not addon.settings.monster end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_ARMOR),
-            tooltip = GetString(SI_UNBOXER_ARMOR_TOOLTIP),
-            getFunc = function() return addon.settings.armor end,
-            setFunc = function(value) addon.settings.armor = value end,
-            default = self.defaults.armor,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.armorSummary end,
-            setFunc = function(value) addon.settings.armorSummary = value end,
-            default = self.defaults.armorSummary,
-            disabled = function() return not addon.settings.armor end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_WEAPONS),
-            tooltip = GetString(SI_UNBOXER_WEAPONS_TOOLTIP),
-            getFunc = function() return addon.settings.weapons end,
-            setFunc = function(value) addon.settings.weapons = value end,
-            default = self.defaults.weapons,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.weaponsSummary end,
-            setFunc = function(value) addon.settings.weaponsSummary = value end,
-            default = self.defaults.weaponsSummary,
-            disabled = function() return not addon.settings.weapons end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_ACCESSORIES),
-            tooltip = GetString(SI_UNBOXER_ACCESSORIES_TOOLTIP),
-            getFunc = function() return addon.settings.accessories end,
-            setFunc = function(value) addon.settings.accessories = value end,
-            default = self.defaults.accessories,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.accessoriesSummary end,
-            setFunc = function(value) addon.settings.accessoriesSummary = value end,
-            default = self.defaults.accessoriesSummary,
-            disabled = function() return not addon.settings.accessories end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_OVERWORLD),
-            tooltip = GetString(SI_UNBOXER_OVERWORLD_TOOLTIP),
-            getFunc = function() return addon.settings.overworld end,
-            setFunc = function(value) addon.settings.overworld = value end,
-            default = self.defaults.overworld,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.overworldSummary end,
-            setFunc = function(value) addon.settings.overworldSummary = value end,
-            default = self.defaults.overworldSummary,
-            disabled = function() return not addon.settings.overworld end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_DUNGEON),
-            tooltip = GetString(SI_UNBOXER_DUNGEON_TOOLTIP),
-            getFunc = function() return addon.settings.dungeon end,
-            setFunc = function(value) addon.settings.dungeon = value end,
-            default = self.defaults.dungeon,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.dungeonSummary end,
-            setFunc = function(value) addon.settings.dungeonSummary = value end,
-            default = self.defaults.dungeonSummary,
-            disabled = function() return not addon.settings.dungeon end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_TRIALS),
-            tooltip = GetString(SI_UNBOXER_TRIALS_TOOLTIP),
-            getFunc = function() return addon.settings.trials end,
-            setFunc = function(value) addon.settings.trials = value end,
-            default = self.defaults.trials,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.trialsSummary end,
-            setFunc = function(value) addon.settings.trialsSummary = value end,
-            default = self.defaults.trialsSummary,
-            disabled = function() return not addon.settings.trials end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_CYRODIIL),
-            tooltip = GetString(SI_UNBOXER_CYRODIIL_TOOLTIP),
-            getFunc = function() return addon.settings.cyrodiil end,
-            setFunc = function(value) addon.settings.cyrodiil = value end,
-            default = self.defaults.cyrodiil,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.cyrodiilSummary end,
-            setFunc = function(value) addon.settings.cyrodiilSummary = value end,
-            default = self.defaults.cyrodiilSummary,
-            disabled = function() return not addon.settings.cyrodiil end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_IC),
-            tooltip = GetString(SI_UNBOXER_IC_TOOLTIP),
-            getFunc = function() return addon.settings.imperialCity end,
-            setFunc = function(value) addon.settings.imperialCity = value end,
-            default = self.defaults.imperialCity,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.imperialCitySummary end,
-            setFunc = function(value) addon.settings.imperialCitySummary = value end,
-            default = self.defaults.imperialCitySummary,
-            disabled = function() return not addon.settings.imperialCity end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_BATTLEGRNDS),
-            tooltip = GetString(SI_UNBOXER_BATTLEGRNDS_TOOLTIP),
-            getFunc = function() return addon.settings.battlegrounds end,
-            setFunc = function(value) addon.settings.battlegrounds = value end,
-            default = self.defaults.battlegrounds,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.battlegroundsSummary end,
-            setFunc = function(value) addon.settings.battlegroundsSummary = value end,
-            default = self.defaults.battlegroundsSummary,
-            disabled = function() return not addon.settings.battlegrounds end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_DB),
-            tooltip = GetString(SI_UNBOXER_DB_TOOLTIP),
-            getFunc = function() return addon.settings.darkBrotherhood end,
-            setFunc = function(value) addon.settings.darkBrotherhood = value end,
-            default = self.defaults.darkBrotherhood,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.darkBrotherhoodSummary end,
-            setFunc = function(value) addon.settings.darkBrotherhoodSummary = value end,
-            default = self.defaults.darkBrotherhoodSummary,
-            disabled = function() return not addon.settings.darkBrotherhood end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_NONSET),
-            tooltip = GetString(SI_UNBOXER_NONSET_TOOLTIP),
-            getFunc = function() return addon.settings.nonSet end,
-            setFunc = function(value) addon.settings.nonSet = value end,
-            default = self.defaults.nonSet,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.nonSetSummary end,
-            setFunc = function(value) addon.settings.nonSetSummary = value end,
-            default = self.defaults.nonSetSummary,
-            disabled = function() return not addon.settings.nonSet end,
-        },
-        
-        
-        
-        --[ LOOT ]--
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_REWARDS),
-            tooltip = GetString(SI_UNBOXER_REWARDS_TOOLTIP),
-            getFunc = function() return addon.settings.rewards end,
-            setFunc = function(value) addon.settings.rewards = value end,
-            default = self.defaults.rewards,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.rewardsSummary end,
-            setFunc = function(value) addon.settings.rewardsSummary = value end,
-            default = self.defaults.rewardsSummary,
-            disabled = function() return not addon.settings.rewards end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_GENERIC),
-            tooltip = GetString(SI_UNBOXER_GENERIC_TOOLTIP),
-            getFunc = function() return addon.settings.gunnySacks end,
-            setFunc = function(value) addon.settings.gunnySacks = value end,
-            default = self.defaults.gunnySacks,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.gunnySacksSummary end,
-            setFunc = function(value) addon.settings.gunnySacksSummary = value end,
-            default = self.defaults.gunnySacksSummary,
-            disabled = function() return not addon.settings.gunnySacks end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_GIFTBOXES),
-            tooltip = GetString(SI_UNBOXER_GIFTBOXES_TOOLTIP),
-            getFunc = function() return addon.settings.giftBoxes end,
-            setFunc = function(value) addon.settings.giftBoxes = value end,
-            default = self.defaults.giftBoxes,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.giftBoxesSummary end,
-            setFunc = function(value) addon.settings.giftBoxesSummary = value end,
-            default = self.defaults.giftBoxesSummary,
-            disabled = function() return not addon.settings.giftBoxes end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_RUNEBOXES),
-            tooltip = GetString(SI_UNBOXER_RUNEBOXES_TOOLTIP),
-            getFunc = function() return addon.settings.runeBoxes end,
-            setFunc = function(value) addon.settings.runeBoxes = value end,
-            default = self.defaults.runeBoxes,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.runeBoxesSummary end,
-            setFunc = function(value) addon.settings.runeBoxesSummary = value end,
-            default = self.defaults.runeBoxesSummary,
-            disabled = function() return not addon.settings.runeBoxes end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_ENCHANTMENTS),
-            tooltip = GetString(SI_UNBOXER_ENCHANTMENTS_TOOLTIP),
-            getFunc = function() return addon.settings.enchantments end,
-            setFunc = function(value) addon.settings.enchantments = value end,
-            default = self.defaults.enchantments,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.enchantmentsSummary end,
-            setFunc = function(value) addon.settings.enchantmentsSummary = value end,
-            default = self.defaults.enchantmentsSummary,
-            disabled = function() return not addon.settings.enchantments end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_CONSUMABLES),
-            tooltip = GetString(SI_UNBOXER_CONSUMABLES_TOOLTIP),
-            getFunc = function() return addon.settings.potions end,
-            setFunc = function(value) addon.settings.potions = value end,
-            default = self.defaults.potions,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.potionsSummary end,
-            setFunc = function(value) addon.settings.potionsSummary = value end,
-            default = self.defaults.potionsSummary,
-            disabled = function() return not addon.settings.potions end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_THIEF),
-            tooltip = GetString(SI_UNBOXER_THIEF_TOOLTIP),
-            getFunc = function() return addon.settings.thief end,
-            setFunc = function(value) addon.settings.thief = value end,
-            default = self.defaults.thief,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.thiefSummary end,
-            setFunc = function(value) addon.settings.thiefSummary = value end,
-            default = self.defaults.thiefSummary,
-            disabled = function() return not addon.settings.thief end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_MAPS),
-            tooltip = GetString(SI_UNBOXER_MAPS_TOOLTIP),
-            getFunc = function() return addon.settings.treasureMaps end,
-            setFunc = function(value) addon.settings.treasureMaps = value end,
-            default = self.defaults.treasureMaps,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.treasureMapsSummary end,
-            setFunc = function(value) addon.settings.treasureMapsSummary = value end,
-            default = self.defaults.treasureMapsSummary,
-            disabled = function() return not addon.settings.treasureMaps end,
-        },
-        
-        
-        
-        --[ CRAFTING ]--
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_ALCHEMIST),
-            tooltip = GetString(SI_UNBOXER_ALCHEMIST_TOOLTIP),
-            getFunc = function() return addon.settings.alchemist end,
-            setFunc = function(value) addon.settings.alchemist = value end,
-            default = self.defaults.alchemist,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.alchemistSummary end,
-            setFunc = function(value) addon.settings.alchemistSummary = value end,
-            default = self.defaults.alchemistSummary,
-            disabled = function() return not addon.settings.alchemist end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_BLACKSMITH),
-            tooltip = GetString(SI_UNBOXER_BLACKSMITH_TOOLTIP),
-            getFunc = function() return addon.settings.blacksmith end,
-            setFunc = function(value) addon.settings.blacksmith = value end,
-            default = self.defaults.blacksmith,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.blacksmithSummary end,
-            setFunc = function(value) addon.settings.blacksmithSummary = value end,
-            default = self.defaults.blacksmithSummary,
-            disabled = function() return not addon.settings.blacksmith end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_CLOTHIER),
-            tooltip = GetString(SI_UNBOXER_CLOTHIER_TOOLTIP),
-            getFunc = function() return addon.settings.clothier end,
-            setFunc = function(value) addon.settings.clothier = value end,
-            default = self.defaults.clothier,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.clothierSummary end,
-            setFunc = function(value) addon.settings.clothierSummary = value end,
-            default = self.defaults.clothierSummary,
-            disabled = function() return not addon.settings.clothier end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_ENCHANTER),
-            tooltip = GetString(SI_UNBOXER_ENCHANTER_TOOLTIP),
-            getFunc = function() return addon.settings.enchanter end,
-            setFunc = function(value) addon.settings.enchanter = value end,
-            default = self.defaults.enchanter,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.enchanterSummary end,
-            setFunc = function(value) addon.settings.enchanterSummary = value end,
-            default = self.defaults.enchanterSummary,
-            disabled = function() return not addon.settings.enchanter end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_PROVISIONER),
-            tooltip = GetString(SI_UNBOXER_PROVISIONER_TOOLTIP),
-            getFunc = function() return addon.settings.provisioner end,
-            setFunc = function(value) addon.settings.provisioner = value end,
-            default = self.defaults.provisioner,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.provisionerSummary end,
-            setFunc = function(value) addon.settings.provisionerSummary = value end,
-            default = self.defaults.provisionerSummary,
-            disabled = function() return not addon.settings.provisioner end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_WOODWORKER),
-            tooltip = GetString(SI_UNBOXER_WOODWORKER_TOOLTIP),
-            getFunc = function() return addon.settings.woodworker end,
-            setFunc = function(value) addon.settings.woodworker = value end,
-            default = self.defaults.woodworker,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.woodworkerSummary end,
-            setFunc = function(value) addon.settings.woodworkerSummary = value end,
-            default = self.defaults.woodworkerSummary,
-            disabled = function() return not addon.settings.woodworker end,
-        },
-        
-        --[ HOUSING ]--
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_FURNISHER),
-            tooltip = GetString(SI_UNBOXER_FURNISHER_TOOLTIP),
-            getFunc = function() return addon.settings.furnisher end,
-            setFunc = function(value) addon.settings.furnisher = value end,
-            default = self.defaults.furnisher,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.furnisherSummary end,
-            setFunc = function(value) addon.settings.furnisherSummary = value end,
-            default = self.defaults.furnisherSummary,
-            disabled = function() return not addon.settings.furnisher end,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_MG_REPRINTS),
-            tooltip = GetString(SI_UNBOXER_MG_REPRINTS_TOOLTIP),
-            getFunc = function() return addon.settings.mageGuildReprints end,
-            setFunc = function(value) addon.settings.mageGuildReprints = value end,
-            default = self.defaults.mageGuildReprints,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.mageGuildReprintsSummary end,
-            setFunc = function(value) addon.settings.mageGuildReprintsSummary = value end,
-            default = self.defaults.mageGuildReprintsSummary,
-            disabled = function() return not addon.settings.mageGuildReprints end,
-        },
-        
-        --[ PTS ]--
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_PTS_COLLECT),
-            tooltip = GetString(SI_UNBOXER_PTS_COLLECT_TOOLTIP),
-            getFunc = function() return addon.settings.ptsCollectibles end,
-            setFunc = function(value) addon.settings.ptsCollectibles = value end,
-            default = self.defaults.ptsCollectibles,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_PTS_CONSUME),
-            tooltip = GetString(SI_UNBOXER_PTS_CONSUME_TOOLTIP),
-            getFunc = function() return addon.settings.ptsConsumables end,
-            setFunc = function(value) addon.settings.ptsConsumables = value end,
-            default = self.defaults.ptsConsumables,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_PTS_CRAFTING),
-            tooltip = GetString(SI_UNBOXER_PTS_CRAFTING_TOOLTIP),
-            getFunc = function() return addon.settings.ptsCrafting end,
-            setFunc = function(value) addon.settings.ptsCrafting = value end,
-            default = self.defaults.ptsCrafting,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_PTS_CURRENCY),
-            tooltip = GetString(SI_UNBOXER_PTS_CURRENCY_TOOLTIP),
-            getFunc = function() return addon.settings.ptsCurrency end,
-            setFunc = function(value) addon.settings.ptsCurrency = value end,
-            default = self.defaults.ptsCurrency,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_PTS_GEAR),
-            tooltip = GetString(SI_UNBOXER_PTS_GEAR_TOOLTIP),
-            getFunc = function() return addon.settings.ptsGear end,
-            setFunc = function(value) addon.settings.ptsGear = value end,
-            default = self.defaults.ptsGear,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_PTS_HOUSING),
-            tooltip = GetString(SI_UNBOXER_PTS_HOUSING_TOOLTIP),
-            getFunc = function() return addon.settings.ptsHousing end,
-            setFunc = function(value) addon.settings.ptsHousing = value end,
-            default = self.defaults.ptsHousing,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_PTS_SKILLS),
-            tooltip = GetString(SI_UNBOXER_PTS_SKILLS_TOOLTIP),
-            getFunc = function() return addon.settings.ptsSkills end,
-            setFunc = function(value) addon.settings.ptsSkills = value end,
-            default = self.defaults.ptsSkills,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_PTS_OTHER),
-            tooltip = GetString(SI_UNBOXER_PTS_OTHER_TOOLTIP),
-            getFunc = function() return addon.settings.ptsOther end,
-            setFunc = function(value) addon.settings.ptsOther = value end,
-            default = self.defaults.ptsOther,
-        },
-        
-        --[ OTHER ]--
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_OTHER),
-            tooltip = GetString(SI_UNBOXER_OTHER_TOOLTIP),
-            getFunc = function() return addon.settings.other end,
-            setFunc = function(value) addon.settings.other = value end,
-            default = self.defaults.other,
-        },
-        {
-            type = "checkbox",
-            name = GetString(SI_UNBOXER_SUMMARY),
-            tooltip = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
-            getFunc = function() return addon.settings.otherSummary end,
-            setFunc = function(value) addon.settings.otherSummary = value end,
-            default = self.defaults.otherSummary,
-            disabled = function() return not addon.settings.other end,
-        },
+            type    = "checkbox",
+            name    = GetString(SI_UNBOXER_AUTOLOOT_GLOBAL),
+            tooltip = GetString(SI_UNBOXER_AUTOLOOT_GLOBAL_TOOLTIP),
+            getFunc = function() return addon.settings.autoloot end,
+            setFunc = function(value) addon.settings.autoloot = value end,
+            default = self.defaults.autoloot,
+        }
     }
-    LAM2:RegisterOptionControls(addon.name.."Options", optionsTable)
+    
+    AddSettingsForFilterCategory(optionsTable, "gear")
+    AddSettingsForFilterCategory(optionsTable, "loot")
+    AddSettingsForFilterCategory(optionsTable, "crafting", DisableWritCreaterAutoloot)
+    AddSettingsForFilterCategory(optionsTable, "housing")
+    AddSettingsForFilterCategory(optionsTable, "pts")
+    AddSettingOptions(optionsTable, false, "other")
+    
+    LAM2:RegisterOptionControls(self.name.."Options", optionsTable)
+end
+
+local exampleFormat = GetString(SI_UNBOXER_TOOLTIP_EXAMPLE)
+local exampleItemIds = {
+    ["generic"] = 43757,
+    ["weapons"] = 54397,
+    ["jewelry"] = 76877,
+    ["ptsConsumables"] = 71051,
+}
+AddSettingOptions = function(optionsTable, settingCategory, settingName, onAutolootSet)
+    if not settingName then return end
+    local title = GetString(_G[string.format("SI_UNBOXER_%s", settingName:upper())])
+    local tooltip = GetString(_G[string.format("SI_UNBOXER_%s_TOOLTIP", settingName:upper())])
+    if settingCategory and settingName then
+        local exampleItemId
+        if exampleItemIds[settingName] then
+            exampleItemId = exampleItemIds[settingName]
+        else
+            exampleItemId = next(addon.filters[settingCategory][settingName])
+        end
+        tooltip = tooltip .. string.format(exampleFormat, exampleItemId)
+    end
+    local autolootSettingName = settingName .. "Autoloot"
+    local summarySettingName = settingName .. "Summary"
+    table.insert(optionsTable,
+        {
+            type     = "checkbox",
+            name     = title,
+            tooltip  = tooltip,
+            getFunc  = function() 
+                           return addon.settings[settingName] 
+                       end,
+            setFunc  = function(value) 
+                           addon.settings[settingName] = value
+                       end,
+            default  = addon.defaults[settingName],
+        })
+    table.insert(optionsTable,
+        {
+            type     = "checkbox",
+            name     = GetString(SI_UNBOXER_AUTOLOOT),
+            tooltip  = GetString(SI_UNBOXER_AUTOLOOT_TOOLTIP),
+            getFunc  = function() return addon.settings[autolootSettingName] end,
+            setFunc  = function(value) 
+                           addon.settings[autolootSettingName] = value
+                           if onAutolootSet and type(onAutolootSet) == "function" then
+                               onAutolootSet(value)
+                           end
+                       end,
+            default  = addon.defaults[autolootSettingName],
+            disabled = function() 
+                           return not addon.settings.autoloot 
+                                  or not addon.settings[settingName] 
+                       end,
+        })
+    table.insert(optionsTable,
+        {
+            type     = "checkbox",
+            name     = GetString(SI_UNBOXER_SUMMARY),
+            tooltip  = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
+            getFunc  = function() 
+                           return addon.settings[summarySettingName] 
+                       end,
+            setFunc  = function(value) 
+                           addon.settings[summarySettingName] = value 
+                       end,
+            default  = addon.defaults[summarySettingName],
+            disabled = function() 
+                           return not addon.settings[settingName] 
+                       end,
+        })
+    
+    if onAutolootSet and type(onAutolootSet) == "function" then
+        onAutolootSet(addon.settings[settingName .. "Autoloot"])
+    end
+end
+
+AddSettingsForFilterCategory = function(optionsTable, filterCategory, onAutolootSet)
+    -- Sort filter names
+    local filterNames = {}
+    for filterName in pairs(addon.filters[filterCategory]) do 
+        table.insert(filterNames, filterName) 
+    end
+    table.sort(filterNames)
+    -- Add options for each filter name
+    for _, filterName in ipairs(filterNames) do
+        AddSettingOptions(optionsTable, filterCategory, filterName, onAutolootSet)
+    end
+end
+
+DisableWritCreaterAutoloot = function(value)
+    if not value then return end
+    if WritCreater then
+        local displayLazyWarning
+        if not WritCreater.savedVars.ignoreAuto then
+            WritCreater.savedVars.ignoreAuto = true
+            displayLazyWarning = true
+        end
+        if WritCreater.savedVars.autoLoot then
+            WritCreater.savedVars.autoLoot = false
+            displayLazyWarning = true
+        end
+        if WritCreater.savedVars.lootContainerOnReceipt then
+            WritCreater.savedVars.lootContainerOnReceipt = false
+            displayLazyWarning = true
+        end
+        if displayLazyWarning then
+            addon.d("Disabled autoloot settings for |r"..tostring(WritCreater.settings["panel"].displayName))
+        end
+    end
+end
+
+local function RenameSetting(settings, oldSetting, newSetting)
+    if settings[oldSetting] == nil then 
+        return
+    end
+    settings[newSetting] = settings[oldSetting]
+    settings[oldSetting] = nil
+end
+
+local function RenameSettingAndSummary(settings, oldSetting, newSetting)
+    RenameSetting(settings, oldSetting, newSetting)
+    RenameSetting(settings, oldSetting .. "Summary", newSetting .. "Summary")
+end
+
+UpgradeSettings = function(settings)
+    if not settings.dataVersion then
+        settings.dataVersion = 1
+        RenameSettingAndSummary(settings, "accessories", "jewelry")
+        RenameSettingAndSummary(settings, "potions", "consumables")
+        RenameSettingAndSummary(settings, "giftBoxes", "festival")
+        RenameSettingAndSummary(settings, "gunnySacks", "generic")
+        RenameSettingAndSummary(settings, "alchemist", "alchemy")
+        RenameSettingAndSummary(settings, "blacksmith", "blacksmithing")
+        RenameSettingAndSummary(settings, "enchanter", "enchanting")
+        RenameSettingAndSummary(settings, "provisioner", "provisioning")
+        RenameSettingAndSummary(settings, "woodworker", "woodworking")
+        RenameSettingAndSummary(settings, "runeBoxes", "runeboxes")
+        
+        for filterCategory, subfilters in pairs(addon.filters) do
+           for settingName in pairs(subfilters) do
+               settings[settingName.."Autoloot"] = settings[settingName]
+            end
+        end
+        settings.otherAutoloot = settings.other
+    end
 end
