@@ -2,7 +2,7 @@ local addon = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "|c99CCEFsilvereyes|r",
-    version = "2.0.0",
+    version = "2.1.0",
     filters = {},
     itemSlotStack = {},
     debugMode = false,
@@ -125,6 +125,7 @@ local function AbortAction(...)
     lootReceived = nil
     updateExpected = false
     filterSetting = nil
+    addon.unboxingItemLink = nil
     KEYBIND_STRIP:UpdateKeybindButtonGroup(addon.unboxAllKeybindButtonGroup)
     -- Print summary
     if LLS then
@@ -132,9 +133,28 @@ local function AbortAction(...)
     end
 end
 
-
+local function GetInventorySlotsNeeded(inventorySlotsNeeded)
+    if not inventorySlotsNeeded then
+        inventorySlotsNeeded = GetNumLootItems()
+    end
+    if addon.settings.reservedSlots and type(addon.settings.reservedSlots) == "number" then
+        inventorySlotsNeeded = inventorySlotsNeeded + addon.settings.reservedSlots
+    end
+    return inventorySlotsNeeded
+end
+local function HasEnoughSlots(inventorySlotsNeeded)
+    -- For performance reasons, just assume each box has 2 items, until the box is actually open.
+    -- Then we will pass in the exact number.
+    if not inventorySlotsNeeded then
+        inventorySlotsNeeded = 2
+    end
+    inventorySlotsNeeded = GetInventorySlotsNeeded(inventorySlotsNeeded)
+    return CheckInventorySpaceSilently(inventorySlotsNeeded)
+end
 local function HasUnboxableSlots()
-    if not(CheckInventorySpaceSilently(2) and BACKPACK_MENU_BAR_LAYOUT_FRAGMENT:GetState() == SCENE_SHOWN) then return false end
+    if not HasEnoughSlots() and BACKPACK_MENU_BAR_LAYOUT_FRAGMENT:GetState() == SCENE_SHOWN then 
+        return false
+    end
     if #addon.itemSlotStack > 0 then return false end
     local bagId = BAG_BACKPACK
     local bagSlots = GetBagSize(bagId) -1
@@ -147,7 +167,7 @@ end
 
 -- Scan backpack for next unboxable container and return true if found
 local function GetNextItemToUnbox()
-    if not CheckInventorySpaceSilently(2) then
+    if not HasEnoughSlots() then
         dbug("Not enough bag space")
         return
     end
@@ -166,8 +186,14 @@ local function GetNextItemToUnbox()
     end
     dbug("No unboxable items found")
 end
+local function PrintUnboxedLink()
+    if not addon.unboxingItemLink then return end
+    pOutput(zo_strformat(SI_UNBOXER_UNBOXED, addon.unboxingItemLink))
+    addon.unboxingItemLink = nil
+end
 local function HandleEventLootReceived(eventCode, receivedBy, itemLink, quantity, itemSound, lootType, lootedBySelf, isPickpocketLoot, questItemIcon, itemId)
     lootReceived = true
+    PrintUnboxedLink()
     if LLS and filterSetting and lootedBySelf and lootType == LOOT_TYPE_ITEM then
         if addon.settings[filterSetting .. "Summary"] then
             LLS:AddItemLink(itemLink, quantity)
@@ -248,6 +274,19 @@ local function HandleEventLootUpdated(eventCode)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_UPDATED)
     if not addon.slotIndex then
         dbug("addon slotindex is empty")
+        EndLooting()
+        return
+    end
+    -- do a dumb check for inventory slot availability
+    --[[ TODO: Be smarter, taking into account stacking slots and craft bag. 
+               Maybe make a library to do this, since Postmaster could use it too.
+               Could get expensive, scanning the whole bag at time of loot, though.
+               Some sort of data structure / index is needed. ]]
+    local inventorySlotsNeeded = GetInventorySlotsNeeded()
+    if not CheckInventorySpaceAndWarn(inventorySlotsNeeded) then
+        dbug("not enough space")
+        AbortAction()
+        EndLooting()
         return
     end
     table.insert(timeoutItemUniqueIds, GetItemUniqueId(BAG_BACKPACK, addon.slotIndex))
@@ -257,7 +296,7 @@ local function HandleEventLootUpdated(eventCode)
 end
 local function HandleEventNewCollectible(eventCode, collectibleId)
     lootReceived = true
-    HandleEventLootClosed(eventCode)
+    PrintUnboxedLink()
 end
 local HandleInteractWindowHidden
 HandleInteractWindowHidden = function()
@@ -274,12 +313,6 @@ UnboxCurrent = function()
         dbug("No items in item slot stack")
         AbortAction()
         return
-    end
-    if not CheckInventorySpaceSilently(2) then
-        dbug("not enough space")
-        AbortAction()
-        ZO_Alert(UI_ALERT_CATEGORY_ERROR, SOUNDS.NEGATIVE_CLICK, SI_INVENTORY_ERROR_INVENTORY_FULL)
-        return false
     end
     local remaining, duration = GetItemCooldownInfo(BAG_BACKPACK, slotIndex)
     if remaining > 0 and duration > 0 then
@@ -318,6 +351,7 @@ UnboxCurrent = function()
             EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_LOOT_UPDATED, HandleEventLootUpdated)
             EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_LOOT_CLOSED, HandleEventLootClosed)
             EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_COLLECTIBLE_NOTIFICATION_NEW, HandleEventNewCollectible)
+            addon.unboxingItemLink = GetItemLink(BAG_BACKPACK, slotIndex)
             if not addon.originalUpdateLootWindow then
                 local lootWindow = SYSTEMS:GetObject("loot")
                 addon.originalUpdateLootWindow = lootWindow.UpdateLootWindow
@@ -336,7 +370,6 @@ UnboxCurrent = function()
             else
                 UseItem(BAG_BACKPACK, slotIndex)
             end
-            pOutput(zo_strformat("Unboxed <<1>>", GetItemLink(BAG_BACKPACK, slotIndex)))
         end
         return true
     else

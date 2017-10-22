@@ -1,6 +1,7 @@
 UNBOXER_STRINGS = {
     ["SI_UNBOXER"] =                         "|c00AAFFUn|cAADDFFboxer|r",
     ["SI_BINDING_NAME_UNBOX_ALL"] =          "Unbox All",
+    ["SI_UNBOXER_UNBOXED"] =                 "Unboxed <<1>>",
     ["SI_UNBOXER_TOOLTIP_EXAMPLE"] =         "\nExample: |H0:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL"] =         "Enable Autoloot",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL_TOOLTIP"] = "Opens containers automatically as soon as they arrive in your bag for all container types with a + Autoloot option enabled below.",
@@ -8,6 +9,8 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_VERBOSE_TOOLTIP"] =         "Displays unbox command results in the chat window.",
     ["SI_UNBOXER_AUTOLOOT"] =                "+ Autoloot",
     ["SI_UNBOXER_AUTOLOOT_TOOLTIP"] =        "Containers from the category above will be automatically opened as soon as they arrive in your bag.",
+    ["SI_UNBOXER_RESERVED_SLOTS"] =          "Reserved Slots",
+    ["SI_UNBOXER_RESERVED_SLOTS_TOOLTIP"] =  "<<1>> will leave the given number of backpack slots open",
     ["SI_UNBOXER_SUMMARY"] =                 "+ "..GetString(SI_JOURNAL_PROGRESS_SUMMARY),
     ["SI_UNBOXER_SUMMARY_TOOLTIP"] =         "A summary of items unboxed from the category above will be printed to chat when Unbox All is done.",
     ["SI_UNBOXER_ARMOR"] =                   "Gear: Armor Chests",

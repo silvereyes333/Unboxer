@@ -13,6 +13,7 @@ function addon:SetupSettings()
     self.defaults = 
     {
         autoloot = tonumber(GetSetting(SETTING_TYPE_LOOT,LOOT_SETTING_AUTO_LOOT)) ~= 0,
+        reservedSlots = 0,
         verbose = true,
         other = true,
         monster = true,
@@ -70,22 +71,38 @@ function addon:SetupSettings()
     LAM2:RegisterAddonPanel(self.name.."Options", panelData)
 
     local optionsTable = {
+        -- Verbose
         {
             type    = "checkbox",
             name    = GetString(SI_UNBOXER_VERBOSE),
             tooltip = GetString(SI_UNBOXER_VERBOSE_TOOLTIP),
-            getFunc = function() return addon.settings.verbose end,
-            setFunc = function(value) addon.settings.verbose = value end,
+            getFunc = function() return self.settings.verbose end,
+            setFunc = function(value) self.settings.verbose = value end,
             default = self.defaults.verbose,
         },
+        -- Autolooot
         {
             type    = "checkbox",
             name    = GetString(SI_UNBOXER_AUTOLOOT_GLOBAL),
             tooltip = GetString(SI_UNBOXER_AUTOLOOT_GLOBAL_TOOLTIP),
-            getFunc = function() return addon.settings.autoloot end,
-            setFunc = function(value) addon.settings.autoloot = value end,
+            getFunc = function() return self.settings.autoloot end,
+            setFunc = function(value) self.settings.autoloot = value end,
             default = self.defaults.autoloot,
-        }
+        },
+        -- Reserved slots
+        {
+            type = "slider",
+            name = zo_strformat(GetString(SI_UNBOXER_RESERVED_SLOTS), GetString(SI_BINDING_NAME_UNBOX_ALL)),
+            tooltip = zo_strformat(GetString(SI_UNBOXER_RESERVED_SLOTS_TOOLTIP), GetString(SI_BINDING_NAME_UNBOX_ALL)),
+            getFunc = function() return self.settings.reservedSlots end,
+            setFunc = function(value) self.settings.reservedSlots = value end,
+            min = 0,
+            max = 200,
+            step = 1,
+            clampInput = true,
+            width = "full",
+            default = self.defaults.reservedSlots,
+        },
     }
     
     AddSettingsForFilterCategory(optionsTable, "gear")
@@ -138,6 +155,7 @@ AddSettingOptions = function(optionsTable, settingCategory, settingName, onAutol
             type     = "checkbox",
             name     = GetString(SI_UNBOXER_AUTOLOOT),
             tooltip  = GetString(SI_UNBOXER_AUTOLOOT_TOOLTIP),
+            width    = "half",
             getFunc  = function() return addon.settings[autolootSettingName] end,
             setFunc  = function(value) 
                            addon.settings[autolootSettingName] = value
@@ -156,6 +174,7 @@ AddSettingOptions = function(optionsTable, settingCategory, settingName, onAutol
             type     = "checkbox",
             name     = GetString(SI_UNBOXER_SUMMARY),
             tooltip  = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
+            width    = "half",
             getFunc  = function() 
                            return addon.settings[summarySettingName] 
                        end,
