@@ -35,6 +35,7 @@ function addon:SetupSettings()
         rewards = true,
         runeBoxes = true,
         treasureMaps = true,
+        transmutation = true,
         alchemy = true,
         blacksmithing = true,
         clothier = true,

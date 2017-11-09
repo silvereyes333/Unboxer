@@ -101,13 +101,9 @@ local rewards = {
     [133225] = true,
     [133559] = true,
     [133560] = true,
-    [134583] = true,
     [134585] = true,
     [134586] = true,
-    [134588] = true,
-    [134589] = true,
-    [134590] = true,
-    [134591] = true,
+    [134619] = true,
 }
 local runeboxes = {
     [79329] = 148,
@@ -144,13 +140,24 @@ local treasureMaps = {
     [45881] = true,
     [45882] = true,
 }
+local transmutation = {
+    [134583] = true,
+    [134588] = true,
+    [134589] = true,
+    [134590] = true,
+    [134591] = true,
+    [134618] = true,
+    [134622] = true,
+    [134623] = true,
+}
 Unboxer.filters.loot = {
-    ["consumables"]  = consumables,
-    ["enchantments"] = enchantments,
-    ["festival"]     = festival,
-    ["generic"]      = generic,
-    ["rewards"]      = rewards,
-    ["runeboxes"]    = runeboxes,
-    ["thief"]        = thief,
-    ["treasureMaps"] = treasureMaps,
+    ["consumables"]   = consumables,
+    ["enchantments"]  = enchantments,
+    ["festival"]      = festival,
+    ["generic"]       = generic,
+    ["rewards"]       = rewards,
+    ["runeboxes"]     = runeboxes,
+    ["thief"]         = thief,
+    ["treasureMaps"]  = treasureMaps,
+    ["transmutation"] = transmutation,
 }
