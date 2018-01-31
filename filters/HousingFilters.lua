@@ -1,6 +1,10 @@
 local housingFurnisher = {
     [121364] = true,
     [127106] = true,
+    [134681] = true,
+    [134682] = true,
+    [134683] = true,
+    [134684] = true,
 }
 local mageGuildReprints = {
     [120377] = true,
