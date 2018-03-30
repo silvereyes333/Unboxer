@@ -133,8 +133,8 @@ local runeboxes = {
     [124659] = 1232,
     [128359] = 1338,
     [128360] = 1339,
-    [133550] = true, -- clockwork reliquary polymorph. no collectible id yet.
-    [134678] = true, -- jester's scintillator (memento?). no collectible id yet.
+    [133550] = 4660,
+    [134678] = 4797,
 }
 local thief = {
     [74651] = true,
