@@ -22,7 +22,6 @@ function addon:SetupSettings()
         jewelry = true,
         overworld = true,
         dungeon = true,
-        trials = true,
         cyrodiil = true,
         imperialCity = true,
         battlegrounds = true,
@@ -40,6 +39,7 @@ function addon:SetupSettings()
         blacksmithing = true,
         clothier = true,
         enchanting = true,
+        jewelrycrafting = true,
         provisioning = true,
         woodworking = true,
         furnisher = true,
@@ -81,7 +81,7 @@ function addon:SetupSettings()
             setFunc = function(value) self.settings.verbose = value end,
             default = self.defaults.verbose,
         },
-        -- Autolooot
+        -- Autoloot
         {
             type    = "checkbox",
             name    = GetString(SI_UNBOXER_AUTOLOOT_GLOBAL),
@@ -109,6 +109,7 @@ function addon:SetupSettings()
     AddSettingsForFilterCategory(optionsTable, "gear")
     AddSettingsForFilterCategory(optionsTable, "loot")
     AddSettingsForFilterCategory(optionsTable, "crafting", DisableWritCreaterAutoloot)
+    AddSettingsForFilterCategory(optionsTable, "collectibles")
     AddSettingsForFilterCategory(optionsTable, "housing")
     AddSettingsForFilterCategory(optionsTable, "pts")
     AddSettingOptions(optionsTable, false, "other")

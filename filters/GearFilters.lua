@@ -191,6 +191,13 @@ local armor = {
     [82125] = true,
     [82126] = true,
     [87718] = true,
+    [140287] = true,
+    [140288] = true,
+    [140289] = true,
+    [140292] = true,
+    [140293] = true,
+    [140295] = true,
+    [140296] = true,
 }
 local weapons = {
     [44784] = true,
@@ -293,6 +300,8 @@ local weapons = {
     [81226] = true,
     [84519] = true,
     [84520] = true,
+    [140290] = true,
+    [140291] = true,
 }
 local jewelry = {
     [44787] = true,
@@ -366,6 +375,7 @@ local jewelry = {
     [117660] = true,
     [117661] = true,
     [117662] = true,
+    [140294] = true,
 }
 local cyrodiil = {
     [87710] = true,
@@ -429,10 +439,6 @@ local dungeon = {
     [87730]  = true,
     [87738]  = true,
     [87741]  = true,
-}
-local trials = {
-    [126130] = true,
-    [126131] = true,
 }
 local imperialCity = {
     [69416] = true,
@@ -518,7 +524,6 @@ Unboxer.filters.gear = {
     ["jewelry"]         = jewelry,
     ["overworld"]       = overworld,
     ["dungeon"]         = dungeon,
-    ["trials"]          = trials,
     ["cyrodiil"]        = cyrodiil,
     ["imperialCity"]    = imperialCity,
     ["darkBrotherhood"] = darkBrotherhood,

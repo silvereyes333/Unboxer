@@ -2,7 +2,7 @@ local addon = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "|c99CCEFsilvereyes|r",
-    version = "2.3.1",
+    version = "2.4.0",
     filters = {},
     itemSlotStack = {},
     debugMode = false,
@@ -70,15 +70,21 @@ local function IsItemUnboxable(bagId, slotIndex)
     
     -- No filters matched.  Handle special cases and catch-all...
     if not filterMatched then
-        if addon.filters.loot.runeboxes[itemId] ~= nil then -- runeboxes
-            if not addon.settings.runeBoxes
+        local collectibleId
+        for filterName,itemIds in pairs(addon.filters.collectibles) do
+            if itemIds[itemId] ~= nil then
+                filterMatched = filterName
+                collectibleId = itemIds[itemId]
+                break
+            end
+        end
+        if collectibleId ~= nil then -- collectibles
+            if not addon.settings[filterMatched]
                or (addon.autolooting
-                   and (not addon.settings.autoloot or not addon.settings.runeBoxesAutoloot))
+                   and (not addon.settings.autoloot or not addon.settings[filterMatched.."AutoLoot"]))
             then
                 return false
             end
-            filterMatched = "runeBoxes"
-            local collectibleId = addon.filters.loot.runeboxes[itemId]
             if type(collectibleId) == "number" and IsCollectibleUnlocked(collectibleId) then
                 return false
             end
@@ -236,12 +242,6 @@ local function HandleEventLootClosed(eventCode)
     end
     EVENT_MANAGER:RegisterForUpdate(addon.name, 40, UnboxCurrent)
 end
-HudStateChange = function(oldState, newState)
-    if newState == SCENE_SHOWN then
-        HUD_SCENE:UnregisterCallback("StateChange", HudStateChange)
-        UnboxCurrent()
-    end
-end
 InventoryStateChange = function(oldState, newState)
     if newState == SCENE_SHOWING then
         KEYBIND_STRIP:UpdateKeybindButtonGroup(addon.unboxAllKeybindButtonGroup)
@@ -298,10 +298,26 @@ local function HandleEventNewCollectible(eventCode, collectibleId)
     lootReceived = true
     PrintUnboxedLink()
 end
+local function EndInteractWait()
+    dbug("Interaction wait over. Starting up unboxing again.")
+    addon.interactWait = nil
+    EVENT_MANAGER:UnregisterForUpdate(addon.name.."InteractWait")
+    UnboxCurrent()
+end
+local function StartInteractWait()
+    dbug("Interaction ended. Waiting 2 seconds to try unboxing again.")
+    INTERACT_WINDOW:UnregisterCallback("Hidden", HandleInteractWindowHidden)
+    HUD_SCENE:UnregisterCallback("StateChange", HudStateChange)
+    EVENT_MANAGER:UnregisterForUpdate(addon.name.."InteractWait")
+    EVENT_MANAGER:RegisterForUpdate(addon.name.."InteractWait", 2000, EndInteractWait)
+end
 local HandleInteractWindowHidden
 HandleInteractWindowHidden = function()
-    INTERACT_WINDOW:UnregisterCallback("Hidden", HandleInteractWindowHidden)
-    EVENT_MANAGER:RegisterForUpdate(addon.name, 40, UnboxCurrent)
+    StartInteractWait()
+end
+HudStateChange = function(oldState, newState)
+    if newState ~= SCENE_SHOWN then return end
+    StartInteractWait()
 end
 local suppressLootWindow = function() end
 UnboxCurrent = function()
@@ -314,21 +330,26 @@ UnboxCurrent = function()
         AbortAction()
         return
     end
-    local remaining, duration = GetItemCooldownInfo(BAG_BACKPACK, slotIndex)
-    if remaining > 0 and duration > 0 then
-        dbug("item at slotIndex "..tostring(slotIndex).." is on cooldown for another "..tostring(remaining).." ms duration "..tostring(duration)..". wait until it is ready")
-        table.insert(addon.itemSlotStack, slotIndex)
-        EVENT_MANAGER:RegisterForUpdate(addon.name, duration, UnboxCurrent)
-        return
-    end
     local isUnboxable
     isUnboxable, filterSetting = IsItemUnboxable(BAG_BACKPACK, slotIndex)
     if isUnboxable then
         if INTERACT_WINDOW:IsInteracting() then
             dbug("interaction window is open. wait until it closes to open slotIndex "..tostring(slotIndex))
             table.insert(addon.itemSlotStack, slotIndex)
+            addon.interactWait = true
             HUD_SCENE:RegisterCallback("StateChange", HudStateChange)
             INTERACT_WINDOW:RegisterCallback("Hidden", HandleInteractWindowHidden)
+            return
+        elseif addon.interactWait then
+            dbug("waiting for interaction timeout to handle unboxing slotIndex "..tostring(slotIndex))
+            table.insert(addon.itemSlotStack, slotIndex)
+            return
+        end
+        local remaining, duration = GetItemCooldownInfo(BAG_BACKPACK, slotIndex)
+        if remaining > 0 and duration > 0 then
+            dbug("item at slotIndex "..tostring(slotIndex).." is on cooldown for another "..tostring(remaining).." ms duration "..tostring(duration)..". wait until it is ready")
+            table.insert(addon.itemSlotStack, slotIndex)
+            EVENT_MANAGER:RegisterForUpdate(addon.name, duration, UnboxCurrent)
             return
         elseif LOOT_SCENE.state ~= SCENE_HIDDEN or LOOT_SCENE_GAMEPAD.state ~= SCENE_HIDDEN then
             dbug("loot scene is showing. wait for it to close to open slotIndex "..tostring(slotIndex))

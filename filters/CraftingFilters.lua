@@ -37,6 +37,7 @@ local blacksmithing = {
     [134990] = true,
     [134993] = true,
     [134996] = true,
+    [138821] = true,
 }
 local clothier = {
     [30338] = true,
@@ -77,6 +78,8 @@ local clothier = {
     [134992] = true,
     [134994] = true,
     [134995] = true,
+    [138820] = true,
+    [138822] = true,
 }
 local enchanting = {
     [30337] = true,
@@ -91,6 +94,24 @@ local enchanting = {
     [59736] = true,
     [71236] = true,
     [121300] = true,
+    [138806] = true,
+    [138807] = true,
+    [138808] = true,
+    [138809] = true,
+    [138810] = true,
+}
+local jewelrycrafting = {
+    [138710] = true,
+    [138801] = true,
+    [138802] = true,
+    [138803] = true,
+    [138804] = true,
+    [138805] = true,
+    [138816] = true,
+    [138817] = true,
+    [138818] = true,
+    [138819] = true,
+    [138824] = true,
 }
 local provisioning = {
     [30333] = true,
@@ -131,12 +152,14 @@ local woodworking = {
     [99282] = true,
     [121299] = true,
     [134997] = true,
+    [138823] = true,
 }
 Unboxer.filters.crafting = {
-    ["alchemy"]       = alchemy,
-    ["blacksmithing"] = blacksmithing,
-    ["clothier"]      = clothier,
-    ["enchanting"]    = enchanting,
-    ["provisioning"]  = provisioning,
-    ["woodworking"]   = woodworking,
+    ["alchemy"]         = alchemy,
+    ["blacksmithing"]   = blacksmithing,
+    ["clothier"]        = clothier,
+    ["enchanting"]      = enchanting,
+    ["jewelrycrafting"] = jewelrycrafting,
+    ["provisioning"]    = provisioning,
+    ["woodworking"]     = woodworking,
 }
