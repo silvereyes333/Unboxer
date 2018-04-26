@@ -32,6 +32,7 @@ local ptsCrafting = {
     [134668] = true,
     [134669] = true,
     [134670] = true,
+    [138710] = true,
     [140413] = true,
 }
 local ptsCurrency = {
