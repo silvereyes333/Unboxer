@@ -99,6 +99,7 @@ local enchanting = {
     [138808] = true,
     [138809] = true,
     [138810] = true,
+    [140460] = true,
 }
 local jewelrycrafting = {
     [138801] = true,

@@ -40,6 +40,7 @@ local generic = {
     [126012] = true,
     [138790] = true,
     [139011] = true,
+    [140443] = true,
 }
 local rewards = {
     [54993] = true,
@@ -135,6 +136,8 @@ local rewards = {
     [139674] = true,
     [139675] = true,
     [140252] = true,
+    [140425] = true,
+    [140426] = true,
 }
 local thief = {
     [74651] = true,

@@ -2,7 +2,7 @@ local addon = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "|c99CCEFsilvereyes|r",
-    version = "2.4.1",
+    version = "2.4.2",
     filters = {},
     itemSlotStack = {},
     debugMode = false,
@@ -134,9 +134,7 @@ local function AbortAction(...)
     addon.unboxingItemLink = nil
     KEYBIND_STRIP:UpdateKeybindButtonGroup(addon.unboxAllKeybindButtonGroup)
     -- Print summary
-    if LLS then
-        LLS:Print()
-    end
+    LLS:Print()
 end
 
 local function GetInventorySlotsNeeded(inventorySlotsNeeded)
@@ -200,7 +198,7 @@ end
 local function HandleEventLootReceived(eventCode, receivedBy, itemLink, quantity, itemSound, lootType, lootedBySelf, isPickpocketLoot, questItemIcon, itemId)
     lootReceived = true
     PrintUnboxedLink()
-    if LLS and filterSetting and lootedBySelf and lootType == LOOT_TYPE_ITEM then
+    if filterSetting and lootedBySelf and lootType == LOOT_TYPE_ITEM then
         if addon.settings[filterSetting .. "Summary"] then
             LLS:AddItemLink(itemLink, quantity)
         end
@@ -364,9 +362,7 @@ UnboxCurrent = function()
         else
             dbug("setting addon.slotIndex = "..tostring(slotIndex))
             addon.slotIndex = slotIndex
-            if LLS then
-                LLS:SetPrefix(prefix)
-            end
+            LLS:SetPrefix(prefix)
             lootReceived = false
             EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_LOOT_RECEIVED, HandleEventLootReceived)
             EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_LOOT_UPDATED, HandleEventLootUpdated)

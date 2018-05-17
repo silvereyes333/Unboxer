@@ -8,7 +8,6 @@ local UpgradeSettings
 ----------------- Settings -----------------------
 function addon:SetupSettings()
     local LAM2 = LibStub("LibAddonMenu-2.0")
-    if not LAM2 then return end
     
     self.defaults = 
     {
