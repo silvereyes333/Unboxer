@@ -206,25 +206,30 @@ AddSettingsForFilterCategory = function(optionsTable, filterCategory, onAutoloot
     end
 end
 
+local function disableWritCreaterSavedVarsAutoloot(savedVars)
+    if not savedVars then return end
+    local displayLazyWarning
+    if not savedVars.ignoreAuto then
+        savedVars.ignoreAuto = true
+        displayLazyWarning = true
+    end
+    if savedVars.autoLoot then
+        savedVars.autoLoot = false
+        displayLazyWarning = true
+    end
+    if savedVars.lootContainerOnReceipt then
+        savedVars.lootContainerOnReceipt = false
+        displayLazyWarning = true
+    end
+    return displayLazyWarning
+end
+
 DisableWritCreaterAutoloot = function(value)
-    if not value then return end
-    if WritCreater then
-        local displayLazyWarning
-        if not WritCreater.savedVars.ignoreAuto then
-            WritCreater.savedVars.ignoreAuto = true
-            displayLazyWarning = true
-        end
-        if WritCreater.savedVars.autoLoot then
-            WritCreater.savedVars.autoLoot = false
-            displayLazyWarning = true
-        end
-        if WritCreater.savedVars.lootContainerOnReceipt then
-            WritCreater.savedVars.lootContainerOnReceipt = false
-            displayLazyWarning = true
-        end
-        if displayLazyWarning then
-            addon.d("Disabled autoloot settings for |r"..tostring(WritCreater.settings["panel"].displayName))
-        end
+    if not value or not WritCreater then return end
+    local displayLazyWarning = disableWritCreaterSavedVarsAutoloot(WritCreater.savedVars)
+    local displayLazyWarningAccountWide = disableWritCreaterSavedVarsAutoloot(WritCreater.savedVarsAccountWide)
+    if displayLazyWarning or displayLazyWarningAccountWide then
+        addon.d("Disabled autoloot settings for |r"..tostring(WritCreater.settings["panel"].displayName))
     end
 end
 
