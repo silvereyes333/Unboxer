@@ -227,7 +227,8 @@ end
 DisableWritCreaterAutoloot = function(value)
     if not value or not WritCreater then return end
     local displayLazyWarning = disableWritCreaterSavedVarsAutoloot(WritCreater.savedVars)
-    local displayLazyWarningAccountWide = disableWritCreaterSavedVarsAutoloot(WritCreater.savedVarsAccountWide)
+    local displayLazyWarningAccountWide = disableWritCreaterSavedVarsAutoloot(
+        WritCreater.savedVarsAccountWide and WritCreater.savedVarsAccountWide.accountWideProfile)
     if displayLazyWarning or displayLazyWarningAccountWide then
         addon.d("Disabled autoloot settings for |r"..tostring(WritCreater.settings["panel"].displayName))
     end
