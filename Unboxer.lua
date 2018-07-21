@@ -2,7 +2,7 @@ local addon = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "|c99CCEFsilvereyes|r",
-    version = "2.5.0",
+    version = "2.5.1",
     filters = {},
     itemSlotStack = {},
     debugMode = false,
@@ -440,6 +440,7 @@ function addon:AddKeyBind()
 end
 
 local function OnInventorySingleSlotUpdate(eventCode, bagId, slotIndex, isNewItem, itemSoundCategory, inventoryUpdateReason, stackCountChange)
+    if addon.running then return end
     local itemType = GetItemType(bagId, slotIndex)
     if itemType ~= ITEMTYPE_CONTAINER then return end
     table.insert(addon.itemSlotStack, slotIndex)
