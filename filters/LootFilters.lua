@@ -28,6 +28,14 @@ local festival = {
     [134797] = true,
     [134978] = true,
     [140216] = true,
+    [141770] = true,
+    [141771] = true,
+    [141772] = true,
+    [141773] = true,
+    [141774] = true,
+    [141775] = true,
+    [141776] = true,
+    [141777] = true,
 }
 local generic = {
     [43757] = true,
@@ -138,6 +146,11 @@ local rewards = {
     [140252] = true,
     [140425] = true,
     [140426] = true,
+    [141734] = true,
+    [141735] = true,
+    [141738] = true,
+    [141739] = true,
+    [141741] = true,
 }
 local thief = {
     [74651] = true,
