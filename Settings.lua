@@ -4,10 +4,32 @@ local AddSettingOptions
 local AddSettingsForFilterCategory
 local DisableWritCreaterAutoloot
 local UpgradeSettings
+local LibSavedVars = LibStub("LibSavedVars")
+local debug = false
+
+local function GetSetupSettingsCallback(retries)
+    return function()
+        EVENT_MANAGER:UnregisterForUpdate(addon.name..".SetupSettings")
+        addon:SetupSettings(retries)
+    end
+end
 
 ----------------- Settings -----------------------
-function addon:SetupSettings()
+function addon:SetupSettings(retries)
     local LAM2 = LibStub("LibAddonMenu-2.0")
+    
+    self.Debug("SetupSettings()", debug)
+    
+    -- Wait up to five seconds for Lazy Writ Crafter to initialize account settings.
+    if WritCreater and not WritCreater.savedVarsAccountWide then
+        if not retries then
+            retries = 5
+        end
+        if retries >= 0 then
+            EVENT_MANAGER:RegisterForUpdate(self.name..".SetupSettings", 1000, GetSetupSettingsCallback(retries - 1))
+            return
+        end
+    end
     
     self.defaults = 
     {
@@ -43,6 +65,8 @@ function addon:SetupSettings()
         woodworking = true,
         furnisher = true,
         mageGuildReprints = true,
+        useAccountSettings = true,
+        dataVersion = 2,
     }
     
     for filterCategory, subfilters in pairs(self.filters) do
@@ -55,8 +79,10 @@ function addon:SetupSettings()
         end
     end
 
-    self.settings = ZO_SavedVars:NewAccountWide("Unboxer_Data", 1, nil, self.defaults)
-    UpgradeSettings(self.settings)
+    local legacyAccountSettings = ZO_SavedVars:NewAccountWide(self.name .. "_Data", 1)
+    local legacyIsAccountWide = true
+    LibSavedVars:Init(self, self.name .. "_Account", self.name .. "_Character", self.defaults, nil, 
+                      legacyAccountSettings, legacyIsAccountWide, UpgradeSettings)
 
     local panelData = {
         type = "panel",
@@ -71,13 +97,17 @@ function addon:SetupSettings()
     LAM2:RegisterAddonPanel(self.name.."Options", panelData)
 
     local optionsTable = {
+        
+        -- Account-wide settings
+        LibSavedVars:GetLibAddonMenuSetting(addon, addon.defaults.useAccountSettings),
+        
         -- Verbose
         {
             type    = "checkbox",
             name    = GetString(SI_UNBOXER_VERBOSE),
             tooltip = GetString(SI_UNBOXER_VERBOSE_TOOLTIP),
-            getFunc = function() return self.settings.verbose end,
-            setFunc = function(value) self.settings.verbose = value end,
+            getFunc = function() return LibSavedVars:Get(self, "verbose") end,
+            setFunc = function(value) LibSavedVars:Set(self, "verbose", value) end,
             default = self.defaults.verbose,
         },
         -- Autoloot
@@ -85,8 +115,8 @@ function addon:SetupSettings()
             type    = "checkbox",
             name    = GetString(SI_UNBOXER_AUTOLOOT_GLOBAL),
             tooltip = GetString(SI_UNBOXER_AUTOLOOT_GLOBAL_TOOLTIP),
-            getFunc = function() return self.settings.autoloot end,
-            setFunc = function(value) self.settings.autoloot = value end,
+            getFunc = function() return LibSavedVars:Get(self, "autoloot") end,
+            setFunc = function(value) LibSavedVars:Set(self, "autoloot", value) end,
             default = self.defaults.autoloot,
         },
         -- Reserved slots
@@ -94,8 +124,8 @@ function addon:SetupSettings()
             type = "slider",
             name = zo_strformat(GetString(SI_UNBOXER_RESERVED_SLOTS), GetString(SI_BINDING_NAME_UNBOX_ALL)),
             tooltip = zo_strformat(GetString(SI_UNBOXER_RESERVED_SLOTS_TOOLTIP), GetString(SI_BINDING_NAME_UNBOX_ALL)),
-            getFunc = function() return self.settings.reservedSlots end,
-            setFunc = function(value) self.settings.reservedSlots = value end,
+            getFunc = function() return LibSavedVars:Get(self, "reservedSlots") end,
+            setFunc = function(value) LibSavedVars:Set(self, "reservedSlots", value) end,
             min = 0,
             max = 200,
             step = 1,
@@ -114,6 +144,8 @@ function addon:SetupSettings()
     AddSettingOptions(optionsTable, false, "other")
     
     LAM2:RegisterOptionControls(self.name.."Options", optionsTable)
+    
+    self:RegisterEvents()
 end
 
 local exampleFormat = GetString(SI_UNBOXER_TOOLTIP_EXAMPLE)
@@ -144,10 +176,10 @@ AddSettingOptions = function(optionsTable, settingCategory, settingName, onAutol
             name     = title,
             tooltip  = tooltip,
             getFunc  = function() 
-                           return addon.settings[settingName] 
+                           return LibSavedVars:Get(addon, settingName) 
                        end,
             setFunc  = function(value) 
-                           addon.settings[settingName] = value
+                           LibSavedVars:Set(addon, settingName, value)
                        end,
             default  = addon.defaults[settingName],
         })
@@ -157,17 +189,18 @@ AddSettingOptions = function(optionsTable, settingCategory, settingName, onAutol
             name     = GetString(SI_UNBOXER_AUTOLOOT),
             tooltip  = GetString(SI_UNBOXER_AUTOLOOT_TOOLTIP),
             width    = "half",
-            getFunc  = function() return addon.settings[autolootSettingName] end,
+            getFunc  = function() return LibSavedVars:Get(addon, autolootSettingName) end,
             setFunc  = function(value) 
-                           addon.settings[autolootSettingName] = value
+                           LibSavedVars:Set(addon, autolootSettingName, value)
                            if onAutolootSet and type(onAutolootSet) == "function" then
+                               addon.Debug("auto loot set for "..settingName, debug)
                                onAutolootSet(value)
                            end
                        end,
             default  = addon.defaults[autolootSettingName],
             disabled = function() 
-                           return not addon.settings.autoloot 
-                                  or not addon.settings[settingName] 
+                           return not LibSavedVars:Get(addon, "autoloot") 
+                                  or not LibSavedVars:Get(addon, settingName) 
                        end,
         })
     table.insert(optionsTable,
@@ -177,19 +210,19 @@ AddSettingOptions = function(optionsTable, settingCategory, settingName, onAutol
             tooltip  = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
             width    = "half",
             getFunc  = function() 
-                           return addon.settings[summarySettingName] 
+                           return LibSavedVars:Get(addon, summarySettingName) 
                        end,
             setFunc  = function(value) 
-                           addon.settings[summarySettingName] = value 
+                           LibSavedVars:Set(addon, summarySettingName, value) 
                        end,
             default  = addon.defaults[summarySettingName],
             disabled = function() 
-                           return not addon.settings[settingName] 
+                           return not LibSavedVars:Get(addon, settingName) 
                        end,
         })
     
     if onAutolootSet and type(onAutolootSet) == "function" then
-        onAutolootSet(addon.settings[settingName .. "Autoloot"])
+        onAutolootSet(LibSavedVars:Get(addon, settingName .. "Autoloot"))
     end
 end
 
@@ -230,7 +263,7 @@ DisableWritCreaterAutoloot = function(value)
     local displayLazyWarningAccountWide = disableWritCreaterSavedVarsAutoloot(
         WritCreater.savedVarsAccountWide and WritCreater.savedVarsAccountWide.accountWideProfile)
     if displayLazyWarning or displayLazyWarningAccountWide then
-        addon.d("Disabled autoloot settings for |r"..tostring(WritCreater.settings["panel"].displayName))
+        addon.Print("Disabled autoloot settings for |r"..tostring(WritCreater.settings["panel"].displayName))
     end
 end
 
@@ -247,9 +280,8 @@ local function RenameSettingAndSummary(settings, oldSetting, newSetting)
     RenameSetting(settings, oldSetting .. "Summary", newSetting .. "Summary")
 end
 
-UpgradeSettings = function(settings)
+UpgradeSettings = function(self, settings)
     if not settings.dataVersion then
-        settings.dataVersion = 1
         RenameSettingAndSummary(settings, "accessories", "jewelry")
         RenameSettingAndSummary(settings, "potions", "consumables")
         RenameSettingAndSummary(settings, "giftBoxes", "festival")
@@ -261,11 +293,12 @@ UpgradeSettings = function(settings)
         RenameSettingAndSummary(settings, "woodworker", "woodworking")
         RenameSettingAndSummary(settings, "runeBoxes", "runeboxes")
         
-        for filterCategory, subfilters in pairs(addon.filters) do
+        for filterCategory, subfilters in pairs(self.filters) do
            for settingName in pairs(subfilters) do
                settings[settingName.."Autoloot"] = settings[settingName]
             end
         end
         settings.otherAutoloot = settings.other
     end
+    settings.dataVersion = 2
 end

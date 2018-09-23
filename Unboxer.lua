@@ -2,29 +2,29 @@ local addon = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "|c99CCEFsilvereyes|r",
-    version = "2.5.1",
+    version = "2.6.0",
     filters = {},
     itemSlotStack = {},
     debugMode = false,
 }
 
 local LLS = LibStub("LibLootSummary")
+local LibSavedVars = LibStub("LibSavedVars")
 local prefix = zo_strformat("<<1>>|cFFFFFF: ", addon.title)
 
 -- Output formatted message to chat window, if configured
-local function pOutput(input)
-    if not addon.settings.verbose then
+function addon.Print(input, force)
+    if not force and not LibSavedVars:Get(addon, "verbose") then
         return
     end
     local output = zo_strformat(prefix .. "<<1>>|r", input)
     d(output)
 end
-addon.d = pOutput
-local function dbug(input)
-    if not addon.debugMode then
+function addon.Debug(input, force)
+    if not force and not addon.debugMode then
         return
     end
-    pOutput(input)
+    addon.Print(input, force)
 end
 -- Extracting item ids from item links
 local function GetItemIdFromLink(itemLink)
@@ -53,9 +53,9 @@ local function IsItemUnboxable(bagId, slotIndex)
     for filterCategory, filters in pairs(addon.filters) do
         for settingName, subFilters in pairs(filters) do
             if settingName ~= "runeBoxes" and subFilters[itemId] ~= nil then
-                if not addon.settings[settingName] 
+                if not LibSavedVars:Get(addon, settingName) 
                    or (addon.autolooting
-                       and (not addon.settings.autoloot or not addon.settings[settingName.."Autoloot"]))
+                       and (not LibSavedVars:Get(addon, "autoloot") or not LibSavedVars:Get(addon, settingName.."Autoloot")))
                 then
                     return false
                 end
@@ -79,18 +79,18 @@ local function IsItemUnboxable(bagId, slotIndex)
             end
         end
         if collectibleId ~= nil then -- collectibles
-            if not addon.settings[filterMatched]
+            if not LibSavedVars:Get(addon, filterMatched)
                or (addon.autolooting
-                   and (not addon.settings.autoloot or not addon.settings[filterMatched.."AutoLoot"]))
+                   and (not LibSavedVars:Get(addon, "autoloot") or not LibSavedVars:Get(addon, filterMatched.."AutoLoot")))
             then
                 return false
             end
             if type(collectibleId) == "number" and IsCollectibleUnlocked(collectibleId) then
                 return false
             end
-        elseif not addon.settings.other 
+        elseif not LibSavedVars:Get(addon, "other") 
                or (addon.autolooting
-                   and (not addon.settings.autoloot or not addon.settings.otherAutoloot))
+                   and (not LibSavedVars:Get(addon, "autoloot") or not LibSavedVars:Get(addon, "otherAutoloot")))
         then -- catch all
             return false
         else
@@ -99,7 +99,7 @@ local function IsItemUnboxable(bagId, slotIndex)
     end
     
     local usable, onlyFromActionSlot = IsItemUsable(bagId, slotIndex)
-    dbug(tostring(itemLink)..", usable: "..tostring(usable)..", onlyFromActionSlot: "..tostring(onlyFromActionSlot))
+    addon.Debug(tostring(itemLink)..", usable: "..tostring(usable)..", onlyFromActionSlot: "..tostring(onlyFromActionSlot))
     return usable and not onlyFromActionSlot, filterMatched
 end
 
@@ -112,7 +112,7 @@ local lootReceived
 local filterSetting
 
 local function AbortAction(...)
-    dbug("AbortAction")
+    addon.Debug("AbortAction")
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_CLOSED)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_RECEIVED)
     EVENT_MANAGER:UnregisterForUpdate(addon.name)
@@ -141,8 +141,8 @@ local function GetInventorySlotsNeeded(inventorySlotsNeeded)
     if not inventorySlotsNeeded then
         inventorySlotsNeeded = GetNumLootItems()
     end
-    if addon.settings.reservedSlots and type(addon.settings.reservedSlots) == "number" then
-        inventorySlotsNeeded = inventorySlotsNeeded + addon.settings.reservedSlots
+    if LibSavedVars:Get(addon, "reservedSlots") and type(LibSavedVars:Get(addon, "reservedSlots")) == "number" then
+        inventorySlotsNeeded = inventorySlotsNeeded + LibSavedVars:Get(addon, "reservedSlots")
     end
     return inventorySlotsNeeded
 end
@@ -172,12 +172,12 @@ end
 -- Scan backpack for next unboxable container and return true if found
 local function GetNextItemToUnbox()
     if not HasEnoughSlots() then
-        dbug("Not enough bag space")
+        addon.Debug("Not enough bag space")
         return
     end
     local menuBarState = BACKPACK_MENU_BAR_LAYOUT_FRAGMENT:GetState()
     if menuBarState ~= SCENE_SHOWN then
-        dbug("Backpack menu bar layout fragment not shown: "..tostring(menuBarState))
+        addon.Debug("Backpack menu bar layout fragment not shown: "..tostring(menuBarState))
         return
     end
 
@@ -188,32 +188,26 @@ local function GetNextItemToUnbox()
             return index
         end
     end
-    dbug("No unboxable items found")
+    addon.Debug("No unboxable items found")
 end
 local function PrintUnboxedLink()
     if not addon.unboxingItemLink then return end
-    pOutput(zo_strformat(SI_UNBOXER_UNBOXED, addon.unboxingItemLink))
+    addon.Print(zo_strformat(SI_UNBOXER_UNBOXED, addon.unboxingItemLink))
     addon.unboxingItemLink = nil
 end
 local function HandleEventLootReceived(eventCode, receivedBy, itemLink, quantity, itemSound, lootType, lootedBySelf, isPickpocketLoot, questItemIcon, itemId)
     lootReceived = true
     PrintUnboxedLink()
     if filterSetting and lootedBySelf and lootType == LOOT_TYPE_ITEM then
-        if addon.settings[filterSetting .. "Summary"] then
+        if LibSavedVars:Get(addon, filterSetting .. "Summary") then
             LLS:AddItemLink(itemLink, quantity)
         end
     end
-    dbug("LootReceived("..tostring(eventCode)..", "..zo_strformat("<<1>>", receivedBy)..", "..tostring(itemLink)..", "..tostring(quantity)..", "..tostring(itemSound)..", "..tostring(lootType)..", "..tostring(lootedBySelf)..", "..tostring(isPickpocketLoot)..", "..tostring(questItemIcon)..", "..tostring(itemId)..")")
+    addon.Debug("LootReceived("..tostring(eventCode)..", "..zo_strformat("<<1>>", receivedBy)..", "..tostring(itemLink)..", "..tostring(quantity)..", "..tostring(itemSound)..", "..tostring(lootType)..", "..tostring(lootedBySelf)..", "..tostring(isPickpocketLoot)..", "..tostring(questItemIcon)..", "..tostring(itemId)..")")
 end
 local InventoryStateChange
-local unboxAllOnInventoryOpen = false
-local function OpenInventory()
-    local mainMenu = SYSTEMS:GetObject("mainMenu")
-    dbug("OpenInventory")
-    mainMenu:ShowCategory(MENU_CATEGORY_INVENTORY)
-end
 local function HandleEventLootClosed(eventCode)
-    dbug("LootClosed("..tostring(eventCode)..")")
+    addon.Debug("LootClosed("..tostring(eventCode)..")")
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_CLOSED)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_RECEIVED)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_COLLECTIBLE_NOTIFICATION_NEW)
@@ -222,19 +216,18 @@ local function HandleEventLootClosed(eventCode)
         if addon.running then
             local menuBarState = BACKPACK_MENU_BAR_LAYOUT_FRAGMENT:GetState()
             if menuBarState == SCENE_HIDDEN then
-                unboxAllOnInventoryOpen = true
-                lootReceived = true
-                OpenInventory()
+                addon.Debug("Menu bar is hidden")
+                AbortAction()
                 return
             end
             if not addon.UnboxAll() then
-                dbug("UnboxAll returned false")
+                addon.Debug("UnboxAll returned false")
                 AbortAction()
                 return
             end
         end
     elseif addon.slotIndex then
-        dbug("lootReceived is false. attempting to loot again.")
+        addon.Debug("lootReceived is false. attempting to loot again.")
         timeoutItemUniqueIds = {}
         table.insert(addon.itemSlotStack, addon.slotIndex)
     end
@@ -243,26 +236,23 @@ end
 InventoryStateChange = function(oldState, newState)
     if newState == SCENE_SHOWING then
         KEYBIND_STRIP:UpdateKeybindButtonGroup(addon.unboxAllKeybindButtonGroup)
-    elseif unboxAllOnInventoryOpen and newState == SCENE_SHOWN then
-        unboxAllOnInventoryOpen = false
-        HandleEventLootClosed()
     end
 end
 local function LootAllItemsTimeout()
-    dbug("LootAllItemsTimeout")
+    addon.Debug("LootAllItemsTimeout")
     if #timeoutItemUniqueIds == 0 then 
-        dbug("timeoutItemUniqueIds is empty")
+        addon.Debug("timeoutItemUniqueIds is empty")
         return
     end
     if not addon.slotIndex then
-        dbug("addon slotindex is empty")
+        addon.Debug("addon slotindex is empty")
         return
     end
     local lootingItemUniqueId = GetItemUniqueId(BAG_BACKPACK, addon.slotIndex)
     local timeoutItemUniqueId = timeoutItemUniqueIds[1]
     table.remove(timeoutItemUniqueIds, 1)
     if lootingItemUniqueId and AreId64sEqual(lootingItemUniqueId,timeoutItemUniqueId) then
-        dbug("Looting again, ids match")
+        addon.Debug("Looting again, ids match")
         table.insert(timeoutItemUniqueIds, lootingItemUniqueId)
         zo_callLater(LootAllItemsTimeout, 1500) -- If still not looted after 1.5 secs, try to loot again
         LOOT_SHARED:LootAllItems()
@@ -271,7 +261,7 @@ end
 local function HandleEventLootUpdated(eventCode)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_UPDATED)
     if not addon.slotIndex then
-        dbug("addon slotindex is empty")
+        addon.Debug("addon slotindex is empty")
         EndLooting()
         return
     end
@@ -282,7 +272,7 @@ local function HandleEventLootUpdated(eventCode)
                Some sort of data structure / index is needed. ]]
     local inventorySlotsNeeded = GetInventorySlotsNeeded()
     if not CheckInventorySpaceAndWarn(inventorySlotsNeeded) then
-        dbug("not enough space")
+        addon.Debug("not enough space")
         AbortAction()
         EndLooting()
         return
@@ -290,20 +280,20 @@ local function HandleEventLootUpdated(eventCode)
     table.insert(timeoutItemUniqueIds, GetItemUniqueId(BAG_BACKPACK, addon.slotIndex))
     zo_callLater(LootAllItemsTimeout, 1500) -- If still not looted after 1.5 secs, try to loot again
     LOOT_SHARED:LootAllItems()
-    dbug("LootUpdated("..tostring(eventCode)..")")
+    addon.Debug("LootUpdated("..tostring(eventCode)..")")
 end
 local function HandleEventNewCollectible(eventCode, collectibleId)
     lootReceived = true
     PrintUnboxedLink()
 end
 local function EndInteractWait()
-    dbug("Interaction wait over. Starting up unboxing again.")
+    addon.Debug("Interaction wait over. Starting up unboxing again.")
     addon.interactWait = nil
     EVENT_MANAGER:UnregisterForUpdate(addon.name.."InteractWait")
     UnboxCurrent()
 end
 local function StartInteractWait()
-    dbug("Interaction ended. Waiting 2 seconds to try unboxing again.")
+    addon.Debug("Interaction ended. Waiting 2 seconds to try unboxing again.")
     INTERACT_WINDOW:UnregisterCallback("Hidden", HandleInteractWindowHidden)
     HUD_SCENE:UnregisterCallback("StateChange", HudStateChange)
     EVENT_MANAGER:UnregisterForUpdate(addon.name.."InteractWait")
@@ -324,7 +314,7 @@ UnboxCurrent = function()
     if #addon.itemSlotStack > 0 then
         slotIndex = table.remove(addon.itemSlotStack)
     else
-        dbug("No items in item slot stack")
+        addon.Debug("No items in item slot stack")
         AbortAction()
         return
     end
@@ -332,35 +322,35 @@ UnboxCurrent = function()
     isUnboxable, filterSetting = IsItemUnboxable(BAG_BACKPACK, slotIndex)
     if isUnboxable then
         if INTERACT_WINDOW:IsInteracting() then
-            dbug("interaction window is open. wait until it closes to open slotIndex "..tostring(slotIndex))
+            addon.Debug("interaction window is open. wait until it closes to open slotIndex "..tostring(slotIndex))
             table.insert(addon.itemSlotStack, slotIndex)
             addon.interactWait = true
             HUD_SCENE:RegisterCallback("StateChange", HudStateChange)
             INTERACT_WINDOW:RegisterCallback("Hidden", HandleInteractWindowHidden)
             return
         elseif addon.interactWait then
-            dbug("waiting for interaction timeout to handle unboxing slotIndex "..tostring(slotIndex))
+            addon.Debug("waiting for interaction timeout to handle unboxing slotIndex "..tostring(slotIndex))
             table.insert(addon.itemSlotStack, slotIndex)
             return
         end
         local remaining, duration = GetItemCooldownInfo(BAG_BACKPACK, slotIndex)
         if remaining > 0 and duration > 0 then
-            dbug("item at slotIndex "..tostring(slotIndex).." is on cooldown for another "..tostring(remaining).." ms duration "..tostring(duration)..". wait until it is ready")
+            addon.Debug("item at slotIndex "..tostring(slotIndex).." is on cooldown for another "..tostring(remaining).." ms duration "..tostring(duration)..". wait until it is ready")
             table.insert(addon.itemSlotStack, slotIndex)
             EVENT_MANAGER:RegisterForUpdate(addon.name, duration, UnboxCurrent)
             return
         elseif LOOT_SCENE.state ~= SCENE_HIDDEN or LOOT_SCENE_GAMEPAD.state ~= SCENE_HIDDEN then
-            dbug("loot scene is showing. wait for it to close to open slotIndex "..tostring(slotIndex))
+            addon.Debug("loot scene is showing. wait for it to close to open slotIndex "..tostring(slotIndex))
             table.insert(addon.itemSlotStack, slotIndex)
             return
          -- Fix for some containers sometimes not being interactable. Just wait a second and try again.
          -- I wonder if this happens due to a race condition with the IsInteracting() check above.
         elseif not CanInteractWithItem(BAG_BACKPACK, slotIndex) then
-            dbug("slot index "..tostring(slotIndex).." is not interactable right now. Waiting 1 second...")
+            addon.Debug("slot index "..tostring(slotIndex).." is not interactable right now. Waiting 1 second...")
             table.insert(addon.itemSlotStack, slotIndex)
             EVENT_MANAGER:RegisterForUpdate(addon.name, 1000, UnboxCurrent)
         else
-            dbug("setting addon.slotIndex = "..tostring(slotIndex))
+            addon.Debug("setting addon.slotIndex = "..tostring(slotIndex))
             addon.slotIndex = slotIndex
             LLS:SetPrefix(prefix)
             lootReceived = false
@@ -372,13 +362,13 @@ UnboxCurrent = function()
             if not addon.originalUpdateLootWindow then
                 local lootWindow = SYSTEMS:GetObject("loot")
                 addon.originalUpdateLootWindow = lootWindow.UpdateLootWindow
-                dbug("original loot window update:"..tostring(lootWindow.UpdateLootWindow))
-                dbug("new loot window update: "..tostring(suppressLootWindow))
+                addon.Debug("original loot window update:"..tostring(lootWindow.UpdateLootWindow))
+                addon.Debug("new loot window update: "..tostring(suppressLootWindow))
                 lootWindow.UpdateLootWindow = suppressLootWindow
             end
             if useCallProtectedFunction then
                 if not CallSecureProtected("UseItem", BAG_BACKPACK, slotIndex) then
-                    dbug("CallSecureProtected failed")
+                    addon.Debug("CallSecureProtected failed")
                     AbortAction()
                     PlaySound(SOUNDS.NEGATIVE_CLICK)
                     pOutput(zo_strformat("Failed to unbox <<1>>", GetItemLink(BAG_BACKPACK, slotIndex)))
@@ -390,10 +380,10 @@ UnboxCurrent = function()
         end
         return true
     else
-        dbug("slot index "..tostring(slotIndex).." is not unboxable: "..tostring(GetItemLink(BAG_BACKPACK, slotIndex)))
+        addon.Debug("slot index "..tostring(slotIndex).." is not unboxable: "..tostring(GetItemLink(BAG_BACKPACK, slotIndex)))
         local usable, onlyFromActionSlot = IsItemUsable(BAG_BACKPACK, slotIndex)
         local canInteractWithItem = CanInteractWithItem(BAG_BACKPACK, slotIndex)
-        dbug(tostring(itemLink).." usable: "..tostring(usable)..", onlyFromActionSlot: "..tostring(onlyFromActionSlot)..", canInteractWithItem: "..tostring(canInteractWithItem)..", filterMatched: "..tostring(filterMatched))
+        addon.Debug(tostring(itemLink).." usable: "..tostring(usable)..", onlyFromActionSlot: "..tostring(onlyFromActionSlot)..", canInteractWithItem: "..tostring(canInteractWithItem)..", filterMatched: "..tostring(filterMatched))
         AbortAction()
     end
 end
@@ -447,20 +437,21 @@ local function OnInventorySingleSlotUpdate(eventCode, bagId, slotIndex, isNewIte
     addon.autolooting = true
     EVENT_MANAGER:RegisterForUpdate(addon.name, 40, UnboxCurrent)
 end
+
+function addon:RegisterEvents()
+    EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, OnInventorySingleSlotUpdate)
+    EVENT_MANAGER:AddFilterForEvent(addon.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_BAG_ID, BAG_BACKPACK)
+    EVENT_MANAGER:AddFilterForEvent(addon.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_INVENTORY_UPDATE_REASON, INVENTORY_UPDATE_REASON_DEFAULT)
+    EVENT_MANAGER:AddFilterForEvent(addon.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_IS_NEW_ITEM, true)
+end
+
 local function OnAddonLoaded(event, name)
     if name ~= addon.name then return end
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_ADD_ON_LOADED)
 
 
     addon:AddKeyBind()
-    addon:SetupSettings()
-    
-    
-    EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, OnInventorySingleSlotUpdate)
-    EVENT_MANAGER:AddFilterForEvent(addon.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_BAG_ID, BAG_BACKPACK)
-    EVENT_MANAGER:AddFilterForEvent(addon.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_INVENTORY_UPDATE_REASON, INVENTORY_UPDATE_REASON_DEFAULT)
-    EVENT_MANAGER:AddFilterForEvent(addon.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_IS_NEW_ITEM, true)
-    
+    addon:SetupSettings()    
 end
 
 EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_ADD_ON_LOADED, OnAddonLoaded)

@@ -1,18 +1,19 @@
 ## Title: Unboxer
 ## Author: |c99CCEFsilvereyes|r
 ## Description: Adds an Unbox All command that loots all containers of a configured type in the player inventory.
-## Version: 2.5.1
-## APIVersion: 100025 100024
-## OptionalDependsOn: LibStub LibAddonMenu-2.0 DolgubonsLazyWritCreator
+## Version: 2.6.0
+## APIVersion: 100024 100025
+## DependsOn: LibStub LibSavedVars LibAddonMenu-2.0 LibCustomMenu
+## OptionalDependsOn: DolgubonsLazyWritCreator
+## SavedVariables: Unboxer_Account
+## SavedVariables: Unboxer_Character
 ## SavedVariables: Unboxer_Data
 
-## This Add-On is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates. The Elder Scrolls® and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the United States and/or other countries. All rights reserved.
+## This Add-On is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates. 
+## The Elder Scrolls® and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the 
+## United States and/or other countries. All rights reserved.
 
-lib\LibStub\LibStub.lua
-lib\LibCustomMenu\LibCustomMenu.lua
-lib\LibAddonMenu-2.0\LibAddonMenu-2.0.lua
-lib\LibAddonMenu-2.0\controls\panel.lua
-lib\LibAddonMenu-2.0\controls\checkbox.lua
+; Libraries
 lib\LibLootSummary\LibLootSummary.lua
 
 localization\EN.lua

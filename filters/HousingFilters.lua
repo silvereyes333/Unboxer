@@ -38,6 +38,7 @@ local mageGuildReprints = {
     [120405] = true,
     [126792] = true,
     [134547] = true,
+    [145596] = true,
 }
 Unboxer.filters.housing = {
     ["furnisher"]         = housingFurnisher,
