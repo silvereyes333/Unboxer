@@ -2,19 +2,18 @@ local addon = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "|c99CCEFsilvereyes|r",
-    version = "2.6.2",
+    version = "2.6.3",
     filters = {},
     itemSlotStack = {},
     debugMode = false,
 }
 
 local LLS = LibStub("LibLootSummary")
-local LibSavedVars = LibStub("LibSavedVars")
 local prefix = zo_strformat("<<1>>|cFFFFFF: ", addon.title)
 
 -- Output formatted message to chat window, if configured
 function addon.Print(input, force)
-    if not force and not LibSavedVars:Get(addon, "verbose") then
+    if not force and not addon.settings.verbose then
         return
     end
     local output = zo_strformat(prefix .. "<<1>>|r", input)
@@ -53,9 +52,9 @@ local function IsItemUnboxable(bagId, slotIndex)
     for filterCategory, filters in pairs(addon.filters) do
         for settingName, subFilters in pairs(filters) do
             if settingName ~= "runeBoxes" and subFilters[itemId] ~= nil then
-                if not LibSavedVars:Get(addon, settingName) 
+                if not addon.settings[settingName] 
                    or (addon.autolooting
-                       and (not LibSavedVars:Get(addon, "autoloot") or not LibSavedVars:Get(addon, settingName.."Autoloot")))
+                       and (not addon.settings.autoloot or not addon.settings[settingName.."Autoloot"]))
                 then
                     return false
                 end
@@ -79,18 +78,18 @@ local function IsItemUnboxable(bagId, slotIndex)
             end
         end
         if collectibleId ~= nil then -- collectibles
-            if not LibSavedVars:Get(addon, filterMatched)
+            if not addon.settings[filterMatched]
                or (addon.autolooting
-                   and (not LibSavedVars:Get(addon, "autoloot") or not LibSavedVars:Get(addon, filterMatched.."AutoLoot")))
+                   and (not addon.settings.autoloot or not addon.settings[filterMatched.."Autoloot"]))
             then
                 return false
             end
             if type(collectibleId) == "number" and IsCollectibleUnlocked(collectibleId) then
                 return false
             end
-        elseif not LibSavedVars:Get(addon, "other") 
+        elseif not addon.settings.other
                or (addon.autolooting
-                   and (not LibSavedVars:Get(addon, "autoloot") or not LibSavedVars:Get(addon, "otherAutoloot")))
+                   and (not addon.settings.autoloot or not addon.settings.otherAutoloot))
         then -- catch all
             return false
         else
@@ -141,8 +140,8 @@ local function GetInventorySlotsNeeded(inventorySlotsNeeded)
     if not inventorySlotsNeeded then
         inventorySlotsNeeded = GetNumLootItems()
     end
-    if LibSavedVars:Get(addon, "reservedSlots") and type(LibSavedVars:Get(addon, "reservedSlots")) == "number" then
-        inventorySlotsNeeded = inventorySlotsNeeded + LibSavedVars:Get(addon, "reservedSlots")
+    if addon.settings.reservedSlots and type(addon.settings.reservedSlots) == "number" then
+        inventorySlotsNeeded = inventorySlotsNeeded + addon.settings.reservedSlots
     end
     return inventorySlotsNeeded
 end
@@ -199,7 +198,7 @@ local function HandleEventLootReceived(eventCode, receivedBy, itemLink, quantity
     lootReceived = true
     PrintUnboxedLink()
     if filterSetting and lootedBySelf and lootType == LOOT_TYPE_ITEM then
-        if LibSavedVars:Get(addon, filterSetting .. "Summary") then
+        if addon.settings[filterSetting .. "Summary"] then
             LLS:AddItemLink(itemLink, quantity)
         end
     end

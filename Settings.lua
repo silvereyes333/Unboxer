@@ -65,7 +65,6 @@ function addon:SetupSettings(retries)
         woodworking = true,
         furnisher = true,
         mageGuildReprints = true,
-        useAccountSettings = true,
         dataVersion = 2,
     }
     
@@ -79,10 +78,10 @@ function addon:SetupSettings(retries)
         end
     end
 
+    self.settings = LibSavedVars:New(self.name .. "_Account", self.name .. "_Character", self.defaults, true)
+    
     local legacyAccountSettings = ZO_SavedVars:NewAccountWide(self.name .. "_Data", 1)
-    local legacyIsAccountWide = true
-    LibSavedVars:Init(self, self.name .. "_Account", self.name .. "_Character", self.defaults, nil, 
-                      legacyAccountSettings, legacyIsAccountWide, UpgradeSettings)
+    self.settings:Migrate(legacyAccountSettings, UpgradeSettings)
 
     local panelData = {
         type = "panel",
@@ -99,15 +98,15 @@ function addon:SetupSettings(retries)
     local optionsTable = {
         
         -- Account-wide settings
-        LibSavedVars:GetLibAddonMenuSetting(addon, addon.defaults.useAccountSettings),
+        self.settings:GetLibAddonMenuAccountCheckbox(),
         
         -- Verbose
         {
             type    = "checkbox",
             name    = GetString(SI_UNBOXER_VERBOSE),
             tooltip = GetString(SI_UNBOXER_VERBOSE_TOOLTIP),
-            getFunc = function() return LibSavedVars:Get(self, "verbose") end,
-            setFunc = function(value) LibSavedVars:Set(self, "verbose", value) end,
+            getFunc = function() return self.settings.verbose end,
+            setFunc = function(value) self.settings.verbose = value end,
             default = self.defaults.verbose,
         },
         -- Autoloot
@@ -115,8 +114,8 @@ function addon:SetupSettings(retries)
             type    = "checkbox",
             name    = GetString(SI_UNBOXER_AUTOLOOT_GLOBAL),
             tooltip = GetString(SI_UNBOXER_AUTOLOOT_GLOBAL_TOOLTIP),
-            getFunc = function() return LibSavedVars:Get(self, "autoloot") end,
-            setFunc = function(value) LibSavedVars:Set(self, "autoloot", value) end,
+            getFunc = function() return self.settings.autoloot end,
+            setFunc = function(value) self.settings.autoloot = value end,
             default = self.defaults.autoloot,
         },
         -- Reserved slots
@@ -124,8 +123,8 @@ function addon:SetupSettings(retries)
             type = "slider",
             name = zo_strformat(GetString(SI_UNBOXER_RESERVED_SLOTS), GetString(SI_BINDING_NAME_UNBOX_ALL)),
             tooltip = zo_strformat(GetString(SI_UNBOXER_RESERVED_SLOTS_TOOLTIP), GetString(SI_BINDING_NAME_UNBOX_ALL)),
-            getFunc = function() return LibSavedVars:Get(self, "reservedSlots") end,
-            setFunc = function(value) LibSavedVars:Set(self, "reservedSlots", value) end,
+            getFunc = function() return self.settings.reservedSlots end,
+            setFunc = function(value) self.settings.reservedSlots = value end,
             min = 0,
             max = 200,
             step = 1,
@@ -176,10 +175,10 @@ AddSettingOptions = function(optionsTable, settingCategory, settingName, onAutol
             name     = title,
             tooltip  = tooltip,
             getFunc  = function() 
-                           return LibSavedVars:Get(addon, settingName) 
+                           return addon.settings[settingName] 
                        end,
             setFunc  = function(value) 
-                           LibSavedVars:Set(addon, settingName, value)
+                           addon.settings[settingName] = value
                        end,
             default  = addon.defaults[settingName],
         })
@@ -189,9 +188,9 @@ AddSettingOptions = function(optionsTable, settingCategory, settingName, onAutol
             name     = GetString(SI_UNBOXER_AUTOLOOT),
             tooltip  = GetString(SI_UNBOXER_AUTOLOOT_TOOLTIP),
             width    = "half",
-            getFunc  = function() return LibSavedVars:Get(addon, autolootSettingName) end,
+            getFunc  = function() return addon.settings[autolootSettingName] end,
             setFunc  = function(value) 
-                           LibSavedVars:Set(addon, autolootSettingName, value)
+                           addon.settings[autolootSettingName] = value
                            if onAutolootSet and type(onAutolootSet) == "function" then
                                addon.Debug("auto loot set for "..settingName, debug)
                                onAutolootSet(value)
@@ -199,8 +198,8 @@ AddSettingOptions = function(optionsTable, settingCategory, settingName, onAutol
                        end,
             default  = addon.defaults[autolootSettingName],
             disabled = function() 
-                           return not LibSavedVars:Get(addon, "autoloot") 
-                                  or not LibSavedVars:Get(addon, settingName) 
+                           return not addon.settings.autoloot
+                                  or not addon.settings[settingName]
                        end,
         })
     table.insert(optionsTable,
@@ -210,19 +209,19 @@ AddSettingOptions = function(optionsTable, settingCategory, settingName, onAutol
             tooltip  = GetString(SI_UNBOXER_SUMMARY_TOOLTIP),
             width    = "half",
             getFunc  = function() 
-                           return LibSavedVars:Get(addon, summarySettingName) 
+                           return addon.settings[summarySettingName]
                        end,
             setFunc  = function(value) 
-                           LibSavedVars:Set(addon, summarySettingName, value) 
+                           addon.settings[summarySettingName] = value
                        end,
             default  = addon.defaults[summarySettingName],
             disabled = function() 
-                           return not LibSavedVars:Get(addon, settingName) 
+                           return not addon.settings[settingName]
                        end,
         })
     
     if onAutolootSet and type(onAutolootSet) == "function" then
-        onAutolootSet(LibSavedVars:Get(addon, settingName .. "Autoloot"))
+        onAutolootSet(addon.settings[settingName .. "Autoloot"])
     end
 end
 
@@ -280,7 +279,7 @@ local function RenameSettingAndSummary(settings, oldSetting, newSetting)
     RenameSetting(settings, oldSetting .. "Summary", newSetting .. "Summary")
 end
 
-UpgradeSettings = function(self, settings)
+UpgradeSettings = function(settings)
     if not settings.dataVersion then
         RenameSettingAndSummary(settings, "accessories", "jewelry")
         RenameSettingAndSummary(settings, "potions", "consumables")
