@@ -2,7 +2,7 @@ local addon = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "|c99CCEFsilvereyes|r",
-    version = "2.6.1",
+    version = "2.6.2",
     filters = {},
     itemSlotStack = {},
     debugMode = false,
@@ -371,7 +371,7 @@ UnboxCurrent = function()
                     addon.Debug("CallSecureProtected failed")
                     AbortAction()
                     PlaySound(SOUNDS.NEGATIVE_CLICK)
-                    pOutput(zo_strformat("Failed to unbox <<1>>", GetItemLink(BAG_BACKPACK, slotIndex)))
+                    addon.Print(zo_strformat("Failed to unbox <<1>>", GetItemLink(BAG_BACKPACK, slotIndex)))
                     return
                 end
             else
