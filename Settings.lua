@@ -55,7 +55,7 @@ function addon:SetupSettings(retries)
         rewards = true,
         runeBoxes = true,
         treasureMaps = true,
-        transmutation = true,
+        transmutation = false,
         alchemy = true,
         blacksmithing = true,
         clothier = true,
@@ -81,7 +81,7 @@ function addon:SetupSettings(retries)
     self.settings = LibSavedVars:New(self.name .. "_Account", self.name .. "_Character", self.defaults, true)
     
     local legacyAccountSettings = ZO_SavedVars:NewAccountWide(self.name .. "_Data", 1)
-    self.settings:Migrate(legacyAccountSettings, UpgradeSettings)
+    self.settings:Migrate(legacyAccountSettings, UpgradeSettings, self)
 
     local panelData = {
         type = "panel",
@@ -279,7 +279,7 @@ local function RenameSettingAndSummary(settings, oldSetting, newSetting)
     RenameSetting(settings, oldSetting .. "Summary", newSetting .. "Summary")
 end
 
-UpgradeSettings = function(settings)
+UpgradeSettings = function(self, settings)
     if not settings.dataVersion then
         RenameSettingAndSummary(settings, "accessories", "jewelry")
         RenameSettingAndSummary(settings, "potions", "consumables")
