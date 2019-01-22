@@ -110,6 +110,16 @@ local clothier = {
     [142160] = true,
     [142176] = true,
     [142177] = true,
+    [147607] = true, -- [Clothier's Satchel (Leather) I]
+    [147608] = true, -- [Clothier's Satchel (Leather) II]
+    [147609] = true, -- [Clothier's Satchel (Leather) III]
+    [147610] = true, -- [Clothier's Satchel (Leather) IV]
+    [147611] = true, -- [Clothier's Satchel (Leather) V]
+    [147612] = true, -- [Clothier's Satchel (Leather) VI]
+    [147613] = true, -- [Clothier's Satchel (Leather) VII]
+    [147614] = true, -- [Clothier's Satchel (Leather) VIII]
+    [147615] = true, -- [Clothier's Satchel (Leather) IX]
+    [147616] = true, -- [Clothier's Satchel (Leather) X]
 }
 local enchanting = {
     [30337] = true,
@@ -146,6 +156,7 @@ local jewelrycrafting = {
     [142171] = true,
     [142172] = true,
     [142173] = true,
+    [147603] = true, -- [Shipment of Ounces V]
 }
 local provisioning = {
     [30333] = true,

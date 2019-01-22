@@ -2,7 +2,7 @@ local addon = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "|c99CCEFsilvereyes|r",
-    version = "2.7.0",
+    version = "2.8.0",
     filters = {},
     itemSlotStack = {},
     debugMode = false,
@@ -51,7 +51,7 @@ local function IsItemUnboxable(bagId, slotIndex)
     local filterMatched = false
     for filterCategory, filters in pairs(addon.filters) do
         for settingName, subFilters in pairs(filters) do
-            if settingName ~= "runeBoxes" and subFilters[itemId] ~= nil then
+            if settingName ~= "runeboxes" and subFilters[itemId] ~= nil then
                 if not addon.settings[settingName] 
                    or (addon.autolooting
                        and (not addon.settings.autoloot or not addon.settings[settingName.."Autoloot"]))

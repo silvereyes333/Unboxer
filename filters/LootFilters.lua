@@ -39,6 +39,13 @@ local festival = {
     [141823] = true,
     [142122] = true,
     [145490] = true,
+    [147430] = true, -- [Anniversary Jubilee Gift (Crafting)]
+    [147431] = true, -- [Anniversary Jubilee Gift (Bosses)]
+    [147432] = true, -- [Anniversary Jubilee Gift (Cyrodiil)]
+    [147433] = true, -- [Anniversary Jubilee Gift (Undaunted)]
+    [147434] = true, -- [Anniversary Jubilee Gift (Tamriel)]
+    [147477] = true, -- [Jester's Festival Box]
+    [147637] = true, -- [Stupendous Jester's Festival Box]
 }
 local generic = {
     [43757] = true,
@@ -168,6 +175,11 @@ local rewards = {
     [145568] = true,
     [145577] = true,
     [146037] = true,
+    [147283] = true, -- [Unidentified Frostvault Armaments]
+    [147284] = true, -- [Unidentified Depths of Malatar Armaments]
+    [147287] = true, -- [Northern Elsweyr Defense Force Cache]
+    [147649] = true, -- [Champion's Cache]
+    [147650] = true, -- [Champion's Cache]
 }
 local thief = {
     [74651] = true,
@@ -203,3 +215,10 @@ Unboxer.filters.loot = {
     ["treasureMaps"]  = treasureMaps,
     ["transmutation"] = transmutation,
 }
+
+--[[ find/replace the following in notepad++ when copied from ESO-Containers.xlsx spreadsheet:
+replace
+\n([0-9]+)\t([^\n]+)
+with
+\n    [\1] = true, -- \2
+]]--

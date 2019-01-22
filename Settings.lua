@@ -1,11 +1,19 @@
 local addon = Unboxer
-
-local AddSettingOptions
-local AddSettingsForFilterCategory
-local DisableWritCreaterAutoloot
-local UpgradeSettings
 local LibSavedVars = LibStub("LibSavedVars")
+
+-- Local functions
+local addSettingOptions, addSettingsForFilterCategory, disableWritCreaterAutoloot, setAutolootDefaults
+
+-- Local variables
 local debug = false
+local exampleFormat = GetString(SI_UNBOXER_TOOLTIP_EXAMPLE)
+local exampleItemIds = {
+    ["generic"] = 43757,
+    ["weapons"] = 54397,
+    ["jewelry"] = 76877,
+    ["ptsConsumables"] = 71051,
+}
+local renamedSettings
 
 local function GetSetupSettingsCallback(retries)
     return function()
@@ -53,7 +61,7 @@ function addon:SetupSettings(retries)
         festival = true,
         generic = true,
         rewards = true,
-        runeBoxes = true,
+        runeboxes = false,
         treasureMaps = true,
         transmutation = false,
         alchemy = true,
@@ -65,7 +73,6 @@ function addon:SetupSettings(retries)
         woodworking = true,
         furnisher = true,
         mageGuildReprints = true,
-        dataVersion = 2,
     }
     
     for filterCategory, subfilters in pairs(self.filters) do
@@ -78,10 +85,13 @@ function addon:SetupSettings(retries)
         end
     end
 
-    self.settings = LibSavedVars:New(self.name .. "_Account", self.name .. "_Character", self.defaults, true)
-    
-    local legacyAccountSettings = ZO_SavedVars:NewAccountWide(self.name .. "_Data", 1)
-    self.settings:Migrate(legacyAccountSettings, UpgradeSettings, self)
+    self.settings =
+      LibSavedVars:NewAccountWide(self.name .. "_Account", self.defaults)
+                  :AddCharacterSettingsToggle(self.name .. "_Character")
+                  :MigrateFromAccountWide( { name=self.name .. "_Data" } )
+                  :RenameSettings(2, renamedSettings)
+                  :Version(2, setAutolootDefaults)
+                  :RemoveSettings(3, "dataVersion")
 
     local panelData = {
         type = "panel",
@@ -134,27 +144,27 @@ function addon:SetupSettings(retries)
         },
     }
     
-    AddSettingsForFilterCategory(optionsTable, "gear")
-    AddSettingsForFilterCategory(optionsTable, "loot")
-    AddSettingsForFilterCategory(optionsTable, "crafting", DisableWritCreaterAutoloot)
-    AddSettingsForFilterCategory(optionsTable, "collectibles")
-    AddSettingsForFilterCategory(optionsTable, "housing")
-    AddSettingsForFilterCategory(optionsTable, "pts")
-    AddSettingOptions(optionsTable, false, "other")
+    addSettingsForFilterCategory(optionsTable, "gear")
+    addSettingsForFilterCategory(optionsTable, "loot")
+    addSettingsForFilterCategory(optionsTable, "crafting", disableWritCreaterAutoloot)
+    addSettingsForFilterCategory(optionsTable, "collectibles")
+    addSettingsForFilterCategory(optionsTable, "housing")
+    addSettingsForFilterCategory(optionsTable, "pts")
+    addSettingOptions(optionsTable, false, "other")
     
     LAM2:RegisterOptionControls(self.name.."Options", optionsTable)
     
     self:RegisterEvents()
 end
 
-local exampleFormat = GetString(SI_UNBOXER_TOOLTIP_EXAMPLE)
-local exampleItemIds = {
-    ["generic"] = 43757,
-    ["weapons"] = 54397,
-    ["jewelry"] = 76877,
-    ["ptsConsumables"] = 71051,
-}
-AddSettingOptions = function(optionsTable, settingCategory, settingName, onAutolootSet)
+----------------------------------------------------------------------------
+--
+--       Local methods
+-- 
+----------------------------------------------------------------------------
+
+
+function addSettingOptions(optionsTable, settingCategory, settingName, onAutolootSet)
     if not settingName then return end
     local title = GetString(_G[string.format("SI_UNBOXER_%s", settingName:upper())])
     local tooltip = GetString(_G[string.format("SI_UNBOXER_%s_TOOLTIP", settingName:upper())])
@@ -225,7 +235,7 @@ AddSettingOptions = function(optionsTable, settingCategory, settingName, onAutol
     end
 end
 
-AddSettingsForFilterCategory = function(optionsTable, filterCategory, onAutolootSet)
+function addSettingsForFilterCategory(optionsTable, filterCategory, onAutolootSet)
     -- Sort filter names
     local filterNames = {}
     for filterName in pairs(addon.filters[filterCategory]) do 
@@ -234,7 +244,7 @@ AddSettingsForFilterCategory = function(optionsTable, filterCategory, onAutoloot
     table.sort(filterNames)
     -- Add options for each filter name
     for _, filterName in ipairs(filterNames) do
-        AddSettingOptions(optionsTable, filterCategory, filterName, onAutolootSet)
+        addSettingOptions(optionsTable, filterCategory, filterName, onAutolootSet)
     end
 end
 
@@ -256,7 +266,7 @@ local function disableWritCreaterSavedVarsAutoloot(savedVars)
     return displayLazyWarning
 end
 
-DisableWritCreaterAutoloot = function(value)
+function disableWritCreaterAutoloot(value)
     if not value or not WritCreater then return end
     local displayLazyWarning = disableWritCreaterSavedVarsAutoloot(WritCreater.savedVars)
     local displayLazyWarningAccountWide = disableWritCreaterSavedVarsAutoloot(
@@ -266,38 +276,35 @@ DisableWritCreaterAutoloot = function(value)
     end
 end
 
-local function RenameSetting(settings, oldSetting, newSetting)
-    if settings[oldSetting] == nil then 
-        return
-    end
-    settings[newSetting] = settings[oldSetting]
-    settings[oldSetting] = nil
-end
-
-local function RenameSettingAndSummary(settings, oldSetting, newSetting)
-    RenameSetting(settings, oldSetting, newSetting)
-    RenameSetting(settings, oldSetting .. "Summary", newSetting .. "Summary")
-end
-
-UpgradeSettings = function(self, settings)
-    if not settings.dataVersion then
-        RenameSettingAndSummary(settings, "accessories", "jewelry")
-        RenameSettingAndSummary(settings, "potions", "consumables")
-        RenameSettingAndSummary(settings, "giftBoxes", "festival")
-        RenameSettingAndSummary(settings, "gunnySacks", "generic")
-        RenameSettingAndSummary(settings, "alchemist", "alchemy")
-        RenameSettingAndSummary(settings, "blacksmith", "blacksmithing")
-        RenameSettingAndSummary(settings, "enchanter", "enchanting")
-        RenameSettingAndSummary(settings, "provisioner", "provisioning")
-        RenameSettingAndSummary(settings, "woodworker", "woodworking")
-        RenameSettingAndSummary(settings, "runeBoxes", "runeboxes")
-        
-        for filterCategory, subfilters in pairs(self.filters) do
-           for settingName in pairs(subfilters) do
-               settings[settingName.."Autoloot"] = settings[settingName]
-            end
+function setAutolootDefaults(sv)     
+    for filterCategory, subfilters in pairs(addon.filters) do
+       for settingName in pairs(subfilters) do
+           sv[settingName.."Autoloot"] = sv[settingName]
         end
-        settings.otherAutoloot = settings.other
     end
-    settings.dataVersion = 2
+    sv.otherAutoloot = sv.other
 end
+
+renamedSettings = 
+    {
+        ["accessories"]        = "jewelry",
+        ["potions"]            = "consumables",
+        ["giftBoxes"]          = "festival",
+        ["gunnySacks"]         = "generic",
+        ["alchemist"]          = "alchemy",
+        ["blacksmith"]         = "blacksmithing",
+        ["enchanter"]          = "enchanting",
+        ["provisioner"]        = "provisioning",
+        ["woodworker"]         = "woodworking",
+        ["runeBoxes"]          = "runeboxes",
+        ["accessoriesSummary"] = "jewelrySummary",
+        ["potionsSummary"]     = "consumablesSummary",
+        ["giftBoxesSummary"]   = "festivalSummary",
+        ["gunnySacksSummary"]  = "genericSummary",
+        ["alchemistSummary"]   = "alchemySummary",
+        ["blacksmithSummary"]  = "blacksmithingSummary",
+        ["enchanterSummary"]   = "enchantingSummary",
+        ["provisionerSummary"] = "provisioningSummary",
+        ["woodworkerSummary"]  = "woodworkingSummary",
+        ["runeBoxesSummary"]   = "runeboxesSummary",
+    }
