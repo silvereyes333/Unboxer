@@ -375,6 +375,7 @@ local jewelry = {
     [117660] = true,
     [117661] = true,
     [117662] = true,
+    [134969] = true, -- [Item Set: Health Rings] Lvl 5 level up rewards
     [140294] = true,
 }
 local cyrodiil = {

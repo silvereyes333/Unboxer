@@ -26,8 +26,6 @@ end
 function addon:SetupSettings(retries)
     local LAM2 = LibStub("LibAddonMenu-2.0")
     
-    self.Debug("SetupSettings()", debug)
-    
     -- Wait up to five seconds for Lazy Writ Crafter to initialize account settings.
     if WritCreater and not WritCreater.savedVarsAccountWide then
         if not retries then
@@ -92,6 +90,8 @@ function addon:SetupSettings(retries)
                   :RenameSettings(2, renamedSettings)
                   :Version(2, setAutolootDefaults)
                   :RemoveSettings(3, "dataVersion")
+    
+    self.Debug("SetupSettings()", debug)
 
     local panelData = {
         type = "panel",

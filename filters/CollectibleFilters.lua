@@ -32,6 +32,10 @@ local runeboxes = {
     [147499] = 6197,
 }
 local outfitstyles = {
+    [135005] = true, -- [Ragged Style Box] Lvl 40 level up rewards w/ all prisoner rags styles
+                     -- don't bother coding in support for checking multiple styles/container, 
+                     -- since it's the only one like this, and you can never get more than one 
+                     -- in your inventory.
     [140308] = 5454,
     [140309] = 5455,
     [140310] = 5457,
@@ -206,7 +210,7 @@ local outfitstyles = {
     [147439] = 6142, -- [Event Style Page: Prophet's Shawl]
     [147440] = 6146, -- [Event Style Page: Prophet's Staff]
     [147441] = 6155, -- [Event Style Page: Lyris Titanborn's Cuirass]
-    [147442] = nil,  -- [Event Style Page: Lyris Titanborn's Helmet]
+    [147442] = true, -- [Event Style Page: Lyris Titanborn's Helmet]
     [147443] = 6153, -- [Event Style Page: Lyris Titanborn's Greaves]
     [147444] = 6152, -- [Event Style Page: Lyris Titanborn's Pauldrons]
     [147445] = 6151, -- [Event Style Page: Lyris Titanborn's Sabatons]
@@ -223,7 +227,7 @@ local outfitstyles = {
     [147456] = 6163, -- [Event Style Page: Sai Sahan's Greatsword]
     [147457] = 6164, -- [Event Style Page: Sai Sahan's Sword]
     [147458] = 6165, -- [Event Style Page: Abner Tharn's Jerkin]
-    [147459] = nil,  -- [Event Style Page: Abner Tharn's Hat]
+    [147459] = true, -- [Event Style Page: Abner Tharn's Hat]
     [147460] = 6167, -- [Event Style Page: Abner Tharn's Breeches]
     [147461] = 6168, -- [Event Style Page: Abner Tharn's Epaulets]
     [147462] = 6169, -- [Event Style Page: Abner Tharn's Shoes]

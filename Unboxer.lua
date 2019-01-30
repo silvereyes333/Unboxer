@@ -2,7 +2,7 @@ local addon = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "|c99CCEFsilvereyes|r",
-    version = "2.8.0",
+    version = "2.9.0",
     filters = {},
     itemSlotStack = {},
     debugMode = false,
@@ -194,6 +194,14 @@ local function PrintUnboxedLink()
     addon.Print(zo_strformat(SI_UNBOXER_UNBOXED, addon.unboxingItemLink))
     addon.unboxingItemLink = nil
 end
+local function HandleEventPlayerCombatState(eventCode, inCombat)
+    if not inCombat then
+        addon.Debug("Combat ended. Resume unboxing.")
+        EVENT_MANAGER:UnregisterForEvent(addon.name,  EVENT_PLAYER_COMBAT_STATE)
+        -- Continue unboxings
+        EVENT_MANAGER:RegisterForUpdate(addon.name, 40, UnboxCurrent)
+    end
+end
 local function HandleEventLootReceived(eventCode, receivedBy, itemLink, quantity, itemSound, lootType, lootedBySelf, isPickpocketLoot, questItemIcon, itemId)
     lootReceived = true
     PrintUnboxedLink()
@@ -368,9 +376,19 @@ UnboxCurrent = function()
             if useCallProtectedFunction then
                 if not CallSecureProtected("UseItem", BAG_BACKPACK, slotIndex) then
                     addon.Debug("CallSecureProtected failed")
-                    AbortAction()
-                    PlaySound(SOUNDS.NEGATIVE_CLICK)
-                    addon.Print(zo_strformat("Failed to unbox <<1>>", GetItemLink(BAG_BACKPACK, slotIndex)))
+                    
+                    -- If unit is in combat, then wait for combat to end and try again
+                    if IsUnitInCombat("player") then
+                        addon.Debug("Player is in combat. Waiting for combat to end.")
+                        table.insert(addon.itemSlotStack, slotIndex)
+                        EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_PLAYER_COMBAT_STATE, HandleEventPlayerCombatState)
+                        
+                    -- Something more serious went wrong
+                    else
+                        AbortAction()
+                        PlaySound(SOUNDS.NEGATIVE_CLICK)
+                        addon.Print(zo_strformat("Failed to unbox <<1>>", GetItemLink(BAG_BACKPACK, slotIndex)))
+                    end
                     return
                 end
             else
@@ -383,7 +401,8 @@ UnboxCurrent = function()
         local usable, onlyFromActionSlot = IsItemUsable(BAG_BACKPACK, slotIndex)
         local canInteractWithItem = CanInteractWithItem(BAG_BACKPACK, slotIndex)
         addon.Debug(tostring(itemLink).." usable: "..tostring(usable)..", onlyFromActionSlot: "..tostring(onlyFromActionSlot)..", canInteractWithItem: "..tostring(canInteractWithItem)..", filterMatched: "..tostring(filterMatched))
-        AbortAction()
+        -- The current item from the slot stack was not unboxable.  Move on.
+        EVENT_MANAGER:RegisterForUpdate(addon.name, 40, UnboxCurrent)
     end
 end
 
