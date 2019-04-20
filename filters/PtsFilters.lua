@@ -2469,6 +2469,7 @@ local ptsOther = {
     [140423] = true,
     [140424] = true,
     [147631] = true, -- [USE ME]
+    [147759] = true, -- [Test Item]
 }
 Unboxer.filters.pts = {
     ["ptsCollectibles"] = ptsCollectibles,

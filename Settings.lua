@@ -40,6 +40,7 @@ function addon:SetupSettings(retries)
     self.defaults = 
     {
         autoloot = tonumber(GetSetting(SETTING_TYPE_LOOT,LOOT_SETTING_AUTO_LOOT)) ~= 0,
+        autolootDelay = 2,
         reservedSlots = 0,
         verbose = true,
         other = true,
@@ -127,6 +128,18 @@ function addon:SetupSettings(retries)
             getFunc = function() return self.settings.autoloot end,
             setFunc = function(value) self.settings.autoloot = value end,
             default = self.defaults.autoloot,
+        },
+        -- Autoloot delay
+        {
+            type    = "slider",
+            name    = GetString(SI_UNBOXER_AUTOLOOT_DELAY),
+            tooltip = GetString(SI_UNBOXER_AUTOLOOT_DELAY_TOOLTIP),
+            min     = 0,
+            max     = 20,
+            getFunc = function() return self.settings.autolootDelay end,
+            setFunc = function(value) self.settings.autolootDelay = value end,
+            default = self.defaults.autolootDelay,
+            disabled = function() return not addon.settings.autoloot end,
         },
         -- Reserved slots
         {

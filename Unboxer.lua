@@ -158,7 +158,14 @@ local function HasUnboxableSlots()
     if not HasEnoughSlots() and BACKPACK_MENU_BAR_LAYOUT_FRAGMENT:GetState() == SCENE_SHOWN then 
         return false
     end
+    
+    -- Disable Unbox All keybind when the player is in an invalid state for opening containers
+    if IsUnitInCombat("player") or IsUnitSwimming("player") or IsUnitDeadOrReincarnating("player") then
+        return false
+    end
+    
     if #addon.itemSlotStack > 0 then return false end
+    
     local bagId = BAG_BACKPACK
     local bagSlots = GetBagSize(bagId) -1
     for index = 0, bagSlots do
@@ -199,8 +206,20 @@ local function HandleEventPlayerCombatState(eventCode, inCombat)
         addon.Debug("Combat ended. Resume unboxing.")
         EVENT_MANAGER:UnregisterForEvent(addon.name,  EVENT_PLAYER_COMBAT_STATE)
         -- Continue unboxings
-        EVENT_MANAGER:RegisterForUpdate(addon.name, 40, UnboxCurrent)
+        EVENT_MANAGER:RegisterForUpdate(addon.name, addon.settings.autolootDelay * 1000, UnboxCurrent)
     end
+end
+local function HandleEventPlayerNotSwimming(eventCode)
+    addon.Debug("Player not swimming. Resume unboxing.")
+    EVENT_MANAGER:UnregisterForEvent(addon.name,  EVENT_PLAYER_NOT_SWIMMING)
+    -- Continue unboxings
+    EVENT_MANAGER:RegisterForUpdate(addon.name, addon.settings.autolootDelay * 1000, UnboxCurrent)
+end
+local function HandleEventPlayerAlive(eventCode)
+    addon.Debug("Player alive again. Resume unboxing.")
+    EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_PLAYER_ALIVE)
+    -- Continue unboxings
+    EVENT_MANAGER:RegisterForUpdate(addon.name, addon.settings.autolootDelay * 1000, UnboxCurrent)
 end
 local function HandleEventLootReceived(eventCode, receivedBy, itemLink, quantity, itemSound, lootType, lootedBySelf, isPickpocketLoot, questItemIcon, itemId)
     lootReceived = true
@@ -261,7 +280,7 @@ local function LootAllItemsTimeout()
     if lootingItemUniqueId and AreId64sEqual(lootingItemUniqueId,timeoutItemUniqueId) then
         addon.Debug("Looting again, ids match")
         table.insert(timeoutItemUniqueIds, lootingItemUniqueId)
-        zo_callLater(LootAllItemsTimeout, 1500) -- If still not looted after 1.5 secs, try to loot again
+        zo_callLater(LootAllItemsTimeout, addon.settings.autolootDelay * 1000) -- If still not looted after X secs, try to loot again
         LOOT_SHARED:LootAllItems()
     end
 end
@@ -285,7 +304,7 @@ local function HandleEventLootUpdated(eventCode)
         return
     end
     table.insert(timeoutItemUniqueIds, GetItemUniqueId(BAG_BACKPACK, addon.slotIndex))
-    zo_callLater(LootAllItemsTimeout, 1500) -- If still not looted after 1.5 secs, try to loot again
+    zo_callLater(LootAllItemsTimeout, addon.settings.autolootDelay * 1000) -- If still not looted after X secs, try to loot again
     LOOT_SHARED:LootAllItems()
     addon.Debug("LootUpdated("..tostring(eventCode)..")")
 end
@@ -300,11 +319,11 @@ local function EndInteractWait()
     UnboxCurrent()
 end
 local function StartInteractWait()
-    addon.Debug("Interaction ended. Waiting 2 seconds to try unboxing again.")
+    addon.Debug("Interaction ended. Waiting ".. addon.settings.autolootDelay .." seconds to try unboxing again.")
     INTERACT_WINDOW:UnregisterCallback("Hidden", HandleInteractWindowHidden)
     HUD_SCENE:UnregisterCallback("StateChange", HudStateChange)
     EVENT_MANAGER:UnregisterForUpdate(addon.name.."InteractWait")
-    EVENT_MANAGER:RegisterForUpdate(addon.name.."InteractWait", 2000, EndInteractWait)
+    EVENT_MANAGER:RegisterForUpdate(addon.name.."InteractWait", addon.settings.autolootDelay * 1000, EndInteractWait)
 end
 local HandleInteractWindowHidden
 HandleInteractWindowHidden = function()
@@ -329,35 +348,98 @@ UnboxCurrent = function()
     isUnboxable, filterSetting = IsItemUnboxable(BAG_BACKPACK, slotIndex)
     if isUnboxable then
         if INTERACT_WINDOW:IsInteracting() then
-            addon.Debug("interaction window is open. wait until it closes to open slotIndex "..tostring(slotIndex))
-            table.insert(addon.itemSlotStack, slotIndex)
-            addon.interactWait = true
-            HUD_SCENE:RegisterCallback("StateChange", HudStateChange)
-            INTERACT_WINDOW:RegisterCallback("Hidden", HandleInteractWindowHidden)
+            addon.Debug("Interaction window is open.")
+            if addon.unboxingAll then
+                AbortAction()
+                PlaySound(SOUNDS.NEGATIVE_CLICK)
+            else
+                addon.Debug("Waiting until it closes to open slotIndex "..tostring(slotIndex))
+                table.insert(addon.itemSlotStack, slotIndex)
+                addon.interactWait = true
+                HUD_SCENE:RegisterCallback("StateChange", HudStateChange)
+                INTERACT_WINDOW:RegisterCallback("Hidden", HandleInteractWindowHidden)
+            end
             return
+            
         elseif addon.interactWait then
-            addon.Debug("waiting for interaction timeout to handle unboxing slotIndex "..tostring(slotIndex))
+            addon.Debug("Waiting for interaction timeout to handle unboxing slotIndex "..tostring(slotIndex))
             table.insert(addon.itemSlotStack, slotIndex)
+            return
+            
+         -- Fix for some containers sometimes not being interactable. Just wait a second and try again.
+         -- I wonder if this happens due to a race condition with the IsInteracting() check above.
+        elseif not CanInteractWithItem(BAG_BACKPACK, slotIndex) then
+            addon.Debug("Slot index "..tostring(slotIndex).." is not interactable right now.")
+            if addon.unboxingAll then
+                AbortAction()
+                PlaySound(SOUNDS.NEGATIVE_CLICK)
+            else
+                addon.Debug("Waiting 1 second...")
+                table.insert(addon.itemSlotStack, slotIndex)
+                EVENT_MANAGER:RegisterForUpdate(addon.name, 1000, UnboxCurrent)
+            end
+            return
+        
+        -- If unit is in combat, then wait for combat to end and try again
+        elseif IsUnitInCombat("player") then
+            addon.Debug("Player is in combat.")
+            if addon.unboxingAll then
+                AbortAction()
+                PlaySound(SOUNDS.NEGATIVE_CLICK)
+            else
+                addon.Debug("Waiting for combat to end.")
+                table.insert(addon.itemSlotStack, slotIndex)
+                EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_PLAYER_COMBAT_STATE, HandleEventPlayerCombatState)
+            end
+            return
+        
+        -- If unit is swimming, then wait for swimming to end and try again
+        elseif IsUnitSwimming("player") then
+            addon.Debug("Player is swimming.")
+            if addon.unboxingAll then
+                AbortAction()
+                PlaySound(SOUNDS.NEGATIVE_CLICK)
+            else
+                addon.Debug("Waiting for swimming to end.")
+                table.insert(addon.itemSlotStack, slotIndex)
+                EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_PLAYER_NOT_SWIMMING, HandleEventPlayerNotSwimming)
+            end
+            return
+            
+        -- If unit is dead, then wait for them to res
+        elseif IsUnitDeadOrReincarnating("player") then
+            addon.Debug("Player is dead or reincarnating..")
+            if addon.unboxingAll then
+                AbortAction()
+                PlaySound(SOUNDS.NEGATIVE_CLICK)
+            else
+                addon.Debug("Waiting for resurecction.")
+                table.insert(addon.itemSlotStack, slotIndex)
+                EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_PLAYER_ALIVE, HandleEventPlayerAlive)
+            end
+            return
+            
+        elseif LOOT_SCENE.state ~= SCENE_HIDDEN or LOOT_SCENE_GAMEPAD.state ~= SCENE_HIDDEN then
+            addon.Debug("Loot scene is showing.")
+            if addon.unboxingAll then
+                AbortAction()
+                PlaySound(SOUNDS.NEGATIVE_CLICK)
+            else
+                addon.Debug("Waiting for it to close to open slotIndex "..tostring(slotIndex))
+                table.insert(addon.itemSlotStack, slotIndex)
+            end
             return
         end
+        
         local remaining, duration = GetItemCooldownInfo(BAG_BACKPACK, slotIndex)
         if remaining > 0 and duration > 0 then
             addon.Debug("item at slotIndex "..tostring(slotIndex).." is on cooldown for another "..tostring(remaining).." ms duration "..tostring(duration)..". wait until it is ready")
             table.insert(addon.itemSlotStack, slotIndex)
             EVENT_MANAGER:RegisterForUpdate(addon.name, duration, UnboxCurrent)
             return
-        elseif LOOT_SCENE.state ~= SCENE_HIDDEN or LOOT_SCENE_GAMEPAD.state ~= SCENE_HIDDEN then
-            addon.Debug("loot scene is showing. wait for it to close to open slotIndex "..tostring(slotIndex))
-            table.insert(addon.itemSlotStack, slotIndex)
-            return
-         -- Fix for some containers sometimes not being interactable. Just wait a second and try again.
-         -- I wonder if this happens due to a race condition with the IsInteracting() check above.
-        elseif not CanInteractWithItem(BAG_BACKPACK, slotIndex) then
-            addon.Debug("slot index "..tostring(slotIndex).." is not interactable right now. Waiting 1 second...")
-            table.insert(addon.itemSlotStack, slotIndex)
-            EVENT_MANAGER:RegisterForUpdate(addon.name, 1000, UnboxCurrent)
+            
         else
-            addon.Debug("setting addon.slotIndex = "..tostring(slotIndex))
+            addon.Debug("Setting addon.slotIndex = "..tostring(slotIndex))
             addon.slotIndex = slotIndex
             LLS:SetPrefix(prefix)
             lootReceived = false
@@ -376,19 +458,11 @@ UnboxCurrent = function()
             if useCallProtectedFunction then
                 if not CallSecureProtected("UseItem", BAG_BACKPACK, slotIndex) then
                     addon.Debug("CallSecureProtected failed")
-                    
-                    -- If unit is in combat, then wait for combat to end and try again
-                    if IsUnitInCombat("player") then
-                        addon.Debug("Player is in combat. Waiting for combat to end.")
-                        table.insert(addon.itemSlotStack, slotIndex)
-                        EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_PLAYER_COMBAT_STATE, HandleEventPlayerCombatState)
                         
                     -- Something more serious went wrong
-                    else
-                        AbortAction()
-                        PlaySound(SOUNDS.NEGATIVE_CLICK)
-                        addon.Print(zo_strformat("Failed to unbox <<1>>", GetItemLink(BAG_BACKPACK, slotIndex)))
-                    end
+                    AbortAction()
+                    PlaySound(SOUNDS.NEGATIVE_CLICK)
+                    addon.Print(zo_strformat("Failed to unbox <<1>>", GetItemLink(BAG_BACKPACK, slotIndex)))
                     return
                 end
             else

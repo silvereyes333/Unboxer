@@ -30,6 +30,7 @@ local runeboxes = {
     [146041] = 5746,
     [147286] = 6064,
     [147499] = 6197,
+    [147928] = 6381, -- [Runebox: Mummified Alfiq Pet]
 }
 local outfitstyles = {
     [135005] = true, -- [Ragged Style Box] Lvl 40 level up rewards w/ all prisoner rags styles
@@ -289,6 +290,8 @@ local outfitstyles = {
     [147602] = 6252, -- [Style Page: Nightflame's Shoulder]
     [147660] = 6295, -- [Style Page: Prophet's Breeches]
     [147661] = 6295, -- [Bound Style Page: Prophet's Breeches]
+    [147767] = 6388, -- [Style Page: Lord Warden's Mask]
+    [147768] = 6389, -- [Style Page: Lord Warden's Shoulder]
 }
 Unboxer.filters.collectibles = {
     ["runeboxes"] = runeboxes,
