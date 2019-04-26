@@ -21,7 +21,6 @@ localization\CreateStrings.lua
 
 Unboxer.lua
 Settings.lua
-filters/CollectibleFilters.lua
 filters/CraftingFilters.lua
 filters/GearFilters.lua
 filters/HousingFilters.lua

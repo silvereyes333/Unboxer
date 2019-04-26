@@ -90,6 +90,7 @@ local strings ={
     ["SI_UNBOXER_PTSOTHER_TOOLTIP"] =        "Ouvrir les boîtes de modèles PTS qui ne rentrent pas dans les catégories ci-dessus.",
     ["SI_UNBOXER_OTHER"] =                   "Déballer autre conteneurs",
     ["SI_UNBOXER_OTHER_TOOLTIP"] =           "Ouvrir tous les autres conteneurs non-spécifiques.",
+    ["SI_UNBOXER_FISHING"] =                 "votre ligne",
 }
 
 -- Overwrite English strings

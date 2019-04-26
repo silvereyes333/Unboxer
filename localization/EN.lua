@@ -91,4 +91,5 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_PTSOTHER_TOOLTIP"] =        "Open PTS template boxes that don't fit into the above categories.",
     ["SI_UNBOXER_OTHER"] =                   "Unbox Other Containers",
     ["SI_UNBOXER_OTHER_TOOLTIP"] =           "Open all other non-specific containers.",
+    ["SI_UNBOXER_FISHING"] =                 "fishing",
 }

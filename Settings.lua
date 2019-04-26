@@ -12,6 +12,8 @@ local exampleItemIds = {
     ["weapons"] = 54397,
     ["jewelry"] = 76877,
     ["ptsConsumables"] = 71051,
+    ["runeboxes"] = 79329,
+    ["outfitstyles"] = 140308,
 }
 local renamedSettings
 
@@ -72,6 +74,8 @@ function addon:SetupSettings(retries)
         woodworking = true,
         furnisher = true,
         mageGuildReprints = true,
+        questContainers = {},
+        containerDetails = {},
     }
     
     for filterCategory, subfilters in pairs(self.filters) do
@@ -160,7 +164,9 @@ function addon:SetupSettings(retries)
     addSettingsForFilterCategory(optionsTable, "gear")
     addSettingsForFilterCategory(optionsTable, "loot")
     addSettingsForFilterCategory(optionsTable, "crafting", disableWritCreaterAutoloot)
-    addSettingsForFilterCategory(optionsTable, "collectibles")
+    -- collectibles
+    addSettingOptions(optionsTable, "collectibles", "runeboxes")
+    addSettingOptions(optionsTable, "collectibles", "outfitstyles")
     addSettingsForFilterCategory(optionsTable, "housing")
     addSettingsForFilterCategory(optionsTable, "pts")
     addSettingOptions(optionsTable, false, "other")
