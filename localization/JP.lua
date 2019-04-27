@@ -1,4 +1,4 @@
-local strings = {
+UNBOXER_STRINGS = {
     ["SI_UNBOXER"] =                         "|c00AAFFUn|cAADDFFboxer|r",
     ["SI_BINDING_NAME_UNBOX_ALL"] =          "Unbox All",
     ["SI_UNBOXER_TOOLTIP_EXAMPLE"] =         "\nExample: |H0:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
@@ -90,10 +90,26 @@ local strings = {
     ["SI_UNBOXER_PTSOTHER_TOOLTIP"] =        "Open PTS template boxes that don't fit into the above categories.",
     ["SI_UNBOXER_OTHER"] =                   "Unbox Other Containers",
     ["SI_UNBOXER_OTHER_TOOLTIP"] =           "Open all other non-specific containers.",
-    ["SI_UNBOXER_FISHING"] =                 "釣り",
+    ["SI_UNBOXER_FISHING_LOWER"] =           "釣り",
+    ["SI_UNBOXER_EQUIPMENT_BOX_LOWER"] =     "装備箱",
+    ["SI_UNBOXER_JEWELRY_BOX_LOWER"] =       "宝石箱",
+    ["SI_UNBOXER_UNIDENTIFIED_LOWER"] =      "未確認",
+    ["SI_UNBOXER_UNIDENTIFIED2_LOWER"] =     "未鑑定",
+    ["SI_UNBOXER_BOX_LOWER"] =               "ボックス",
+    ["SI_UNBOXER_BOX2_LOWER"] =              "箱",
+    ["SI_UNBOXER_COMMON_LOWER"] =            "一般",
+    ["SI_UNBOXER_OFFENSIVE_LOWER"] =         "攻撃的",
+    ["SI_UNBOXER_DEFENSIVE_LOWER"] =         "守備的",
+    ["SI_UNBOXER_CP160_ADVENTURERS_LOWER"] = "チャンピオン160の冒険者",
+    ["SI_UNBOXER_ITEM_SETS_LOWER"] =         "セット",
+    ["SI_UNBOXER_RENOWNED_LOWER"] =          "高名",
+    ["SI_UNBOXER_1H_WEAPON_LOWER"] =         "片手武器",
+    ["SI_UNBOXER_2H_WEAPON_LOWER"] =         "両手武器",
+    ["SI_UNBOXER_METAL_WEAPON_LOWER"] =      "金属製の武器",
+    ["SI_UNBOXER_WOOD_WEAPON_LOWER"] =       "木製の武器",
+    ["SI_UNBOXER_ACCESSORY_LOWER"] =         "アクセサリ",
+    ["SI_UNBOXER_HEAVY_ARMOR_LOWER"] =       "重装鎧",
+    ["SI_UNBOXER_LIGHT_ARMOR_LOWER"] =       "軽装鎧",
+    ["SI_UNBOXER_MEDIUM_ARMOR_LOWER"] =      "中装鎧",
+    ["SI_UNBOXER_STAFF_LOWER"] =             "杖",
 }
-
--- Overwrite English strings
-for stringId, value in pairs(strings) do
-    UNBOXER_STRINGS[stringId] = value
-end

@@ -1,4 +1,4 @@
-local strings = {
+UNBOXER_STRINGS = {
     ["SI_UNBOXER"] =                         "|c00AAFFUn|cAADDFFboxer|r",
     ["SI_BINDING_NAME_UNBOX_ALL"] =          "Unbox All",
     ["SI_UNBOXER_TOOLTIP_EXAMPLE"] =         "\nExample: |H0:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
@@ -90,10 +90,23 @@ local strings = {
     ["SI_UNBOXER_PTSOTHER_TOOLTIP"] =        "Open PTS template boxes that don't fit into the above categories.",
     ["SI_UNBOXER_OTHER"] =                   "Unbox Other Containers",
     ["SI_UNBOXER_OTHER_TOOLTIP"] =           "Open all other non-specific containers.",
-    ["SI_UNBOXER_FISHING"] =                 "angel",
+    ["SI_UNBOXER_FISHING_LOWER"] =           "angel",
+    ["SI_UNBOXER_EQUIPMENT_BOX_LOWER"] =     "ausrüstungskiste",
+    ["SI_UNBOXER_EQUIPMENT_BOX2_LOWER"] =    "ausrüstungskassette",
+    ["SI_UNBOXER_JEWELRY_BOX_LOWER"] =       "schmuckkassette",
+    ["SI_UNBOXER_UNIDENTIFIED_LOWER"] =      "unidentifizierte",
+    ["SI_UNBOXER_BOX_LOWER"] =               "gabe",
+    ["SI_UNBOXER_COMMON_LOWER"] =            "geläufiger",
+    ["SI_UNBOXER_DEFENSIVE_LOWER"] =         "verteidigung",
+    ["SI_UNBOXER_CP160_ADVENTURERS_LOWER"] = "abenteurer mit champion 160",
+    ["SI_UNBOXER_RENOWNED_LOWER"] =          "seltenen gegenstand",
+    ["SI_UNBOXER_1H_WEAPON_LOWER"] =         "einhänder",
+    ["SI_UNBOXER_2H_WEAPON_LOWER"] =         "zweihänder",
+    ["SI_UNBOXER_METAL_WEAPON_LOWER"] =      "metallwaffe",
+    ["SI_UNBOXER_WOOD_WEAPON_LOWER"] =       "holzwaffe",
+    ["SI_UNBOXER_ACCESSORY_LOWER"] =         "schmuck",
+    ["SI_UNBOXER_HEAVY_ARMOR_LOWER"] =       "schwere rüstung",
+    ["SI_UNBOXER_LIGHT_ARMOR_LOWER"] =       "leichte rüstung",
+    ["SI_UNBOXER_MEDIUM_ARMOR_LOWER"] =      "mittlere rüstung",
+    ["SI_UNBOXER_STAFF_LOWER"] =             "stab",
 }
-
--- Overwrite English strings
-for stringId, value in pairs(strings) do
-    UNBOXER_STRINGS[stringId] = value
-end

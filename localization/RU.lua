@@ -1,4 +1,4 @@
-local strings = {
+UNBOXER_STRINGS = {
     ["SI_UNBOXER"] =                         "|c00AAFFUn|cAADDFFboxer|r",
     ["SI_BINDING_NAME_UNBOX_ALL"] =          "Unbox All",
     ["SI_UNBOXER_TOOLTIP_EXAMPLE"] =         "\nExample: |H0:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
@@ -88,10 +88,14 @@ local strings = {
     ["SI_UNBOXER_PTSOTHER_TOOLTIP"] =        "Open PTS template boxes that don't fit into the above categories.",
     ["SI_UNBOXER_OTHER"] =                   "Unbox Other Containers",
     ["SI_UNBOXER_OTHER_TOOLTIP"] =           "Open all other non-specific containers.",
-    ["SI_UNBOXER_FISHING"] =                 "рыболовная",
+    ["SI_UNBOXER_FISHING_LOWER"] =           "рыболовная",
+    ["SI_UNBOXER_EQUIPMENT_BOX_LOWER"] =     "коробка со снаряжением",
+    ["SI_UNBOXER_JEWELRY_BOX_LOWER"] =       "коробка с ювелирными изделиями",
+    ["SI_UNBOXER_UNIDENTIFIED_LOWER"] =      "нераспознанный",
+    ["SI_UNBOXER_BOX_LOWER"] =               "коробка",
+    ["SI_UNBOXER_COMMON_LOWER"] =            "общий",
+    ["SI_UNBOXER_OFFENSIVE_LOWER"] =         "атакующие",
+    ["SI_UNBOXER_DEFENSIVE_LOWER"] =         "оборонительные",
+    ["SI_UNBOXER_ITEM_SETS_LOWER"] =         "комплекты",
+    ["SI_UNBOXER_RENOWNED_LOWER"] =          "знаменитый",
 }
-
--- Overwrite English strings
-for stringId, value in pairs(strings) do
-    UNBOXER_STRINGS[stringId] = value
-end

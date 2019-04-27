@@ -1,13 +1,15 @@
-local addon = {
+Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "|c99CCEFsilvereyes|r",
     version = "2.9.1",
     filters = {},
     itemSlotStack = {},
+    defaultLanguage = "en",
     debugMode = false,
 }
 
+local addon = Unboxer
 local LLS = LibStub("LibLootSummary")
 local prefix = zo_strformat("<<1>>|cFFFFFF: ", addon.title)
 local itemLinkFormat = '|H1:item:<<1>>:30:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:10000:0|h|h'
@@ -43,18 +45,18 @@ local function GetLowerNonEmptyString(stringId, ...)
     end
     return value    
 end
-local function StringContainsNotAtStart(searchIn, searchFor)
-    local startIndex, endIndex = string.find(searchIn, searchFor)
-    if not startIndex or startIndex == 1 then return end
-    return startIndex, endIndex
-end
 local function StringContainsStringIdOrDefault(searchIn, stringId, ...)
+    local self = addon
     local searchFor = LocaleAwareToLower(GetString(stringId, ...))
-    if string.find(searchIn, LocaleAwareToLower(searchFor)) then
-        return true
+    local startIndex, endIndex
+    if searchFor and searchFor ~= "" then
+        startIndex, endIndex = string.find(searchIn, searchFor)
+    end
+    if startIndex or self:IsDefaultLanguageSelected() then
+        return startIndex, endIndex
     end
     -- Default strings are stored at the next esostrings index higher.
-    -- See CreateStrings.lua for initialization logic that guarantees this.
+    -- See localization/CreateStrings.lua for initialization logic that guarantees this.
     local defaultStringId
     if type(stringId) == "string" then
         defaultStringId = _G[stringId] + 1
@@ -62,10 +64,18 @@ local function StringContainsStringIdOrDefault(searchIn, stringId, ...)
         defaultStringId = stringId + 1
     end
     searchFor = LocaleAwareToLower(GetString(defaultStringId, ...))
-    if string.find(searchIn, LocaleAwareToLower(searchFor)) then
-        return true
+    if not searchFor or searchFor == "" then
+        return string.find(searchIn, searchFor)
     end
-)
+end
+
+
+local function StringContainsNotAtStart(searchIn, stringId, ...)
+    local startIndex, endIndex = StringContainsStringIdOrDefault(searchIn, stringId, ...)
+    if not startIndex or startIndex == 1 then return end
+    return startIndex, endIndex
+end
+
 local useCallProtectedFunction = IsProtectedFunction("UseItem")
 
 function addon:IsItemLinkUnboxable(itemLink)
@@ -274,9 +284,6 @@ local function InitializeLocations()
         for filterCategory2, filters in pairs(category1Filters) do
             self.Debug("Scanning category "..tostring(filterCategory1)..": "..tostring(filterCategory2).."...")
             for itemId, _ in pairs(filters) do
-                if itemId == 69572 then
-                    self.Debug("Found id 69572")
-                end
                 local itemLink = GetItemLinkFromItemId(itemId)
                 
                 if not addon.settings.containerDetails[itemId] or (
@@ -289,11 +296,6 @@ local function InitializeLocations()
                     itemLinkData["filterCategory1"] = filterCategory1
                     itemLinkData["filterCategory2"] = filterCategory2
                     addon.settings.containerDetails[itemId] = itemLinkData
-                    if itemId == 69572 then
-                        self.Debug("Saved 69572")
-                    end
-                elseif itemId == 69572 then
-                    self.Debug("Skipping 69572")
                 end
             end
         end
@@ -312,7 +314,6 @@ local function GetTextLFGActivity(text)
         local multipleFound
         for _, location in ipairs(locations) do
             if string.find(text, location.name) then
-                --self.Debug("Found location '"..tostring(location.name).."' in '"..tostring(text).."'")
                 if found then
                     multipleFound = true
                     break
@@ -334,26 +335,43 @@ local function ContainsItemSetsText(search)
     return string.find(search, GetLowerNonEmptyString(SI_UNBOXER_ITEM_SETS))
            or string.find(search, GetLowerNonEmptyString(SI_UNBOXER_ITEM_SETS2))
 end
+local defaultGuildSkillLineNames = {
+    "mages guild",
+    "fighters guild",
+    "thieves guild",
+    "dark brotherhood",
+    "undaunted",
+    "psijic order",
+}
 local function ContainsGuildSkillLineName(search)
+    local self = addon
     local skillType = SKILL_TYPE_GUILD
     for skillLineIndex=1, GetNumSkillLines(skillType) do
-        local skillLineName = LocaleAwareToLower(GetSkillLineName(SkillType skillType, skillLineIndex))
+        local skillLineName = LocaleAwareToLower(GetSkillLineName(skillType, skillLineIndex))
         if string.find(search, skillLineName) then
             return true
         end
     end
+    if self:IsDefaultLanguageSelected() then
+        return
+    end
+    for _, skillLineName in ipairs(defaultGuildSkillLineNames) do
+        if string.find(search, skillLineName) then
+            return true
+        end
+    end
+end
+local function ContainsDailyQuestText(search)
+  
     --TODO: implement
     --[[ =IFERROR(FIND("reward",LOWER(L53)),0)
     +IFERROR(FIND("daily",LOWER(L53)),0)
     +IFERROR(FIND("job",LOWER(L53)),0)
     +IFERROR(FIND("award",LOWER(L53)),0)
-    +IFERROR(FIND("contract",LOWER(L53)),0)
-    +IFERROR(FIND("fighters guild",LOWER(C53)),0)
-    +IFERROR(FIND("mages guild",LOWER(C53)),0)
-    +IFERROR(FIND("dark brotherhood",LOWER(C53)),0)
-    +IFERROR(FIND("undaunted",LOWER(C53)),0)
-    +IFERROR(FIND("thieves guild",LOWER(C53)),0)
-    +IFERROR(FIND("psijic order",LOWER(C53)),0) ]]
+    +IFERROR(FIND("contract",LOWER(L53)),0) ]]
+end
+function addon:IsDefaultLanguageSelected()
+    return GetCVar("language.2") == self.defaultLanguage
 end
 function addon:GetItemLinkData(itemLink)
   
@@ -399,8 +417,8 @@ function addon:GetItemLinkData(itemLink)
     elseif string.find(name, ":") then
         containerType = "pts"
     elseif setInfo[1] then
-        if string.find(name, GetLowerNonEmptyString(SI_UNBOXER_EQUIPMENT_BOX))
-           or string.find(name, GetLowerNonEmptyString(SI_UNBOXER_EQUIPMENT_BOX2))
+        if StringContainsStringIdOrDefault(name, SI_UNBOXER_EQUIPMENT_BOX_LOWER)
+           or StringContainsStringIdOrDefault(name, SI_UNBOXER_EQUIPMENT_BOX2_LOWER)
         then
             containerType = "vendorGear"
         else
@@ -411,12 +429,12 @@ function addon:GetItemLinkData(itemLink)
            and quality < ITEM_QUALITY_ARTIFACT
         then
             local stringIds = { 
-                SI_UNBOXER_1H_WEAPON, SI_UNBOXER_2H_WEAPON, SI_UNBOXER_METAL_WEAPON,
-                SI_UNBOXER_WOOD_WEAPON, SI_UNBOXER_ACCESSORY, SI_UNBOXER_HEAVY_ARMOR,
-                SI_UNBOXER_LIGHT_ARMOR, SI_UNBOXER_MEDIUM_ARMOR, SI_UNBOXER_STAFF
+                SI_UNBOXER_1H_WEAPON_LOWER, SI_UNBOXER_2H_WEAPON_LOWER, SI_UNBOXER_METAL_WEAPON_LOWER,
+                SI_UNBOXER_WOOD_WEAPON_LOWER, SI_UNBOXER_ACCESSORY_LOWER, SI_UNBOXER_HEAVY_ARMOR_LOWER,
+                SI_UNBOXER_LIGHT_ARMOR_LOWER, SI_UNBOXER_MEDIUM_ARMOR_LOWER, SI_UNBOXER_STAFF_LOWER
             }
             for _, stringId in ipairs(stringIds) do
-                if string.find(name, GetLowerNonEmptyString(stringId)) then
+                if StringContainsStringIdOrDefault(name, stringId) then
                     containerType = "vendorGear"
                     break
                 end
@@ -429,56 +447,58 @@ function addon:GetItemLinkData(itemLink)
         end
     elseif lfgActivity == LFG_ACTIVITY_DUNGEON then
         containerType = "dungeon"
-    elseif lfgActivity == LFG_ACTIVITY_TRIAL then
+    elseif lfgActivity == LFG_ACTIVITY_TRIAL
+           or (StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_UNDAUNTED_LOWER)
+               and StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_WEEKLY_LOWER))
+    then
         containerType = "trial"
     elseif self.mostRecentInteractionType == INTERACTION_FISH then
         containerType = "fishing"
-    elseif string.find(icon, 'event_') then
-        containerType = "festival"
-    elseif string.find(icon, 'gift') 
-           and (string.find(name, GetLowerNonEmptyString(SI_GIFT_INVENTORY_KEYBOARD_HEADER_NAME))
-                or string.find(name, GetLowerNonEmptyString(SI_LEVEL_UP_REWARDS_GAMEPAD_REWARD_SECTION_HEADER_SINGULAR))
-                or string.find(name, GetLowerNonEmptyString(SI_UNBOXER_BOX))
-                or string.find(name, GetLowerNonEmptyString(SI_UNBOXER_BOX2)))
+    elseif string.find(icon, 'event_')
+           or (string.find(icon, 'gift') 
+               and (StringContainsStringIdOrDefault(name, SI_UNBOXER_GIFT_LOWER)
+                    or StringContainsStringIdOrDefault(name, SI_UNBOXER_REWARD_LOWER)
+                    or StringContainsStringIdOrDefault(name, SI_UNBOXER_BOX_LOWER)
+                    or StringContainsStringIdOrDefault(name, SI_UNBOXER_BOX2_LOWER))
     then
         containerType = "festival"
     elseif string.find(flavorText, GetLowerNonEmptyString(SI_ITEMTYPE17)) then
         containerType = "materials"
     elseif bindType == BIND_TYPE_ON_PICKUP and string.find(flavorText, GetLowerNonEmptyString(SI_ITEMTYPE61)) then
         containerType = "furnisher"
-    elseif string.find(name, GetLowerNonEmptyString(SI_CUSTOMERSERVICESUBMITFEEDBACKSUBCATEGORIES211)) then
+    elseif StringContainsStringIdOrDefault(name, SI_UNBOXER_TRANSMUTATION_LOWER) then
         containerType = "transmutation"
-    elseif string.find(name, GetLowerNonEmptyString(SI_SPECIALIZEDITEMTYPE100)) then
+    elseif StringContainsStringIdOrDefault(name, SI_UNBOXER_TREASURE_MAP_LOWER) then
         containerType = "treasureMaps"
     elseif string.find(icon, 'zonebag') 
-           or string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_RENOWNED)) 
-           or string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_RENOWNED2))
+           or StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_RENOWNED_LOWER
+           or StringContainsStringIdOrDefault(name, SI_UNBOXER_BATTLEGROUND_LOWER)
     then
         containerType = "vendorGear"
-    elseif string.find(name, GetLowerNonEmptyString(SI_UNBOXER_BATTLEGROUND_LOWER)) then
-        containerType = "vendorGear"
-    elseif string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_UNDAUNTED_LOWER)) and string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_WEEKLY_LOWER)) then
-        containerType = "trial"
-    elseif string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_CRAFTED_LOWER)) and string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_REWARD_LOWER)) then
+    elseif string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_CRAFTED_LOWER)) 
+           and string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_REWARD_LOWER))
+    then
         containerType = "crafting"
-    elseif string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_FISHING)) then
+    elseif StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_FISHING_LOWER) then
         containerType = "fishing"
-    elseif StringContainsNotAtStart(name, GetLowerNonEmptyString(SI_UNBOXER_JEWELRY_BOX)) then
+    elseif StringContainsNotAtStart(name, SI_UNBOXER_JEWELRY_BOX_LOWER) then
         containerType = "vendorGear"
     elseif quality > ITEM_QUALITY_NORMAL
-           and (string.find(name, GetLowerNonEmptyString(SI_UNBOXER_UNIDENTIFIED)) 
-                or string.find(name, GetLowerNonEmptyString(SI_UNBOXER_UNIDENTIFIED2)))
+           and (StringContainsStringIdOrDefault(name, SI_UNBOXER_UNIDENTIFIED_LOWER)
+                or StringContainsStringIdOrDefault(name, SI_UNBOXER_UNIDENTIFIED2_LOWER))
     then
-        if string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_COMMON)) or string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_COMMON2))
-           or string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_OFFENSIVE)) or string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_DEFENSIVE))
+        if StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_COMMON_LOWER)
+           or StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_OFFENSIVE_LOWER) 
+           or StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_DEFENSIVE_LOWER)
         then
             containerType = "vendorGear"
         else
             containerType = "zone"
         end
-    elseif string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_CP160_ADVENTURERS)) then
+    elseif StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_CP160_ADVENTURERS_LOWER) then
         containerType = "vendorGear"
-    elseif ContainsGuildSkillLineName(flavorText)
+    elseif ContainsGuildSkillLineName(flavorText) then
+        containerType = "zone"
     else
         containerType = "unknown"
     end
@@ -1148,5 +1168,3 @@ local function OnAddonLoaded(event, name)
 end
 
 EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_ADD_ON_LOADED, OnAddonLoaded)
-
-Unboxer = addon
