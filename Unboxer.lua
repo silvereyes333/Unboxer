@@ -5,7 +5,7 @@ local addon = {
     version = "2.9.1",
     filters = {},
     itemSlotStack = {},
-    debugMode = true,
+    debugMode = false,
 }
 
 local LLS = LibStub("LibLootSummary")
@@ -31,15 +31,49 @@ local function GetItemLinkFromItemId(itemId)
     if itemId == nil or itemId == 0 then return end
     return zo_strformat(itemLinkFormat, itemId)
 end
+local function GetLowerNonEmptyString(stringId, ...)
+    local value
+    if stringId then
+        value = GetString(stringId, ...)
+    end
+    if not value or value == "" then
+        value = "***NIL***"
+    else
+        value = LocaleAwareToLower(value)
+    end
+    return value    
+end
+local function StringContainsNotAtStart(searchIn, searchFor)
+    local startIndex, endIndex = string.find(searchIn, searchFor)
+    if not startIndex or startIndex == 1 then return end
+    return startIndex, endIndex
+end
+local function StringContainsStringIdOrDefault(searchIn, stringId, ...)
+    local searchFor = LocaleAwareToLower(GetString(stringId, ...))
+    if string.find(searchIn, LocaleAwareToLower(searchFor)) then
+        return true
+    end
+    -- Default strings are stored at the next esostrings index higher.
+    -- See CreateStrings.lua for initialization logic that guarantees this.
+    local defaultStringId
+    if type(stringId) == "string" then
+        defaultStringId = _G[stringId] + 1
+    else
+        defaultStringId = stringId + 1
+    end
+    searchFor = LocaleAwareToLower(GetString(defaultStringId, ...))
+    if string.find(searchIn, LocaleAwareToLower(searchFor)) then
+        return true
+    end
+)
 local useCallProtectedFunction = IsProtectedFunction("UseItem")
-local function IsItemUnboxable(bagId, slotIndex)
-    if bagId ~= BAG_BACKPACK then return false end
 
-    local itemType = GetItemType(bagId, slotIndex)
-    if itemType ~= ITEMTYPE_CONTAINER then return false end
-    
-    local itemLink = GetItemLink(bagId, slotIndex)
+function addon:IsItemLinkUnboxable(itemLink)
+  
     if not itemLink then return false end
+    
+    local itemType = GetItemLinkItemType(itemLink)
+    if itemType ~= ITEMTYPE_CONTAINER then return false end
     
     local itemId = GetItemLinkItemId(itemLink)
     
@@ -51,9 +85,6 @@ local function IsItemUnboxable(bagId, slotIndex)
     -- Do not unbox collectible containers that have already been collected
     local collectibleId = GetItemLinkContainerCollectibleId(itemLink)
     if type(collectibleId) == "number" and collectibleId > 0 then
-        if IsCollectibleUnlocked(collectibleId) then
-            return false
-        end
         
         local collectibleCategoryType = GetCollectibleCategoryType(collectibleId)
         if collectibleCategoryType == COLLECTIBLE_CATEGORY_TYPE_OUTFIT_STYLE then
@@ -61,10 +92,14 @@ local function IsItemUnboxable(bagId, slotIndex)
         else
             filterMatched = "runeboxes"
         end
+        
+        if IsCollectibleUnlocked(collectibleId) then
+            return false, filterMatched
+        end
     
     -- perform filtering for non-collectible containers
     else
-        for filterCategory, filters in pairs(addon.filters) do
+        for filterCategory, filters in pairs(self.filters) do
             if filterCategory ~= "collectibles" then
                 for settingName, subFilters in pairs(filters) do
                     if subFilters[itemId] ~= nil then
@@ -84,15 +119,28 @@ local function IsItemUnboxable(bagId, slotIndex)
         filterMatched = "other"
     end
     
-    if not addon.settings[filterMatched] 
-       or (addon.autolooting
-           and (not addon.settings.autoloot or not addon.settings[filterMatched.."Autoloot"]))
+    if not self.settings[filterMatched] 
+       or (self.autolooting
+           and (not self.settings.autoloot or not self.settings[filterMatched.."Autoloot"]))
     then
-        return false
+        return false, filterMatched
+    end
+    
+    return true, filterMatched
+end
+
+function addon:IsItemUnboxable(bagId, slotIndex)
+    if bagId ~= BAG_BACKPACK then return false end
+    
+    local itemLink = GetItemLink(bagId, slotIndex)
+
+    local unboxable, filterMatched = self:IsItemLinkUnboxable(itemLink)
+    if not unboxable then
+        return false, filterMatched
     end
     
     local usable, onlyFromActionSlot = IsItemUsable(bagId, slotIndex)
-    addon.Debug(tostring(itemLink)..", usable: "..tostring(usable)..", onlyFromActionSlot: "..tostring(onlyFromActionSlot))
+    self.Debug(tostring(itemLink)..", usable: "..tostring(usable)..", onlyFromActionSlot: "..tostring(onlyFromActionSlot))
     return usable and not onlyFromActionSlot, filterMatched
 end
 
@@ -147,6 +195,7 @@ local function HasEnoughSlots(inventorySlotsNeeded)
     return CheckInventorySpaceSilently(inventorySlotsNeeded)
 end
 local function HasUnboxableSlots()
+    local self = addon
     if not HasEnoughSlots() and BACKPACK_MENU_BAR_LAYOUT_FRAGMENT:GetState() == SCENE_SHOWN then 
         return false
     end
@@ -156,12 +205,12 @@ local function HasUnboxableSlots()
         return false
     end
     
-    if #addon.itemSlotStack > 0 then return false end
+    if #self.itemSlotStack > 0 then return false end
     
     local bagId = BAG_BACKPACK
     local bagSlots = GetBagSize(bagId) -1
     for index = 0, bagSlots do
-        if IsItemUnboxable(bagId, index) and CanInteractWithItem(bagId, index) then return true end
+        if self:IsItemUnboxable(bagId, index) and CanInteractWithItem(bagId, index) then return true end
     end
 
     return false
@@ -169,26 +218,26 @@ end
 
 -- Scan backpack for next unboxable container and return true if found
 local function GetNextItemToUnbox()
+    local self = addon
     if not HasEnoughSlots() then
-        addon.Debug("Not enough bag space")
+        self.Debug("Not enough bag space")
         return
     end
     local menuBarState = BACKPACK_MENU_BAR_LAYOUT_FRAGMENT:GetState()
     if menuBarState ~= SCENE_SHOWN then
-        addon.Debug("Backpack menu bar layout fragment not shown: "..tostring(menuBarState))
+        self.Debug("Backpack menu bar layout fragment not shown: "..tostring(menuBarState))
         return
     end
 
     local bagId = BAG_BACKPACK
     local bagSlots = GetBagSize(bagId) -1
     for index = 0, bagSlots do
-        if IsItemUnboxable(bagId, index) and CanInteractWithItem(bagId, index) then
+        if self:IsItemUnboxable(bagId, index) and CanInteractWithItem(bagId, index) then
             return index
         end
     end
-    addon.Debug("No unboxable items found")
+    self.Debug("No unboxable items found")
 end
-local GetItemLinkData
 local function InitializeLocations()
     local self = addon
     self.Debug("InitializeLocations()")
@@ -223,7 +272,11 @@ local function InitializeLocations()
     local c = 0
     for filterCategory1, category1Filters in pairs(addon.filters) do
         for filterCategory2, filters in pairs(category1Filters) do
+            self.Debug("Scanning category "..tostring(filterCategory1)..": "..tostring(filterCategory2).."...")
             for itemId, _ in pairs(filters) do
+                if itemId == 69572 then
+                    self.Debug("Found id 69572")
+                end
                 local itemLink = GetItemLinkFromItemId(itemId)
                 
                 if not addon.settings.containerDetails[itemId] or (
@@ -232,10 +285,15 @@ local function InitializeLocations()
                   and not addon.settings.containerDetails[itemId]["store"]
                 ) then
                     c = c + 1
-                    local itemLinkData = GetItemLinkData(itemLink)
+                    local itemLinkData = self:GetItemLinkData(itemLink)
                     itemLinkData["filterCategory1"] = filterCategory1
                     itemLinkData["filterCategory2"] = filterCategory2
                     addon.settings.containerDetails[itemId] = itemLinkData
+                    if itemId == 69572 then
+                        self.Debug("Saved 69572")
+                    end
+                elseif itemId == 69572 then
+                    self.Debug("Skipping 69572")
                 end
             end
         end
@@ -268,8 +326,37 @@ local function GetTextLFGActivity(text)
         end
     end
 end
-function GetItemLinkData(itemLink)
-    local self = addon
+local function ContainsItemSetsText(search)
+  
+    local summerset = LocaleAwareToLower(GetZoneNameById(1011))
+    if string.find(search, summerset) then return end
+    
+    return string.find(search, GetLowerNonEmptyString(SI_UNBOXER_ITEM_SETS))
+           or string.find(search, GetLowerNonEmptyString(SI_UNBOXER_ITEM_SETS2))
+end
+local function ContainsGuildSkillLineName(search)
+    local skillType = SKILL_TYPE_GUILD
+    for skillLineIndex=1, GetNumSkillLines(skillType) do
+        local skillLineName = LocaleAwareToLower(GetSkillLineName(SkillType skillType, skillLineIndex))
+        if string.find(search, skillLineName) then
+            return true
+        end
+    end
+    --TODO: implement
+    --[[ =IFERROR(FIND("reward",LOWER(L53)),0)
+    +IFERROR(FIND("daily",LOWER(L53)),0)
+    +IFERROR(FIND("job",LOWER(L53)),0)
+    +IFERROR(FIND("award",LOWER(L53)),0)
+    +IFERROR(FIND("contract",LOWER(L53)),0)
+    +IFERROR(FIND("fighters guild",LOWER(C53)),0)
+    +IFERROR(FIND("mages guild",LOWER(C53)),0)
+    +IFERROR(FIND("dark brotherhood",LOWER(C53)),0)
+    +IFERROR(FIND("undaunted",LOWER(C53)),0)
+    +IFERROR(FIND("thieves guild",LOWER(C53)),0)
+    +IFERROR(FIND("psijic order",LOWER(C53)),0) ]]
+end
+function addon:GetItemLinkData(itemLink)
+  
     local itemType, specializedItemType = GetItemLinkItemType(itemLink)
     local itemId = GetItemLinkItemId(itemLink)
     local tags = {}
@@ -292,44 +379,106 @@ function GetItemLinkData(itemLink)
     local flavorText = LocaleAwareToLower(GetItemLinkFlavorText(itemLink))
     local filterTypeInfo = { GetItemLinkFilterTypeInfo(itemLink) }
     local setInfo = { GetItemLinkSetInfo(itemLink) }
+    local requiredChampionPoints = GetItemLinkRequiredChampionPoints(itemLink)
+    local requiredLevel = GetItemLinkRequiredLevel(itemLink)
+    local quality = GetItemLinkQuality(itemLink)
+    local bindType = GetItemLinkBindType(itemLink)
     local lfgActivity, multipleLfgFound = GetTextLFGActivity(name)
+    local summerset = LocaleAwareToLower(GetZoneNameById(1011))
     if not lfgActivity then
          lfgActivity, multipleLfgFound = GetTextLFGActivity(flavorText)
     end
     local containerType
-    if flavorText == "" or multipleLfgFound or setInfo[1] or GetItemLinkOnUseAbilityInfo(itemLink) then
+    if multipleLfgFound or GetItemLinkOnUseAbilityInfo(itemLink) or string.find(flavorText, " pts ")
+       or ContainsItemSetsText(name)
+    then
         containerType = "pts"
     elseif string.find(icon, 'housing.*book') then
         containerType = "mageGuildReprints"
     --[[ other than mages guild reprints and collectibles, the only other items containing a : colon in the name are PTS containers ]]
     elseif string.find(name, ":") then
         containerType = "pts"
+    elseif setInfo[1] then
+        if string.find(name, GetLowerNonEmptyString(SI_UNBOXER_EQUIPMENT_BOX))
+           or string.find(name, GetLowerNonEmptyString(SI_UNBOXER_EQUIPMENT_BOX2))
+        then
+            containerType = "vendorGear"
+        else
+            containerType = "pts"
+        end
+    elseif flavorText == "" then
+        if string.find(icon, "quest_container_001") 
+           and quality < ITEM_QUALITY_ARTIFACT
+        then
+            local stringIds = { 
+                SI_UNBOXER_1H_WEAPON, SI_UNBOXER_2H_WEAPON, SI_UNBOXER_METAL_WEAPON,
+                SI_UNBOXER_WOOD_WEAPON, SI_UNBOXER_ACCESSORY, SI_UNBOXER_HEAVY_ARMOR,
+                SI_UNBOXER_LIGHT_ARMOR, SI_UNBOXER_MEDIUM_ARMOR, SI_UNBOXER_STAFF
+            }
+            for _, stringId in ipairs(stringIds) do
+                if string.find(name, GetLowerNonEmptyString(stringId)) then
+                    containerType = "vendorGear"
+                    break
+                end
+            end
+            if not containerType then
+                containerType = "zone"
+            end
+        else
+            containerType = "pts"
+        end
     elseif lfgActivity == LFG_ACTIVITY_DUNGEON then
         containerType = "dungeon"
     elseif lfgActivity == LFG_ACTIVITY_TRIAL then
         containerType = "trial"
     elseif self.mostRecentInteractionType == INTERACTION_FISH then
         containerType = "fishing"
-    elseif string.find(icon, 'gift') or string.find(icon, 'event_') then
+    elseif string.find(icon, 'event_') then
         containerType = "festival"
-    elseif string.find(flavorText, LocaleAwareToLower(GetString(SI_ITEMTYPE17))) then
+    elseif string.find(icon, 'gift') 
+           and (string.find(name, GetLowerNonEmptyString(SI_GIFT_INVENTORY_KEYBOARD_HEADER_NAME))
+                or string.find(name, GetLowerNonEmptyString(SI_LEVEL_UP_REWARDS_GAMEPAD_REWARD_SECTION_HEADER_SINGULAR))
+                or string.find(name, GetLowerNonEmptyString(SI_UNBOXER_BOX))
+                or string.find(name, GetLowerNonEmptyString(SI_UNBOXER_BOX2)))
+    then
+        containerType = "festival"
+    elseif string.find(flavorText, GetLowerNonEmptyString(SI_ITEMTYPE17)) then
         containerType = "materials"
-    elseif string.find(flavorText, LocaleAwareToLower(GetString(SI_ITEMTYPE61))) then
+    elseif bindType == BIND_TYPE_ON_PICKUP and string.find(flavorText, GetLowerNonEmptyString(SI_ITEMTYPE61)) then
         containerType = "furnisher"
-    elseif string.find(name, LocaleAwareToLower(GetString(SI_CUSTOMERSERVICESUBMITFEEDBACKSUBCATEGORIES211))) then
+    elseif string.find(name, GetLowerNonEmptyString(SI_CUSTOMERSERVICESUBMITFEEDBACKSUBCATEGORIES211)) then
         containerType = "transmutation"
-    elseif string.find(name, LocaleAwareToLower(GetString(SI_SPECIALIZEDITEMTYPE100))) then
+    elseif string.find(name, GetLowerNonEmptyString(SI_SPECIALIZEDITEMTYPE100)) then
         containerType = "treasureMaps"
-    elseif string.find(icon, 'zonebag') then
-        containerType = "overworld"
-    elseif string.find(name, GetString(SI_UNBOXER_BATTLEGROUND_LOWER)) or string.find(flavorText, GetString(SI_UNBOXER_BATTLEGROUND_LOWER)) then
-        containerType = "battleground"
-    elseif string.find(flavorText, GetString(SI_UNBOXER_UNDAUNTED_LOWER)) and string.find(flavorText, GetString(SI_UNBOXER_WEEKLY_LOWER)) then
+    elseif string.find(icon, 'zonebag') 
+           or string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_RENOWNED)) 
+           or string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_RENOWNED2))
+    then
+        containerType = "vendorGear"
+    elseif string.find(name, GetLowerNonEmptyString(SI_UNBOXER_BATTLEGROUND_LOWER)) then
+        containerType = "vendorGear"
+    elseif string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_UNDAUNTED_LOWER)) and string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_WEEKLY_LOWER)) then
         containerType = "trial"
-    elseif string.find(flavorText, GetString(SI_UNBOXER_CRAFTED_LOWER)) and string.find(flavorText, GetString(SI_UNBOXER_REWARD_LOWER)) then
+    elseif string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_CRAFTED_LOWER)) and string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_REWARD_LOWER)) then
         containerType = "crafting"
-    elseif string.find(flavorText, GetString(SI_UNBOXER_FISHING)) then
+    elseif string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_FISHING)) then
         containerType = "fishing"
+    elseif StringContainsNotAtStart(name, GetLowerNonEmptyString(SI_UNBOXER_JEWELRY_BOX)) then
+        containerType = "vendorGear"
+    elseif quality > ITEM_QUALITY_NORMAL
+           and (string.find(name, GetLowerNonEmptyString(SI_UNBOXER_UNIDENTIFIED)) 
+                or string.find(name, GetLowerNonEmptyString(SI_UNBOXER_UNIDENTIFIED2)))
+    then
+        if string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_COMMON)) or string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_COMMON2))
+           or string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_OFFENSIVE)) or string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_DEFENSIVE))
+        then
+            containerType = "vendorGear"
+        else
+            containerType = "zone"
+        end
+    elseif string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_CP160_ADVENTURERS)) then
+        containerType = "vendorGear"
+    elseif ContainsGuildSkillLineName(flavorText)
     else
         containerType = "unknown"
     end
@@ -351,7 +500,7 @@ function GetItemLinkData(itemLink)
         ["enchantId"] = GetItemLinkAppliedEnchantId(itemLink),
         ["armorRating"] = GetItemLinkArmorRating(itemLink),
         ["armorType"] = GetItemLinkArmorType(itemLink),
-        ["bindType"] = GetItemLinkBindType(itemLink),
+        ["bindType"] = bindType,
         ["collectibleEvolutionDesc"] = GetItemLinkCollectibleEvolutionDescription(itemLink),
         ["collectibleEvolutionInfo"] = {GetItemLinkCollectibleEvolutionInformation(itemLink)},
         ["comboDescription"] = GetItemLinkCombinationDescription(itemLink),
@@ -379,7 +528,7 @@ function GetItemLinkData(itemLink)
         ["charges"] = GetItemLinkNumEnchantCharges(itemLink),
         ["abilities"] = {GetItemLinkOnUseAbilityInfo(itemLink)},
         ["outfitStyleId"] = GetItemLinkOutfitStyleId(itemLink),
-        ["quality"] = GetItemLinkQuality(itemLink),
+        ["quality"] = quality,
         ["reagentTraits"] = reagentTraits,
         ["recipeCraftingSkillType"] = GetItemLinkRecipeCraftingSkillType(itemLink),
         ["recipeIngredients"] = recipeIngredients,
@@ -388,9 +537,9 @@ function GetItemLinkData(itemLink)
         ["recipeQualityRequirement"] = GetItemLinkRecipeQualityRequirement(itemLink),
         ["recipleResultItemLink"] = GetItemLinkRecipeResultItemLink(itemLink),
         ["refinedMaterialItemLink"] = GetItemLinkRefinedMaterialItemLink(itemLink),
-        ["requiredChampionPoints"] = GetItemLinkRequiredChampionPoints(itemLink),
+        ["requiredChampionPoints"] = requiredChampionPoints,
         ["requiredCraftingSkillRank"] = GetItemLinkRequiredCraftingSkillRank(itemLink),
-        ["requiredLevel"] = GetItemLinkRequiredLevel(itemLink),
+        ["requiredLevel"] = requiredLevel,
         ["sellInformation"] = GetItemLinkSellInformation(itemLink),
         ["showItemStyleInTooltip"] = GetItemLinkShowItemStyleInTooltip(itemLink),
         ["siegeMaxHP"] = GetItemLinkSiegeMaxHP(itemLink),
@@ -586,133 +735,134 @@ HudStateChange = function(oldState, newState)
 end
 local suppressLootWindow = function() end
 UnboxCurrent = function()
-    EVENT_MANAGER:UnregisterForUpdate(addon.name)
+    local self = addon
+    EVENT_MANAGER:UnregisterForUpdate(self.name)
     local slotIndex
-    if #addon.itemSlotStack > 0 then
-        slotIndex = table.remove(addon.itemSlotStack)
+    if #self.itemSlotStack > 0 then
+        slotIndex = table.remove(self.itemSlotStack)
     else
-        addon.Debug("No items in item slot stack")
+        self.Debug("No items in item slot stack")
         AbortAction()
         return
     end
     local isUnboxable
-    isUnboxable, filterSetting = IsItemUnboxable(BAG_BACKPACK, slotIndex)
+    isUnboxable, filterSetting = self:IsItemUnboxable(BAG_BACKPACK, slotIndex)
     if isUnboxable then
         if INTERACT_WINDOW:IsInteracting() then
-            addon.Debug("Interaction window is open.")
-            if addon.unboxingAll then
+            self.Debug("Interaction window is open.")
+            if self.unboxingAll then
                 AbortAction()
                 PlaySound(SOUNDS.NEGATIVE_CLICK)
             else
-                addon.Debug("Waiting until it closes to open slotIndex "..tostring(slotIndex))
-                table.insert(addon.itemSlotStack, slotIndex)
-                addon.interactWait = true
+                self.Debug("Waiting until it closes to open slotIndex "..tostring(slotIndex))
+                table.insert(self.itemSlotStack, slotIndex)
+                self.interactWait = true
                 HUD_SCENE:RegisterCallback("StateChange", HudStateChange)
                 INTERACT_WINDOW:RegisterCallback("Hidden", HandleInteractWindowHidden)
             end
             return
             
-        elseif addon.interactWait then
-            addon.Debug("Waiting for interaction timeout to handle unboxing slotIndex "..tostring(slotIndex))
-            table.insert(addon.itemSlotStack, slotIndex)
+        elseif self.interactWait then
+            self.Debug("Waiting for interaction timeout to handle unboxing slotIndex "..tostring(slotIndex))
+            table.insert(self.itemSlotStack, slotIndex)
             return
             
          -- Fix for some containers sometimes not being interactable. Just wait a second and try again.
          -- I wonder if this happens due to a race condition with the IsInteracting() check above.
         elseif not CanInteractWithItem(BAG_BACKPACK, slotIndex) then
-            addon.Debug("Slot index "..tostring(slotIndex).." is not interactable right now.")
-            if addon.unboxingAll then
+            self.Debug("Slot index "..tostring(slotIndex).." is not interactable right now.")
+            if self.unboxingAll then
                 AbortAction()
                 PlaySound(SOUNDS.NEGATIVE_CLICK)
             else
-                addon.Debug("Waiting 1 second...")
-                table.insert(addon.itemSlotStack, slotIndex)
-                EVENT_MANAGER:RegisterForUpdate(addon.name, 1000, UnboxCurrent)
+                self.Debug("Waiting 1 second...")
+                table.insert(self.itemSlotStack, slotIndex)
+                EVENT_MANAGER:RegisterForUpdate(self.name, 1000, UnboxCurrent)
             end
             return
         
         -- If unit is in combat, then wait for combat to end and try again
         elseif IsUnitInCombat("player") then
-            addon.Debug("Player is in combat.")
-            if addon.unboxingAll then
+            self.Debug("Player is in combat.")
+            if self.unboxingAll then
                 AbortAction()
                 PlaySound(SOUNDS.NEGATIVE_CLICK)
             else
-                addon.Debug("Waiting for combat to end.")
-                table.insert(addon.itemSlotStack, slotIndex)
-                EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_PLAYER_COMBAT_STATE, HandleEventPlayerCombatState)
+                self.Debug("Waiting for combat to end.")
+                table.insert(self.itemSlotStack, slotIndex)
+                EVENT_MANAGER:RegisterForEvent(self.name, EVENT_PLAYER_COMBAT_STATE, HandleEventPlayerCombatState)
             end
             return
         
         -- If unit is swimming, then wait for swimming to end and try again
         elseif IsUnitSwimming("player") then
-            addon.Debug("Player is swimming.")
-            if addon.unboxingAll then
+            self.Debug("Player is swimming.")
+            if self.unboxingAll then
                 AbortAction()
                 PlaySound(SOUNDS.NEGATIVE_CLICK)
             else
-                addon.Debug("Waiting for swimming to end.")
-                table.insert(addon.itemSlotStack, slotIndex)
-                EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_PLAYER_NOT_SWIMMING, HandleEventPlayerNotSwimming)
+                self.Debug("Waiting for swimming to end.")
+                table.insert(self.itemSlotStack, slotIndex)
+                EVENT_MANAGER:RegisterForEvent(self.name, EVENT_PLAYER_NOT_SWIMMING, HandleEventPlayerNotSwimming)
             end
             return
             
         -- If unit is dead, then wait for them to res
         elseif IsUnitDeadOrReincarnating("player") then
-            addon.Debug("Player is dead or reincarnating..")
-            if addon.unboxingAll then
+            self.Debug("Player is dead or reincarnating..")
+            if self.unboxingAll then
                 AbortAction()
                 PlaySound(SOUNDS.NEGATIVE_CLICK)
             else
-                addon.Debug("Waiting for resurecction.")
-                table.insert(addon.itemSlotStack, slotIndex)
-                EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_PLAYER_ALIVE, HandleEventPlayerAlive)
+                self.Debug("Waiting for resurecction.")
+                table.insert(self.itemSlotStack, slotIndex)
+                EVENT_MANAGER:RegisterForEvent(self.name, EVENT_PLAYER_ALIVE, HandleEventPlayerAlive)
             end
             return
             
         elseif LOOT_SCENE.state ~= SCENE_HIDDEN or LOOT_SCENE_GAMEPAD.state ~= SCENE_HIDDEN then
-            addon.Debug("Loot scene is showing.")
-            if addon.unboxingAll then
+            self.Debug("Loot scene is showing.")
+            if self.unboxingAll then
                 AbortAction()
                 PlaySound(SOUNDS.NEGATIVE_CLICK)
             else
-                addon.Debug("Waiting for it to close to open slotIndex "..tostring(slotIndex))
-                table.insert(addon.itemSlotStack, slotIndex)
+                self.Debug("Waiting for it to close to open slotIndex "..tostring(slotIndex))
+                table.insert(self.itemSlotStack, slotIndex)
             end
             return
         end
         
         local remaining, duration = GetItemCooldownInfo(BAG_BACKPACK, slotIndex)
         if remaining > 0 and duration > 0 then
-            addon.Debug("item at slotIndex "..tostring(slotIndex).." is on cooldown for another "..tostring(remaining).." ms duration "..tostring(duration)..". wait until it is ready")
-            table.insert(addon.itemSlotStack, slotIndex)
-            EVENT_MANAGER:RegisterForUpdate(addon.name, duration, UnboxCurrent)
+            self.Debug("item at slotIndex "..tostring(slotIndex).." is on cooldown for another "..tostring(remaining).." ms duration "..tostring(duration)..". wait until it is ready")
+            table.insert(self.itemSlotStack, slotIndex)
+            EVENT_MANAGER:RegisterForUpdate(self.name, duration, UnboxCurrent)
             return
             
         else
-            addon.Debug("Setting addon.slotIndex = "..tostring(slotIndex))
-            addon.slotIndex = slotIndex
+            self.Debug("Setting self.slotIndex = "..tostring(slotIndex))
+            self.slotIndex = slotIndex
             LLS:SetPrefix(prefix)
             lootReceived = false
-            EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_LOOT_UPDATED, HandleEventLootUpdated)
-            EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_LOOT_CLOSED, HandleEventLootClosed)
-            EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_COLLECTIBLE_NOTIFICATION_NEW, HandleEventNewCollectible)
-            addon.unboxingItemLink = GetItemLink(BAG_BACKPACK, slotIndex)
-            if not addon.originalUpdateLootWindow then
+            EVENT_MANAGER:RegisterForEvent(self.name, EVENT_LOOT_UPDATED, HandleEventLootUpdated)
+            EVENT_MANAGER:RegisterForEvent(self.name, EVENT_LOOT_CLOSED, HandleEventLootClosed)
+            EVENT_MANAGER:RegisterForEvent(self.name, EVENT_COLLECTIBLE_NOTIFICATION_NEW, HandleEventNewCollectible)
+            self.unboxingItemLink = GetItemLink(BAG_BACKPACK, slotIndex)
+            if not self.originalUpdateLootWindow then
                 local lootWindow = SYSTEMS:GetObject("loot")
-                addon.originalUpdateLootWindow = lootWindow.UpdateLootWindow
-                addon.Debug("original loot window update:"..tostring(lootWindow.UpdateLootWindow))
-                addon.Debug("new loot window update: "..tostring(suppressLootWindow))
+                self.originalUpdateLootWindow = lootWindow.UpdateLootWindow
+                self.Debug("original loot window update:"..tostring(lootWindow.UpdateLootWindow))
+                self.Debug("new loot window update: "..tostring(suppressLootWindow))
                 lootWindow.UpdateLootWindow = suppressLootWindow
             end
             if useCallProtectedFunction then
                 if not CallSecureProtected("UseItem", BAG_BACKPACK, slotIndex) then
-                    addon.Debug("CallSecureProtected failed")
+                    self.Debug("CallSecureProtected failed")
                         
                     -- Something more serious went wrong
                     AbortAction()
                     PlaySound(SOUNDS.NEGATIVE_CLICK)
-                    addon.Print(zo_strformat("Failed to unbox <<1>>", GetItemLink(BAG_BACKPACK, slotIndex)))
+                    self.Print(zo_strformat("Failed to unbox <<1>>", GetItemLink(BAG_BACKPACK, slotIndex)))
                     return
                 end
             else
@@ -721,12 +871,12 @@ UnboxCurrent = function()
         end
         return true
     else
-        addon.Debug("slot index "..tostring(slotIndex).." is not unboxable: "..tostring(GetItemLink(BAG_BACKPACK, slotIndex)))
+        self.Debug("slot index "..tostring(slotIndex).." is not unboxable: "..tostring(GetItemLink(BAG_BACKPACK, slotIndex)))
         local usable, onlyFromActionSlot = IsItemUsable(BAG_BACKPACK, slotIndex)
         local canInteractWithItem = CanInteractWithItem(BAG_BACKPACK, slotIndex)
-        addon.Debug(tostring(itemLink).." usable: "..tostring(usable)..", onlyFromActionSlot: "..tostring(onlyFromActionSlot)..", canInteractWithItem: "..tostring(canInteractWithItem)..", filterMatched: "..tostring(filterMatched))
+        self.Debug(tostring(itemLink).." usable: "..tostring(usable)..", onlyFromActionSlot: "..tostring(onlyFromActionSlot)..", canInteractWithItem: "..tostring(canInteractWithItem)..", filterMatched: "..tostring(filterMatched))
         -- The current item from the slot stack was not unboxable.  Move on.
-        EVENT_MANAGER:RegisterForUpdate(addon.name, 40, UnboxCurrent)
+        EVENT_MANAGER:RegisterForUpdate(self.name, 40, UnboxCurrent)
     end
 end
 
@@ -779,7 +929,7 @@ local function OnInventorySingleSlotUpdate(eventCode, bagId, slotIndex, isNewIte
     local itemId = GetItemLinkItemId(itemLink)
     if self.settings.containerDetails[itemId] then return end
     
-    local itemLinkData = GetItemLinkData(itemLink)
+    local itemLinkData = self:GetItemLinkData(itemLink)
     if not itemLinkData["interactionType"] then
         itemLinkData["interactionType"] = self.mostRecentInteractionType
     end
@@ -801,7 +951,7 @@ local function ScanQuestRewardIndex(journalQuestIndex, rewardIndex)
   local itemType = GetItemLinkItemType(itemLink)
   if itemType ~= ITEMTYPE_CONTAINER then return end
   
-    local itemLinkData = GetItemLinkData(itemLink)
+    local itemLinkData = self:GetItemLinkData(itemLink)
     local rewardType, _, _, _, _, _, rewardItemType = GetJournalQuestRewardInfo(journalQuestIndex, rewardIndex)
     local skillType, skillLineIndex = GetJournalQuestRewardSkillLine(journalQuestIndex, rewardIndex)
     local _, _, zoneIndex, poiIndex = GetJournalQuestLocationInfo(journalQuestIndex)
@@ -845,7 +995,7 @@ local function ScanMailAttachment(mailId, attachIndex, displayName, characterNam
     local itemType = GetItemLinkItemType(itemLink)
     if itemType ~= ITEMTYPE_CONTAINER then return end
     
-    local itemLinkData = GetItemLinkData(itemLink)
+    local itemLinkData = self:GetItemLinkData(itemLink)
     local itemId = GetItemLinkItemId(itemLink)
     local text = self.settings.containerDetails[itemId]["mail"] and self.settings.containerDetails[itemId]["mail"]["text"] or {}
     text[GetCVar("language.2")] = {
@@ -854,7 +1004,7 @@ local function ScanMailAttachment(mailId, attachIndex, displayName, characterNam
         ["subject"] = subject,
     }
     itemLinkData["mail"] = {
-        ["text"] = text
+        ["text"] = text,
         ["fromCustomerService"] = fromCustomerService,
         ["fromSystem"] = fromSystem,
     }
@@ -903,27 +1053,32 @@ local function ScanStoreEntry(entryIndex)
     local itemType = GetItemLinkItemType(itemLink)
     if itemType ~= ITEMTYPE_CONTAINER then return end
     
-    local itemLinkData = GetItemLinkData(itemLink)
-    if itemLinkData["containerType"] ~= "unknown" then return end
+    local itemLinkData = self:GetItemLinkData(itemLink)
+    --if itemLinkData["containerType"] ~= "unknown" then return end
     
     local _, _, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyQuantity1,
         currencyType2, currencyQuantity2, entryType = GetStoreEntryInfo(entryIndex)
-    if stack <= 0 then return end
+    if stack <= 0 then
+        self.Debug("Not recording store for container "..tostring(itemLink).." because stack is <= 0")
+        return
+    end
     
     local itemId = GetItemLinkItemId(itemLink)
     local avaContainerType =  IsInCyrodiil() and "cyrodiil" or IsInImperialCity() and "imperialCity"
-    if not avaContainerType then return end
+    if not avaContainerType then
+        --self.Debug("Not recording store for container "..tostring(itemLink).." avaContainerType is nil")
+        --return
+    end
     
     if not itemLinkData["interactionType"] then
         itemLinkData["interactionType"] = self.mostRecentInteractionType
     end
     local zoneId, worldX, worldY, worldZ = GetUnitWorldPosition("player")
     local sellInformation = GetItemLinkSellInformation(itemLink)
-    itemLinkData["containerType"] = avaContainerType
     
-    local text = self.settings.containerDetails[itemId]["store"] and self.settings.containerDetails[itemId]["store"]["text"] or {}
+    local text = self.settings.containerDetails[itemId] and self.settings.containerDetails[itemId]["store"] and self.settings.containerDetails[itemId]["store"]["text"] or {}
     text[GetCVar("language.2")] = {
-        ["vendor"] = GetChatterOption(1),
+        ["vendor"] = GetChatterOption(GetChatterOptionCount()),
     }
     itemLinkData["store"] = {
         ["entryType"] = entryType,
