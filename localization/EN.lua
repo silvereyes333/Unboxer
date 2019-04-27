@@ -122,5 +122,7 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_STAFF_LOWER"] =             "staff",
     ["SI_UNBOXER_TRANSMUTATION_LOWER"] =     "transmutation",
     ["SI_UNBOXER_TREASURE_MAP_LOWER"] =      "treasure map",
+    ["SI_UNBOXER_RAW_MATERIAL_LOWER"] =      "raw material",
+    ["SI_UNBOXER_FURNISHING_LOWER"] =        "furnishing",
 }
 UNBOXER_DEFAULT_STRINGS = UNBOXER_STRINGS

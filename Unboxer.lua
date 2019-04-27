@@ -45,8 +45,7 @@ local function GetLowerNonEmptyString(stringId, ...)
     end
     return value    
 end
-local function StringContainsStringIdOrDefault(searchIn, stringId, ...)
-    local self = addon
+function addon:StringContainsStringIdOrDefault(searchIn, stringId, ...)
     local searchFor = LocaleAwareToLower(GetString(stringId, ...))
     local startIndex, endIndex
     if searchFor and searchFor ~= "" then
@@ -70,8 +69,8 @@ local function StringContainsStringIdOrDefault(searchIn, stringId, ...)
 end
 
 
-local function StringContainsNotAtStart(searchIn, stringId, ...)
-    local startIndex, endIndex = StringContainsStringIdOrDefault(searchIn, stringId, ...)
+function addon:StringContainsNotAtStart(searchIn, stringId, ...)
+    local startIndex, endIndex = self:StringContainsStringIdOrDefault(searchIn, stringId, ...)
     if not startIndex or startIndex == 1 then return end
     return startIndex, endIndex
 end
@@ -248,85 +247,6 @@ local function GetNextItemToUnbox()
     end
     self.Debug("No unboxable items found")
 end
-local function InitializeLocations()
-    local self = addon
-    self.Debug("InitializeLocations()")
-    if self.locations then
-        self.Debug("Already initialized. Exiting.")
-        return
-    end
-    local locations = {
-        [LFG_ACTIVITY_DUNGEON] = {},
-        [LFG_ACTIVITY_TRIAL]   = {},
-    }
-    local activityType = LFG_ACTIVITY_DUNGEON
-    for activityIndex = 1, GetNumActivitiesByType(activityType) do
-        local activityId = GetActivityIdByTypeAndIndex(activityType, activityIndex)
-        if GetRequiredActivityCollectibleId(activityId) > 0 then
-            local name = LocaleAwareToLower(zo_strformat(SI_LFG_ACTIVITY_NAME, GetActivityInfo(activityId)))
-            table.insert(locations[activityType], { ["id"] = activityId, ["name"] = name })
-        end
-    end
-    activityType = LFG_ACTIVITY_TRIAL
-    self.veteranSuffix = " (" .. GetString(SI_DUNGEONDIFFICULTY2) .. ")"
-    for raidIndex = 1, GetNumRaidLeaderboards(RAID_CATEGORY_TRIAL) do
-        local raidName, raidId = GetRaidLeaderboardInfo(RAID_CATEGORY_TRIAL, raidIndex)
-        if string.find(raidName, GetString(SI_DUNGEONDIFFICULTY2)) then
-            raidName = string.sub(raidName, 1, -ZoUTF8StringLength(self.veteranSuffix) - 1)
-        end
-        table.insert(locations[activityType], { ["id"] = raidId, ["name"] = LocaleAwareToLower(raidName) })
-    end
-    self.locations = locations
-    
-    self.Debug("Scanning container details...")
-    local c = 0
-    for filterCategory1, category1Filters in pairs(addon.filters) do
-        for filterCategory2, filters in pairs(category1Filters) do
-            self.Debug("Scanning category "..tostring(filterCategory1)..": "..tostring(filterCategory2).."...")
-            for itemId, _ in pairs(filters) do
-                local itemLink = GetItemLinkFromItemId(itemId)
-                
-                if not addon.settings.containerDetails[itemId] or (
-                  not addon.settings.containerDetails[itemId]["quest"] 
-                  and not addon.settings.containerDetails[itemId]["mail"]
-                  and not addon.settings.containerDetails[itemId]["store"]
-                ) then
-                    c = c + 1
-                    local itemLinkData = self:GetItemLinkData(itemLink)
-                    itemLinkData["filterCategory1"] = filterCategory1
-                    itemLinkData["filterCategory2"] = filterCategory2
-                    addon.settings.containerDetails[itemId] = itemLinkData
-                end
-            end
-        end
-    end
-    self.Debug(tostring(c).." containers scanned.")
-end
-local function GetTextLFGActivity(text)
-    local self = addon
-    if not text or text == "" then return end
-    if not self.locations then
-        InitializeLocations()
-    end
-    text = LocaleAwareToLower(text)
-    for lfgActivity, locations in pairs(self.locations) do
-        local found
-        local multipleFound
-        for _, location in ipairs(locations) do
-            if string.find(text, location.name) then
-                if found then
-                    multipleFound = true
-                    break
-                else
-                    found = true
-                end
-            end
-        end
-        if found then
-            return lfgActivity, multipleFound
-        end
-    end
-end
 local function ContainsItemSetsText(search)
   
     local summerset = LocaleAwareToLower(GetZoneNameById(1011))
@@ -374,7 +294,7 @@ function addon:IsDefaultLanguageSelected()
     return GetCVar("language.2") == self.defaultLanguage
 end
 function addon:GetItemLinkData(itemLink)
-  
+
     local itemType, specializedItemType = GetItemLinkItemType(itemLink)
     local itemId = GetItemLinkItemId(itemLink)
     local tags = {}
@@ -397,15 +317,33 @@ function addon:GetItemLinkData(itemLink)
     local flavorText = LocaleAwareToLower(GetItemLinkFlavorText(itemLink))
     local filterTypeInfo = { GetItemLinkFilterTypeInfo(itemLink) }
     local setInfo = { GetItemLinkSetInfo(itemLink) }
+    local hasSet, setName, _, _, _, setId = GetItemLinkSetInfo(itemLink)
     local requiredChampionPoints = GetItemLinkRequiredChampionPoints(itemLink)
     local requiredLevel = GetItemLinkRequiredLevel(itemLink)
     local quality = GetItemLinkQuality(itemLink)
     local bindType = GetItemLinkBindType(itemLink)
-    local lfgActivity, multipleLfgFound = GetTextLFGActivity(name)
-    local summerset = LocaleAwareToLower(GetZoneNameById(1011))
-    if not lfgActivity then
-         lfgActivity, multipleLfgFound = GetTextLFGActivity(flavorText)
+    
+    local data = {
+        ["itemId"]                 = itemId,
+        ["itemLink"]               = itemLink,
+        ["name"]                   = LocaleAwareToLower(GetItemLinkName(itemLink)),
+        ["flavorText"]             = LocaleAwareToLower(GetItemLinkFlavorText(itemLink)),
+        ["quality"]                = GetItemLinkQuality(itemLink),
+        ["icon"]                   = LocaleAwareToLower(GetItemLinkIcon(itemLink)),
+        ["hasSet"]                 = hasSet,
+        ["setName"]                = LocaleAwareToLower(setName),
+        ["setId"]                  = setId,
+        ["requiredLevel"]          = GetItemLinkRequiredLevel(itemLink),
+        ["requiredChampionPoints"] = GetItemLinkRequiredChampionPoints(itemLink),
+        ["bindType"]               = GetItemLinkBindType(itemLink),
+        ["collectibleId"]          = GetItemLinkContainerCollectibleId(itemLink),
+    }
+    if type(data.collectibleId) == "number" and data.collectibleId > 0 then
+        data["collectibleCategoryType"] = GetCollectibleCategoryType(data.collectibleId)
+        data["collectibleUnlocked"]     = IsCollectibleUnlocked(data.collectibleId)
     end
+    
+    local summerset = LocaleAwareToLower(GetZoneNameById(1011))
     local containerType
     if multipleLfgFound or GetItemLinkOnUseAbilityInfo(itemLink) or string.find(flavorText, " pts ")
        or ContainsItemSetsText(name)
@@ -417,8 +355,8 @@ function addon:GetItemLinkData(itemLink)
     elseif string.find(name, ":") then
         containerType = "pts"
     elseif setInfo[1] then
-        if StringContainsStringIdOrDefault(name, SI_UNBOXER_EQUIPMENT_BOX_LOWER)
-           or StringContainsStringIdOrDefault(name, SI_UNBOXER_EQUIPMENT_BOX2_LOWER)
+        if self:StringContainsStringIdOrDefault(name, SI_UNBOXER_EQUIPMENT_BOX_LOWER)
+           or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_EQUIPMENT_BOX2_LOWER)
         then
             containerType = "vendorGear"
         else
@@ -434,7 +372,7 @@ function addon:GetItemLinkData(itemLink)
                 SI_UNBOXER_LIGHT_ARMOR_LOWER, SI_UNBOXER_MEDIUM_ARMOR_LOWER, SI_UNBOXER_STAFF_LOWER
             }
             for _, stringId in ipairs(stringIds) do
-                if StringContainsStringIdOrDefault(name, stringId) then
+                if self:StringContainsStringIdOrDefault(name, stringId) then
                     containerType = "vendorGear"
                     break
                 end
@@ -448,54 +386,54 @@ function addon:GetItemLinkData(itemLink)
     elseif lfgActivity == LFG_ACTIVITY_DUNGEON then
         containerType = "dungeon"
     elseif lfgActivity == LFG_ACTIVITY_TRIAL
-           or (StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_UNDAUNTED_LOWER)
-               and StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_WEEKLY_LOWER))
+           or (self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_UNDAUNTED_LOWER)
+               and self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_WEEKLY_LOWER))
     then
         containerType = "trial"
     elseif self.mostRecentInteractionType == INTERACTION_FISH then
         containerType = "fishing"
     elseif string.find(icon, 'event_')
            or (string.find(icon, 'gift') 
-               and (StringContainsStringIdOrDefault(name, SI_UNBOXER_GIFT_LOWER)
-                    or StringContainsStringIdOrDefault(name, SI_UNBOXER_REWARD_LOWER)
-                    or StringContainsStringIdOrDefault(name, SI_UNBOXER_BOX_LOWER)
-                    or StringContainsStringIdOrDefault(name, SI_UNBOXER_BOX2_LOWER))
+               and (self:StringContainsStringIdOrDefault(name, SI_UNBOXER_GIFT_LOWER)
+                    or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_REWARD_LOWER)
+                    or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_BOX_LOWER)
+                    or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_BOX2_LOWER))
     then
         containerType = "festival"
-    elseif string.find(flavorText, GetLowerNonEmptyString(SI_ITEMTYPE17)) then
+    elseif self:StringContainsStringIdOrDefault(name, SI_UNBOXER_RAW_MATERIAL_LOWER) then
         containerType = "materials"
-    elseif bindType == BIND_TYPE_ON_PICKUP and string.find(flavorText, GetLowerNonEmptyString(SI_ITEMTYPE61)) then
+    elseif bindType == BIND_TYPE_ON_PICKUP and self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_FURNISHING_LOWER) then
         containerType = "furnisher"
-    elseif StringContainsStringIdOrDefault(name, SI_UNBOXER_TRANSMUTATION_LOWER) then
+    elseif self:StringContainsStringIdOrDefault(name, SI_UNBOXER_TRANSMUTATION_LOWER) then
         containerType = "transmutation"
-    elseif StringContainsStringIdOrDefault(name, SI_UNBOXER_TREASURE_MAP_LOWER) then
+    elseif self:StringContainsStringIdOrDefault(name, SI_UNBOXER_TREASURE_MAP_LOWER) then
         containerType = "treasureMaps"
     elseif string.find(icon, 'zonebag') 
-           or StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_RENOWNED_LOWER
-           or StringContainsStringIdOrDefault(name, SI_UNBOXER_BATTLEGROUND_LOWER)
+           or self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_RENOWNED_LOWER
+           or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_BATTLEGROUND_LOWER)
     then
         containerType = "vendorGear"
-    elseif string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_CRAFTED_LOWER)) 
-           and string.find(flavorText, GetLowerNonEmptyString(SI_UNBOXER_REWARD_LOWER))
+    elseif self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_CRAFTED_LOWER)
+           and self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_REWARD_LOWER)
     then
         containerType = "crafting"
-    elseif StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_FISHING_LOWER) then
+    elseif self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_FISHING_LOWER) then
         containerType = "fishing"
-    elseif StringContainsNotAtStart(name, SI_UNBOXER_JEWELRY_BOX_LOWER) then
+    elseif self:StringContainsNotAtStart(name, SI_UNBOXER_JEWELRY_BOX_LOWER) then
         containerType = "vendorGear"
     elseif quality > ITEM_QUALITY_NORMAL
-           and (StringContainsStringIdOrDefault(name, SI_UNBOXER_UNIDENTIFIED_LOWER)
-                or StringContainsStringIdOrDefault(name, SI_UNBOXER_UNIDENTIFIED2_LOWER))
+           and (self:StringContainsStringIdOrDefault(name, SI_UNBOXER_UNIDENTIFIED_LOWER)
+                or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_UNIDENTIFIED2_LOWER))
     then
-        if StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_COMMON_LOWER)
-           or StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_OFFENSIVE_LOWER) 
-           or StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_DEFENSIVE_LOWER)
+        if self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_COMMON_LOWER)
+           or self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_OFFENSIVE_LOWER) 
+           or self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_DEFENSIVE_LOWER)
         then
             containerType = "vendorGear"
         else
             containerType = "zone"
         end
-    elseif StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_CP160_ADVENTURERS_LOWER) then
+    elseif self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_CP160_ADVENTURERS_LOWER) then
         containerType = "vendorGear"
     elseif ContainsGuildSkillLineName(flavorText) then
         containerType = "zone"
@@ -1144,7 +1082,6 @@ function addon:RegisterEvents()
     EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_LOOT_UPDATED , HandleEventLootUpdated)
     EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_REQUEST_CONFIRM_USE_ITEM, HandleRequestConfirmUseItem)
     EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_OPEN_STORE, OnOpenStore)
-    EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_PLAYER_ACTIVATED, InitializeLocations)
 end
 local function OnAddonLoaded(event, name)
   

@@ -28,21 +28,16 @@ filters/LootFilters.lua
 filters/PtsFilters.lua
 
 ; Rules engines for different categories
-rules/CraftingMaterials.lua
-rules/CraftingWrits.lua
-rules/Dungeon.lua
+Rule.lua
+rules/Collectibles.lua
+rules/Crafting.lua
 rules/Festival.lua
 rules/Fishing.lua
-rules/Furnisher.lua
-rules/MagesGuildReprints.lua
 rules/Pts.lua
-rules/Runeboxes.lua
-rules/StylePages.lua
+rules/Rewards.lua
 rules/Transmutation.lua
 rules/TreasureMaps.lua
-rules/Trial.lua
-rules/VendorGear.lua
-rules/ZoneRewards.lua
+rules/Vendor.lua
 
 
 Bindings.xml
