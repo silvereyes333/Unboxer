@@ -148,12 +148,12 @@ end
 -- Zone repeatable activites (e.g. dailies, Rewards for the Worthy, etc.)
 class.Zone = class.Rule:Subclass()
 function class.Zone:New()
-    return class.Zone.New(self, 
+    return class.Rule.New(self, 
       "zone",
       140296, -- [Unidentified Summerset Chest Armor]
       { -- dependencies
           "vendorGear" -- always process vendor gear logic first
-      }, 
+      } 
     )
 end
 

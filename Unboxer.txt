@@ -31,12 +31,9 @@ filters/PtsFilters.lua
 Rule.lua
 rules/Collectibles.lua
 rules/Crafting.lua
-rules/Festival.lua
-rules/Fishing.lua
 rules/Pts.lua
 rules/Rewards.lua
-rules/Transmutation.lua
-rules/TreasureMaps.lua
+rules/Special.lua
 rules/Vendor.lua
 
 

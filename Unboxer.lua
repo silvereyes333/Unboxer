@@ -7,6 +7,7 @@ Unboxer = {
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
+    classes = {}
 }
 
 local addon = Unboxer
@@ -397,7 +398,7 @@ function addon:GetItemLinkData(itemLink)
                and (self:StringContainsStringIdOrDefault(name, SI_UNBOXER_GIFT_LOWER)
                     or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_REWARD_LOWER)
                     or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_BOX_LOWER)
-                    or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_BOX2_LOWER))
+                    or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_BOX2_LOWER)))
     then
         containerType = "festival"
     elseif self:StringContainsStringIdOrDefault(name, SI_UNBOXER_RAW_MATERIAL_LOWER) then
@@ -409,7 +410,7 @@ function addon:GetItemLinkData(itemLink)
     elseif self:StringContainsStringIdOrDefault(name, SI_UNBOXER_TREASURE_MAP_LOWER) then
         containerType = "treasureMaps"
     elseif string.find(icon, 'zonebag') 
-           or self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_RENOWNED_LOWER
+           or self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_RENOWNED_LOWER)
            or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_BATTLEGROUND_LOWER)
     then
         containerType = "vendorGear"

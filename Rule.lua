@@ -114,9 +114,9 @@ function class.Rule:SetAutolootEnabled(value)
 end
 
 function class.Rule:SetEnabled(enabled)
-    return addon.settings[self.name] = enabled
+    addon.settings[self.name] = enabled
 end
 
 function class.Rule:SetSummaryEnabled(enabled)
-    return addon.settings[self.summarySettingName] = enabled
+    addon.settings[self.summarySettingName] = enabled
 end
