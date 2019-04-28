@@ -49,7 +49,7 @@ function class.LFGActivity:GetLocations()
         for filterCategory2, filters in pairs(category1Filters) do
             addon.Debug("Scanning category "..tostring(filterCategory1)..": "..tostring(filterCategory2).."...")
             for itemId, _ in pairs(filters) do
-                local itemLink = GetItemLinkFromItemId(itemId)
+                local itemLink = addon.GetItemLinkFromItemId(itemId)
                 
                 if not addon.settings.containerDetails[itemId] or (
                   not addon.settings.containerDetails[itemId]["quest"] 

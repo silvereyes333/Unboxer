@@ -30,7 +30,7 @@ function addon.Debug(input, force)
     addon.Print(input, force)
 end
 --Create an exmaple item link, given an item's id
-local function GetItemLinkFromItemId(itemId)
+function addon.GetItemLinkFromItemId(itemId)
     if itemId == nil or itemId == 0 then return end
     return zo_strformat(itemLinkFormat, itemId)
 end
@@ -253,9 +253,7 @@ local function ContainsItemSetsText(search)
     local summerset = LocaleAwareToLower(GetZoneNameById(1011))
     if string.find(search, summerset) then return end
     
-    return string.find(search, GetLowerNonEmptyString(SI_UNBOXER_ITEM_SETS))
-           or string.find(search, GetLowerNonEmptyString(SI_UNBOXER_ITEM_SETS2))
-end
+    return string.find(search, GetLowerNonEmptyString(SI_UNBOXER_ITEM_SETS_LOWER))
 local defaultGuildSkillLineNames = {
     "mages guild",
     "fighters guild",
@@ -314,7 +312,7 @@ function addon:GetItemLinkData(itemLink)
         end
     end
     local icon = LocaleAwareToLower(GetItemLinkIcon(itemLink))
-    local name = LocaleAwareToLower(GetItemLinkName(itemLink))
+    local name = LocaleAwareToLower(GetItemLinkTradingHouseItemSearchName(itemLink))
     local flavorText = LocaleAwareToLower(GetItemLinkFlavorText(itemLink))
     local filterTypeInfo = { GetItemLinkFilterTypeInfo(itemLink) }
     local setInfo = { GetItemLinkSetInfo(itemLink) }
@@ -327,7 +325,7 @@ function addon:GetItemLinkData(itemLink)
     local data = {
         ["itemId"]                 = itemId,
         ["itemLink"]               = itemLink,
-        ["name"]                   = LocaleAwareToLower(GetItemLinkName(itemLink)),
+        ["name"]                   = LocaleAwareToLower(GetItemLinkTradingHouseItemSearchName(itemLink)),
         ["flavorText"]             = LocaleAwareToLower(GetItemLinkFlavorText(itemLink)),
         ["quality"]                = GetItemLinkQuality(itemLink),
         ["icon"]                   = LocaleAwareToLower(GetItemLinkIcon(itemLink)),
@@ -448,7 +446,6 @@ function addon:GetItemLinkData(itemLink)
         ["bookTitle"] = GetItemLinkBookTitle(itemLink),
         ["runeName"] = {GetItemLinkEnchantingRuneName(itemLink)},
         ["flavorText"] = flavorText,
-        ["tradingHouseItemSearchName"] = GetItemLinkTradingHouseItemSearchName(itemLink),
         ["setInfo"] = setInfo,
     }
     return {
@@ -905,7 +902,7 @@ local function ScanQuestRewardIndex(journalQuestIndex, rewardIndex)
   local self = addon
   
   local itemId = GetJournalQuestRewardItemId(journalQuestIndex, rewardIndex)
-  local itemLink = GetItemLinkFromItemId(itemId)
+  local itemLink = addon.GetItemLinkFromItemId(itemId)
   
   local itemType = GetItemLinkItemType(itemLink)
   if itemType ~= ITEMTYPE_CONTAINER then return end
