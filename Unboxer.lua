@@ -48,6 +48,9 @@ local function GetLowerNonEmptyString(stringId, ...)
     return value    
 end
 function addon:StringContainsStringIdOrDefault(searchIn, stringId, ...)
+    if not stringId then
+        return
+    end
     local searchFor = LocaleAwareToLower(GetString(stringId, ...))
     local startIndex, endIndex
     if searchFor and searchFor ~= "" then
@@ -255,6 +258,7 @@ function addon:IsDefaultLanguageSelected()
 end
 
 local function LookupOldFilterCategories(itemId)
+    local self = addon
     for filterCategory1, category1Filters in pairs(self.filters) do
         for filterCategory2, filters in pairs(category1Filters) do
             if filters[itemId] then
@@ -300,10 +304,11 @@ function addon:GetItemLinkData(itemLink)
     end
     
   
-    local containerType
+    local containerType = "unknown"
     for ruleIndex, rule in ipairs(self.rules) do
         if rule:Match(data) then
             containerType = rule.name
+            break
         end
     end
     
@@ -320,7 +325,6 @@ function addon:GetItemLinkData(itemLink)
         ["filterCategory1"] = filterCategory1,
         ["filterCategory2"] = filterCategory2,
         ["bindType"] = bindType,
-        ["collectibleId"] = GetItemLinkContainerCollectibleId(itemLink),
         ["icon"] = icon,
         ["abilities"] = GetItemLinkOnUseAbilityInfo(itemLink),
         ["quality"] = quality,
@@ -329,7 +333,12 @@ function addon:GetItemLinkData(itemLink)
         ["sellInformation"] = GetItemLinkSellInformation(itemLink),
         ["text"] = text,
         ["interactionType"] = interactionType,
-        ["store"] = addon.settings.containerDetails[itemId] and addon.settings.containerDetails[itemId]["store"]
+        ["store"] = addon.settings.containerDetails[itemId] and addon.settings.containerDetails[itemId]["store"],
+        ["collectible"] = {
+            ["collectibleId"] = data.collectibleId,
+            ["collectibleCategoryType"] = GetCollectibleCategoryType(data.collectibleId),
+            ["collectibleUnlocked"]     = IsCollectibleUnlocked(data.collectibleId)
+        },
     }
 end
 local function PrintUnboxedLink()

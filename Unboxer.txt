@@ -15,7 +15,7 @@
 ; Libraries
 lib\LibLootSummary\LibLootSummary.lua
 
-localization\EN.lua
+localization\Default.lua
 localization\$(language).lua
 localization\CreateStrings.lua
 

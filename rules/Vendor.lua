@@ -58,8 +58,8 @@ function class.VendorGear:Match(data)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_BATTLEGROUND_LOWER)            -- Battlegrounds Equipment Vendor
        or addon:StringContainsNotAtStart(data.name, SI_UNBOXER_JEWELRY_BOX_LOWER)                    -- Tel-Var Jewelry Merchant (legacy)
        or (data.hasSet
-           and (addon:StringContainsStringIdOrDefault(name, SI_UNBOXER_EQUIPMENT_BOX_LOWER)
-                or addon:StringContainsStringIdOrDefault(name, SI_UNBOXER_EQUIPMENT_BOX2_LOWER)))    -- Tel-Var Equipment Vendor (current)
+           and (addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_EQUIPMENT_BOX_LOWER)
+                or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_EQUIPMENT_BOX2_LOWER)))    -- Tel-Var Equipment Vendor (current)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_CP160_ADVENTURERS_LOWER) -- Tel-Var Equipment Vendor (legacy)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_COMMON_LOWER)            -- Legacy "Unidentified" gear
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_OFFENSIVE_LOWER)         -- Elite Gear Vendor 

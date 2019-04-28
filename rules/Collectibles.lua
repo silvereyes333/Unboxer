@@ -32,7 +32,9 @@ function class.StylePages:New()
 end
 
 function class.StylePages:Match(data)
-    if data.collectibleCategoryType ~= COLLECTIBLE_CATEGORY_TYPE_OUTFIT_STYLE then
+    if data.collectibleCategoryType 
+       and data.collectibleCategoryType ~= COLLECTIBLE_CATEGORY_TYPE_OUTFIT_STYLE
+    then
         return true,                     -- isMatch
                data.collectibleUnlocked  -- canUnbox
     end

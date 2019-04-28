@@ -154,7 +154,7 @@ class.Zone.rulebreakers = {
 
 function class.Zone:Match(data)
   
-    if self.rulebreakders[data.itemId] then
+    if self.rulebreakers[data.itemId] then
         return true, -- isMatch
                true  -- canUnbox
     end
