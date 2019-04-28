@@ -112,4 +112,6 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_LIGHT_ARMOR_LOWER"] =       "軽装鎧",
     ["SI_UNBOXER_MEDIUM_ARMOR_LOWER"] =      "中装鎧",
     ["SI_UNBOXER_STAFF_LOWER"] =             "杖",
+    ["SI_UNBOXER_JOB_LOWER"] =               "任務を",
+    ["SI_UNBOXER_REWARD_LOWER"] =            "報酬"
 }

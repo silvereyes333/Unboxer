@@ -109,4 +109,5 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_LIGHT_ARMOR_LOWER"] =       "armure légère",
     ["SI_UNBOXER_MEDIUM_ARMOR_LOWER"] =      "armure moyenne",
     ["SI_UNBOXER_STAFF_LOWER"] =             "bâton",
+    ["SI_UNBOXER_JOB_LOWER"] =               "contrat",
 }

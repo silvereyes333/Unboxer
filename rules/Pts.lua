@@ -7,7 +7,7 @@ class.Pts = class.Rule:Subclass()
 function class.Pts:New()
     return class.Rule.New(self, 
       "pts",
-      119566 -- [Exquisite Furniture Tome]
+      119566, -- [Exquisite Furniture Tome]
       { -- dependencies
           "dungeon",
           "mageGuildReprints",
@@ -42,5 +42,7 @@ function class.Pts:MatchItemSetsText(text)
     if string.find(text, summerset) then return end
     
     local startIndex, endIndex = addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_ITEM_SETS_LOWER)
-    if startIndex == 1 or 
+    if startIndex == 1 or endIndex == ZoUTF8StringLength(text) then
+        return true
+    end
 end

@@ -249,50 +249,11 @@ local function GetNextItemToUnbox()
     end
     self.Debug("No unboxable items found")
 end
-local function ContainsItemSetsText(search)
-  
-    local summerset = LocaleAwareToLower(GetZoneNameById(1011))
-    if string.find(search, summerset) then return end
-    
-    return string.find(search, GetLowerNonEmptyString(SI_UNBOXER_ITEM_SETS_LOWER))
-local defaultGuildSkillLineNames = {
-    "mages guild",
-    "fighters guild",
-    "thieves guild",
-    "dark brotherhood",
-    "undaunted",
-    "psijic order",
-}
-local function ContainsGuildSkillLineName(search)
-    local self = addon
-    local skillType = SKILL_TYPE_GUILD
-    for skillLineIndex=1, GetNumSkillLines(skillType) do
-        local skillLineName = LocaleAwareToLower(GetSkillLineName(skillType, skillLineIndex))
-        if string.find(search, skillLineName) then
-            return true
-        end
-    end
-    if self:IsDefaultLanguageSelected() then
-        return
-    end
-    for _, skillLineName in ipairs(defaultGuildSkillLineNames) do
-        if string.find(search, skillLineName) then
-            return true
-        end
-    end
-end
-local function ContainsDailyQuestText(search)
-  
-    --TODO: implement
-    --[[ =IFERROR(FIND("reward",LOWER(L53)),0)
-    +IFERROR(FIND("daily",LOWER(L53)),0)
-    +IFERROR(FIND("job",LOWER(L53)),0)
-    +IFERROR(FIND("award",LOWER(L53)),0)
-    +IFERROR(FIND("contract",LOWER(L53)),0) ]]
-end
+
 function addon:IsDefaultLanguageSelected()
     return GetCVar("language.2") == self.defaultLanguage
 end
+
 local function LookupOldFilterCategories(itemId)
     for filterCategory1, category1Filters in pairs(self.filters) do
         for filterCategory2, filters in pairs(category1Filters) do
@@ -302,6 +263,7 @@ local function LookupOldFilterCategories(itemId)
         end
     end
 end
+
 function addon:GetItemLinkData(itemLink)
 
     local itemType, specializedItemType = GetItemLinkItemType(itemLink)

@@ -95,6 +95,7 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_TRIAL_LOWER"] =             "trial",
     ["SI_UNBOXER_UNDAUNTED_LOWER"] =         "undaunted",
     ["SI_UNBOXER_WEEKLY_LOWER"] =            "weekly",
+    ["SI_UNBOXER_DAILY_LOWER"] =             "daily",
     ["SI_UNBOXER_CRAFTED_LOWER"] =           "crafted",
     ["SI_UNBOXER_REWARD_LOWER"] =            "reward",
     ["SI_UNBOXER_GIFT_LOWER"] =              "gift",
@@ -124,5 +125,6 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_TREASURE_MAP_LOWER"] =      "treasure map",
     ["SI_UNBOXER_RAW_MATERIAL_LOWER"] =      "raw material",
     ["SI_UNBOXER_FURNISHING_LOWER"] =        "furnishing",
+    ["SI_UNBOXER_JOB_LOWER"] =               "job",
 }
 UNBOXER_DEFAULT_STRINGS = UNBOXER_STRINGS

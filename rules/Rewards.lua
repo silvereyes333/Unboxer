@@ -142,12 +142,26 @@ function class.Zone:New()
       "zone",
       140296, -- [Unidentified Summerset Chest Armor]
       { -- dependencies
-          "vendorGear" -- always process vendor gear logic first
+          "vendorGear",
+          "trial",
+          "crafting",
       } 
     )
 end
+class.Zone.rulebreakers = {
+    [134619] = true, -- [Rewards for the Worthy]
+}
 
 function class.Zone:Match(data)
+  
+    if self.rulebreakders[data.itemId] then
+        return true, -- isMatch
+               true  -- canUnbox
+    end
+  
+    if string.find(data.name, ":") then
+        return
+    end
     
     -- All the vendor-supplied "Unidentified" weapon and armor boxes are already matched
     -- because of the "vendorGear" dependency in the constructor.
@@ -168,4 +182,55 @@ function class.Zone:Match(data)
         return true, -- isMatch
                true  -- canUnbox
     end
+    
+    -- Matches "Merit" containers like 96387 [Undaunted Merits] for guild skill tree lines
+    if self:MatchGuildSkillLineName(data.name) then
+        return true, -- isMatch
+               true  -- canUnbox
+    end
+    
+    
+    -- Matches daily reward containers
+    if data.bindType == BIND_TYPE_ON_PICKUP
+       and (addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_REWARD_LOWER)
+            or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_DAILY_LOWER)
+            or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_JOB_LOWER)
+            or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_CONTRACT_LOWER))
+    then
+        return true, -- isMatch
+               true  -- canUnbox
+    end
+end
+
+
+
+local defaultGuildSkillLineNames = {
+    "mages guild",
+    "fighters guild",
+    "thieves guild",
+    "dark brotherhood",
+    "undaunted",
+    "psijic order",
+}
+function class.Zone:MatchGuildSkillLineName(text)
+  
+    local skillType = SKILL_TYPE_GUILD
+    for skillLineIndex=1, GetNumSkillLines(skillType) do
+        local skillLineName = LocaleAwareToLower(GetSkillLineName(skillType, skillLineIndex))
+        if string.find(text, skillLineName) then
+            return true
+        end
+    end
+    if addon:IsDefaultLanguageSelected() then
+        return
+    end
+    -- Fallback to default language when running on an incomplete translation, like ruESO
+    for _, skillLineName in ipairs(defaultGuildSkillLineNames) do
+        if string.find(text, skillLineName) then
+            return true
+        end
+    end
+end
+local function ContainsDailyQuestText(search)
+    local self = class.Zone
 end

@@ -98,4 +98,5 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_DEFENSIVE_LOWER"] =         "оборонительные",
     ["SI_UNBOXER_ITEM_SETS_LOWER"] =         "комплекты",
     ["SI_UNBOXER_RENOWNED_LOWER"] =          "знаменитый",
+    ["SI_UNBOXER_JOB_LOWER"] =               "контракта",
 }
