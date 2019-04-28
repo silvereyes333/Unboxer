@@ -6,7 +6,7 @@ local debug = false
 
 
 -- Materials
-class.CraftingMaterials  = class.Rule:Subclass()
+class.CraftingMaterials = class.Rule:Subclass()
 function class.CraftingMaterials:New()
     return class.Rule.New(self, 
       "materials",
@@ -23,7 +23,7 @@ end
 
 
 -- Writ Rewards
-class.CraftingWrits  = class.Rule:Subclass()
+class.CraftingWrits = class.Rule:Subclass()
 function class.CraftingWrits:New()
     return class.Rule.New(self, 
       "crafting",

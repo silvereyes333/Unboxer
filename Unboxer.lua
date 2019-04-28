@@ -7,7 +7,8 @@ Unboxer = {
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
-    classes = {}
+    classes = {},
+    rules = {},
 }
 
 local addon = Unboxer
@@ -292,35 +293,29 @@ end
 function addon:IsDefaultLanguageSelected()
     return GetCVar("language.2") == self.defaultLanguage
 end
+local function LookupOldFilterCategories(itemId)
+    for filterCategory1, category1Filters in pairs(self.filters) do
+        for filterCategory2, filters in pairs(category1Filters) do
+            if filters[itemId] then
+                return filterCategory1, filterCategory2
+            end
+        end
+    end
+end
 function addon:GetItemLinkData(itemLink)
 
     local itemType, specializedItemType = GetItemLinkItemType(itemLink)
     local itemId = GetItemLinkItemId(itemLink)
-    local tags = {}
-    for tagIndex=1,GetItemLinkNumItemTags(itemLink) do
-        table.insert(tags, {GetItemLinkItemTagInfo(itemLink, tagIndex)})
-    end
-    local recipeIngredients = {}
-    for ingredientIndex=1,GetItemLinkRecipeNumIngredients(itemLink) do
-        table.insert(recipeIngredients, {GetItemLinkRecipeIngredientInfo(itemLink, ingredientIndex)})
-    end
-    local reagentTraits = {}
-    for reagentIndex=1,3 do
-        local _, reagentTraitName = GetItemLinkReagentTraitInfo(itemLink, reagentIndex)
-        if reagentTraitName and reagentTraitName ~= "" then
-            table.insert(reagentTraits, reagentTraitName)
-        end
-    end
     local icon = LocaleAwareToLower(GetItemLinkIcon(itemLink))
     local name = LocaleAwareToLower(GetItemLinkTradingHouseItemSearchName(itemLink))
     local flavorText = LocaleAwareToLower(GetItemLinkFlavorText(itemLink))
-    local filterTypeInfo = { GetItemLinkFilterTypeInfo(itemLink) }
     local setInfo = { GetItemLinkSetInfo(itemLink) }
     local hasSet, setName, _, _, _, setId = GetItemLinkSetInfo(itemLink)
     local requiredChampionPoints = GetItemLinkRequiredChampionPoints(itemLink)
     local requiredLevel = GetItemLinkRequiredLevel(itemLink)
     local quality = GetItemLinkQuality(itemLink)
     local bindType = GetItemLinkBindType(itemLink)
+    local filterCategory1, filterCategory2 = LookupOldFilterCategories(itemId)
     
     local data = {
         ["itemId"]                 = itemId,
@@ -342,174 +337,37 @@ function addon:GetItemLinkData(itemLink)
         data["collectibleUnlocked"]     = IsCollectibleUnlocked(data.collectibleId)
     end
     
-    local summerset = LocaleAwareToLower(GetZoneNameById(1011))
+  
     local containerType
-    if multipleLfgFound or GetItemLinkOnUseAbilityInfo(itemLink) or string.find(flavorText, " pts ")
-       or ContainsItemSetsText(name)
-    then
-        containerType = "pts"
-    elseif string.find(icon, 'housing.*book') then
-        containerType = "mageGuildReprints"
-    --[[ other than mages guild reprints and collectibles, the only other items containing a : colon in the name are PTS containers ]]
-    elseif string.find(name, ":") then
-        containerType = "pts"
-    elseif setInfo[1] then
-        if self:StringContainsStringIdOrDefault(name, SI_UNBOXER_EQUIPMENT_BOX_LOWER)
-           or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_EQUIPMENT_BOX2_LOWER)
-        then
-            containerType = "vendorGear"
-        else
-            containerType = "pts"
+    for ruleIndex, rule in ipairs(self.rules) do
+        if rule:Match(data) then
+            containerType = rule.name
         end
-    elseif flavorText == "" then
-        if string.find(icon, "quest_container_001") 
-           and quality < ITEM_QUALITY_ARTIFACT
-        then
-            local stringIds = { 
-                SI_UNBOXER_1H_WEAPON_LOWER, SI_UNBOXER_2H_WEAPON_LOWER, SI_UNBOXER_METAL_WEAPON_LOWER,
-                SI_UNBOXER_WOOD_WEAPON_LOWER, SI_UNBOXER_ACCESSORY_LOWER, SI_UNBOXER_HEAVY_ARMOR_LOWER,
-                SI_UNBOXER_LIGHT_ARMOR_LOWER, SI_UNBOXER_MEDIUM_ARMOR_LOWER, SI_UNBOXER_STAFF_LOWER
-            }
-            for _, stringId in ipairs(stringIds) do
-                if self:StringContainsStringIdOrDefault(name, stringId) then
-                    containerType = "vendorGear"
-                    break
-                end
-            end
-            if not containerType then
-                containerType = "zone"
-            end
-        else
-            containerType = "pts"
-        end
-    elseif lfgActivity == LFG_ACTIVITY_DUNGEON then
-        containerType = "dungeon"
-    elseif lfgActivity == LFG_ACTIVITY_TRIAL
-           or (self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_UNDAUNTED_LOWER)
-               and self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_WEEKLY_LOWER))
-    then
-        containerType = "trial"
-    elseif self.mostRecentInteractionType == INTERACTION_FISH then
-        containerType = "fishing"
-    elseif string.find(icon, 'event_')
-           or (string.find(icon, 'gift') 
-               and (self:StringContainsStringIdOrDefault(name, SI_UNBOXER_GIFT_LOWER)
-                    or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_REWARD_LOWER)
-                    or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_BOX_LOWER)
-                    or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_BOX2_LOWER)))
-    then
-        containerType = "festival"
-    elseif self:StringContainsStringIdOrDefault(name, SI_UNBOXER_RAW_MATERIAL_LOWER) then
-        containerType = "materials"
-    elseif bindType == BIND_TYPE_ON_PICKUP and self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_FURNISHING_LOWER) then
-        containerType = "furnisher"
-    elseif self:StringContainsStringIdOrDefault(name, SI_UNBOXER_TRANSMUTATION_LOWER) then
-        containerType = "transmutation"
-    elseif self:StringContainsStringIdOrDefault(name, SI_UNBOXER_TREASURE_MAP_LOWER) then
-        containerType = "treasureMaps"
-    elseif string.find(icon, 'zonebag') 
-           or self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_RENOWNED_LOWER)
-           or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_BATTLEGROUND_LOWER)
-    then
-        containerType = "vendorGear"
-    elseif self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_CRAFTED_LOWER)
-           and self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_REWARD_LOWER)
-    then
-        containerType = "crafting"
-    elseif self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_FISHING_LOWER) then
-        containerType = "fishing"
-    elseif self:StringContainsNotAtStart(name, SI_UNBOXER_JEWELRY_BOX_LOWER) then
-        containerType = "vendorGear"
-    elseif quality > ITEM_QUALITY_NORMAL
-           and (self:StringContainsStringIdOrDefault(name, SI_UNBOXER_UNIDENTIFIED_LOWER)
-                or self:StringContainsStringIdOrDefault(name, SI_UNBOXER_UNIDENTIFIED2_LOWER))
-    then
-        if self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_COMMON_LOWER)
-           or self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_OFFENSIVE_LOWER) 
-           or self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_DEFENSIVE_LOWER)
-        then
-            containerType = "vendorGear"
-        else
-            containerType = "zone"
-        end
-    elseif self:StringContainsStringIdOrDefault(flavorText, SI_UNBOXER_CP160_ADVENTURERS_LOWER) then
-        containerType = "vendorGear"
-    elseif ContainsGuildSkillLineName(flavorText) then
-        containerType = "zone"
-    else
-        containerType = "unknown"
     end
+    
     local interactionType = addon.settings.containerDetails[itemId] and addon.settings.containerDetails[itemId]["interactionType"]
     local text = addon.settings.containerDetails[itemId] and addon.settings.containerDetails[itemId]["text"] or {}
     text[GetCVar("language.2")] = {
         ["name"] = name,
-        ["bookTitle"] = GetItemLinkBookTitle(itemLink),
-        ["runeName"] = {GetItemLinkEnchantingRuneName(itemLink)},
         ["flavorText"] = flavorText,
-        ["setInfo"] = setInfo,
+        ["setName"] = setName,
     }
     return {
         ["containerType"] = containerType,
         ["itemLink"] = itemLink,
-        ["specializedItemType"] = specializedItemType,
-        ["filterTypeInfo"] = filterTypeInfo,
-        ["enchantId"] = GetItemLinkAppliedEnchantId(itemLink),
-        ["armorRating"] = GetItemLinkArmorRating(itemLink),
-        ["armorType"] = GetItemLinkArmorType(itemLink),
+        ["filterCategory1"] = filterCategory1,
+        ["filterCategory2"] = filterCategory2,
         ["bindType"] = bindType,
-        ["collectibleEvolutionDesc"] = GetItemLinkCollectibleEvolutionDescription(itemLink),
-        ["collectibleEvolutionInfo"] = {GetItemLinkCollectibleEvolutionInformation(itemLink)},
-        ["comboDescription"] = GetItemLinkCombinationDescription(itemLink),
-        ["condition"] = GetItemLinkCondition(itemLink),
         ["collectibleId"] = GetItemLinkContainerCollectibleId(itemLink),
-        ["craftingSkillType"] = GetItemLinkCraftingSkillType(itemLink),
-        ["defaultEnchantId"] = GetItemLinkDefaultEnchantId(itemLink),
-        ["dyeIds"] = {GetItemLinkDyeIds(itemLink)},
-        ["dyeStampId"] = GetItemLinkDyeStampId(itemLink),
-        ["enchantInfo"] = {GetItemLinkEnchantInfo(itemLink)},
-        ["runeClassification"] = GetItemLinkEnchantingRuneClassification(itemLink),
-        ["equipType"] = GetItemLinkEquipType(itemLink),
-        ["finalEnchantId"] = GetItemLinkFinalEnchantId(itemLink),
-        ["furnishingLimitType"] = GetItemLinkFurnishingLimitType and GetItemLinkFurnishingLimitType(itemLink),
-        ["furnitureDataId"] = GetItemLinkFurnitureDataId(itemLink),
-        ["glyphMinLevels"] = {GetItemLinkGlyphMinLevels(itemLink)},
-        ["recipeIndices"] = {GetItemLinkGrantedRecipeIndices(itemLink)},
         ["icon"] = icon,
-        ["info"] = {GetItemLinkInfo(itemLink)},
-        ["style"] = GetItemLinkItemStyle(itemLink),
-        ["tags"] = tags,
-        ["useType"] = GetItemLinkItemUseType(itemLink),
-        ["matLevel"] = GetItemLinkMaterialLevelDescription(itemLink),
-        ["maxCharges"] = GetItemLinkMaxEnchantCharges(itemLink),
-        ["charges"] = GetItemLinkNumEnchantCharges(itemLink),
-        ["abilities"] = {GetItemLinkOnUseAbilityInfo(itemLink)},
-        ["outfitStyleId"] = GetItemLinkOutfitStyleId(itemLink),
+        ["abilities"] = GetItemLinkOnUseAbilityInfo(itemLink),
         ["quality"] = quality,
-        ["reagentTraits"] = reagentTraits,
-        ["recipeCraftingSkillType"] = GetItemLinkRecipeCraftingSkillType(itemLink),
-        ["recipeIngredients"] = recipeIngredients,
-        ["recipeIngredientCount"] = GetItemLinkRecipeNumIngredients(itemLink),
-        ["tradskillRequirementCount"] = GetItemLinkRecipeNumTradeskillRequirements(itemLink),
-        ["recipeQualityRequirement"] = GetItemLinkRecipeQualityRequirement(itemLink),
-        ["recipleResultItemLink"] = GetItemLinkRecipeResultItemLink(itemLink),
-        ["refinedMaterialItemLink"] = GetItemLinkRefinedMaterialItemLink(itemLink),
         ["requiredChampionPoints"] = requiredChampionPoints,
-        ["requiredCraftingSkillRank"] = GetItemLinkRequiredCraftingSkillRank(itemLink),
         ["requiredLevel"] = requiredLevel,
         ["sellInformation"] = GetItemLinkSellInformation(itemLink),
-        ["showItemStyleInTooltip"] = GetItemLinkShowItemStyleInTooltip(itemLink),
-        ["siegeMaxHP"] = GetItemLinkSiegeMaxHP(itemLink),
-        ["siegeType"] = GetItemLinkSiegeType(itemLink),
-        ["stacks"] = {GetItemLinkStacks(itemLink)},
-        ["requiresCollectibleId"] = GetItemLinkTooltipRequiresCollectibleId(itemLink),
         ["text"] = text,
-        ["traitCategory"] = GetItemLinkTraitCategory(itemLink),
-        ["traitInfo"] = {GetItemLinkTraitInfo(itemLink)},
-        ["traitType"] = GetItemLinkTraitType(itemLink),
-        ["value"] = GetItemLinkValue(itemLink),
-        ["weaponPower"] = GetItemLinkWeaponPower(itemLink),
-        ["weaponType"] = GetItemLinkWeaponType(itemLink),
         ["interactionType"] = interactionType,
+        ["store"] = addon.settings.containerDetails[itemId] and addon.settings.containerDetails[itemId]["store"]
     }
 end
 local function PrintUnboxedLink()
@@ -897,112 +755,6 @@ local function OnInventorySingleSlotUpdate(eventCode, bagId, slotIndex, isNewIte
     addon.autolooting = true
     EVENT_MANAGER:RegisterForUpdate(self.name, 40, UnboxCurrent)
 end
-
-local function ScanQuestRewardIndex(journalQuestIndex, rewardIndex)
-  local self = addon
-  
-  local itemId = GetJournalQuestRewardItemId(journalQuestIndex, rewardIndex)
-  local itemLink = addon.GetItemLinkFromItemId(itemId)
-  
-  local itemType = GetItemLinkItemType(itemLink)
-  if itemType ~= ITEMTYPE_CONTAINER then return end
-  
-    local itemLinkData = self:GetItemLinkData(itemLink)
-    local rewardType, _, _, _, _, _, rewardItemType = GetJournalQuestRewardInfo(journalQuestIndex, rewardIndex)
-    local skillType, skillLineIndex = GetJournalQuestRewardSkillLine(journalQuestIndex, rewardIndex)
-    local _, _, zoneIndex, poiIndex = GetJournalQuestLocationInfo(journalQuestIndex)
-    local zoneId = GetZoneId(zoneIndex)
-    local startingZoneIndex = GetJournalQuestStartingZone(journalQuestIndex)
-    local startingZoneId = GetZoneId(startingZoneIndex)
-    local poiType = GetPOIType(zoneIndex, poiIndex)
-    local questType = GetJournalQuestType(journalQuestIndex)
-    itemLinkData["quest"] = {
-        ["journalQuestIndex"] = journalQuestIndex,
-        ["questType"] = questType,
-        ["rewardIndex"] = rewardIndex,
-        ["rewardType"] = rewardType,
-        ["rewardItemType"] = rewardItemType,
-        ["instanceDisplayType"] = GetJournalQuestInstanceDisplayType(journalQuestIndex),
-        ["repeatType"] = GetJournalQuestRepeatType(journalQuestIndex),
-        ["skillType"] = skillType,
-        ["skillLineIndex"] = skillLineIndex,
-        ["storyZoneId"] = GetJournalQuestZoneStoryZoneId(journalQuestIndex),
-        ["zoneId"] = zoneId,
-        ["zoneIndex"] = zoneIndex,
-        ["startingZoneId"] = startingZoneId,
-        ["startingZoneIndex"] = startingZoneIndex,
-        ["poiIndex"] = poiIndex,
-        ["poiType"] = poiType,
-    }
-    self.settings.containerDetails[itemId] = itemLinkData
-end
-local function OnQuestCompleteDialog(eventCode, journalQuestIndex)
-    local self = addon
-    local maxRewardIndex =  GetJournalQuestNumRewards(journalQuestIndex)
-    for rewardIndex = 1, maxRewardIndex do
-      
-        ScanQuestRewardIndex(journalQuestIndex, rewardIndex)
-    end
-end
-local function ScanMailAttachment(mailId, attachIndex, displayName, characterName, subject, fromSystem, fromCustomerService)
-    local self = addon
-    
-    local itemLink = GetAttachedItemLink(mailId, attachIndex)
-    local itemType = GetItemLinkItemType(itemLink)
-    if itemType ~= ITEMTYPE_CONTAINER then return end
-    
-    local itemLinkData = self:GetItemLinkData(itemLink)
-    local itemId = GetItemLinkItemId(itemLink)
-    local text = self.settings.containerDetails[itemId]["mail"] and self.settings.containerDetails[itemId]["mail"]["text"] or {}
-    text[GetCVar("language.2")] = {
-        ["senderDisplayName"] = displayName,
-        ["senderCharacterName"] = characterName,
-        ["subject"] = subject,
-    }
-    itemLinkData["mail"] = {
-        ["text"] = text,
-        ["fromCustomerService"] = fromCustomerService,
-        ["fromSystem"] = fromSystem,
-    }
-    if not itemLinkData["interactionType"] then
-        itemLinkData["interactionType"] = self.mostRecentInteractionType
-    end
-    self.settings.containerDetails[itemId] = itemLinkData
-end
-local function OnMailReadable(eventCode, mailId)
-    local self = addon
-    UpdateInteractionType()
-    local senderDisplayName, senderCharacterName, subject, _, _, fromSystem, fromCustomerService, _, numAttachments = GetMailItemInfo(mailId)
-    if not fromSystem and not fromCustomerService then return end
-    for attachIndex = 1, numAttachments do
-        ScanMailAttachment(mailId, attachIndex, senderDisplayName, senderCharacterName, subject, fromSystem, fromCustomerService)
-    end
-end
-local function OnInventoryItemUsed(eventCode)
-    local self = addon
-    if not self.lastReferencedSlotIndex then
-        self.Debug("Unknown item used")
-        return
-    end
-    local itemLink = GetItemLink(BAG_BACKPACK, self.lastReferencedSlotIndex)
-    local itemType, specializedItemType = GetItemLinkItemType(itemLink)
-    if itemType ~= ITEMTYPE_CONTAINER then
-        self.Debug("Non-container opened: "..tostring(itemLink))
-        return
-    end
-    self.lastContainerOpened = {
-          ["itemId"] = GetItemLinkItemId(itemLink),
-          ["itemLink"] = itemLink,
-          ["specializedItemType"] = specializedItemType
-      }
-    self.Debug("Container opened: "..tostring(itemLink))
-end
-
-local function HandleRequestConfirmUseItem(eventCode, bagId, slotIndex)
-    local self = addon
-    local itemLink = GetItemLink(bagId, slotIndex)
-    self.Debug("EVENT_REQUEST_CONFIRM_USE_ITEM "..tostring(itemLink))
-end
 local function ScanStoreEntry(entryIndex)
     local self = addon
     local itemLink = GetStoreItemLink(entryIndex)
@@ -1073,13 +825,36 @@ function addon:RegisterEvents()
     --EVENT_MANAGER:AddFilterForEvent(addon.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_BAG_ID, BAG_BACKPACK)
     --EVENT_MANAGER:AddFilterForEvent(addon.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_INVENTORY_UPDATE_REASON, INVENTORY_UPDATE_REASON_DEFAULT)
     --EVENT_MANAGER:AddFilterForEvent(addon.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_IS_NEW_ITEM, true)
-    EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_QUEST_COMPLETE_DIALOG, OnQuestCompleteDialog)
-    EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_MAIL_READABLE, OnMailReadable)
-    EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_INVENTORY_ITEM_USED , OnInventoryItemUsed)
     EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_LOOT_RECEIVED , HandleEventLootReceived)
     EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_LOOT_UPDATED , HandleEventLootUpdated)
-    EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_REQUEST_CONFIRM_USE_ITEM, HandleRequestConfirmUseItem)
     EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_OPEN_STORE, OnOpenStore)
+end
+function addon:GetRuleInsertIndex(instance)
+    
+    local dependencies = instance.dependencies
+    
+    for ruleIndex = 1, #self.rules do
+        local rule = self.rules[ruleIndex]
+        if rule.dependencies then
+            for _, dependency in ipairs(rule.dependencies) do
+                if dependency == instance.name then
+                    return ruleIndex
+                end
+            end
+        end
+    end
+    
+    return #self.rules + 1
+end
+function addon:RegisterCategoryRule(class)
+    if type(class) == "string" then
+        class = self.classes[class]
+    end
+    if not class then return end
+    
+    local instance = class:New()
+    local insertIndex = self:GetRuleInsertIndex(instance)
+    table.insert(self.rules, insertIndex, instance)
 end
 local function OnAddonLoaded(event, name)
   
@@ -1088,18 +863,22 @@ local function OnAddonLoaded(event, name)
     EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_ADD_ON_LOADED)
 
     self:AddKeyBind()
+    self:RegisterCategoryRule("Runeboxes")
+    self:RegisterCategoryRule("StylePages")
+    self:RegisterCategoryRule("CraftingMaterials")
+    self:RegisterCategoryRule("CraftingWrits")
+    self:RegisterCategoryRule("Pts")
+    self:RegisterCategoryRule("Dungeon")
+    self:RegisterCategoryRule("Trial")
+    self:RegisterCategoryRule("Zone")
+    self:RegisterCategoryRule("Festival")
+    self:RegisterCategoryRule("Fishing")
+    self:RegisterCategoryRule("Transmutation")
+    self:RegisterCategoryRule("TreasureMaps")
+    self:RegisterCategoryRule("MagesGuildReprints")
+    self:RegisterCategoryRule("Furnisher")
+    self:RegisterCategoryRule("VendorGear")
     self:SetupSettings()
-    
-    SLASH_COMMANDS["/ubunknown"] = function (extra)
-        if not self.settings.containerDetails then
-            return
-        end
-        for itemId, itemData in pairs(self.settings.containerDetails) do
-            if itemData["containerType"] == "unknown" and itemData["filterCategory1"] ~= "pts" then
-                d(tostring(itemData["itemLink"]))
-            end
-        end
-    end
 end
 
 EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_ADD_ON_LOADED, OnAddonLoaded)
