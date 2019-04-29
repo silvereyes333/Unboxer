@@ -42,6 +42,7 @@ end
 
 
 -- Vendor Equipment Boxes
+local vendorGear
 class.VendorGear = class.Rule:Subclass()
 function class.VendorGear:New()
     return class.Rule.New(self, 
@@ -53,13 +54,13 @@ end
 function class.VendorGear:Match(data)
     
     -- Match various known vendors
-    if string.find(data.icon, 'zonebag')                                                             -- Regional Equipment Vendor
+    if vendorGear[data.itemId]
+       or string.find(data.icon, 'zonebag')                                                          -- Regional Equipment Vendor
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_RENOWNED_LOWER)          -- Regional Equipment Vendor (backup in case icon changes)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_BATTLEGROUND_LOWER)            -- Battlegrounds Equipment Vendor
        or addon:StringContainsNotAtStart(data.name, SI_UNBOXER_JEWELRY_BOX_LOWER)                    -- Tel-Var Jewelry Merchant (legacy)
-       or (data.hasSet
-           and (addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_EQUIPMENT_BOX_LOWER)
-                or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_EQUIPMENT_BOX2_LOWER)))    -- Tel-Var Equipment Vendor (current)
+       or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_EQUIPMENT_BOX_LOWER)           -- Tel-Var Equipment Vendor (current)
+       or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_EQUIPMENT_BOX2_LOWER)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_CP160_ADVENTURERS_LOWER) -- Tel-Var Equipment Vendor (legacy)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_COMMON_LOWER)            -- Legacy "Unidentified" gear
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_OFFENSIVE_LOWER)         -- Elite Gear Vendor 
@@ -91,3 +92,8 @@ function class.VendorGear:MatchGenericEquipmentText(text)
         end
     end
 end
+
+vendorGear = {
+  [69416] = true,
+  [69418] = true,
+}

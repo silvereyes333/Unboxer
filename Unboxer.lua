@@ -846,7 +846,7 @@ local function OnAddonLoaded(event, name)
 
     self:AddKeyBind()
     self:RegisterCategoryRule("CraftingMaterials")
-    self:RegisterCategoryRule("CraftingWrits")
+    self:RegisterCategoryRule("CraftingQuests")
     self:RegisterCategoryRule("Dungeon")
     self:RegisterCategoryRule("Festival")
     self:RegisterCategoryRule("Fishing")

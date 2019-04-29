@@ -13,6 +13,7 @@ function class.Pts:New()
           "mageGuildReprints",
           "outfitstyles",
           "runeboxes",
+          "treasureMaps",
           "trial",
           "vendorGear",
           "zone",
@@ -21,6 +22,16 @@ function class.Pts:New()
 end
 
 function class.Pts:Match(data)
+    if self:MatchExceptIcon(data)
+       or (string.find(data.icon, "quest_container_001") -- misc containers
+           and data.quality < ITEM_QUALITY_ARTIFACT)
+    then
+        return true, -- isMatch
+               true  -- canUnbox
+    end
+end
+
+function class.Pts:MatchExceptIcon(data)
     if data.flavorText == "" -- if flavorText is still empty after processing dependencies, assume PTS box
        or string.find(data.name, ":") -- if name still contains colon after processing mage guild reprints and collectibles, assume PTS box
        or data.hasSet -- if item set information is displayed on the container, even after all the tel-var merchant containers are processed, assume PTS box
@@ -29,8 +40,10 @@ function class.Pts:Match(data)
        or self:MatchItemSetsText(data.name)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_ALL_LOWER) -- Contains the word " all " surrounded by spaces (if supported by locale)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FOUND_LOWER) -- Contains the phrase " found in " surrounded by spaces (if supported by locale)
-       or (string.find(data.icon, "quest_container_001") -- misc containers
-           and data.quality < ITEM_QUALITY_ARTIFACT)
+       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FOUND2_LOWER)
+       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FULL_SUITE_LOWER) -- Contains the phrase "full set" or "full suite"
+       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FULL_SUITE2_LOWER)
+       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FULL_SUITE3_LOWER)
     then
         return true, -- isMatch
                true  -- canUnbox

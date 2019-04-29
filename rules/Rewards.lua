@@ -141,6 +141,7 @@ end
 
 
 -- Zone repeatable activites (e.g. dailies, Rewards for the Worthy, etc.)
+local zone
 class.Zone = class.Rule:Subclass()
 function class.Zone:New()
     local instance = class.Rule.New(self, 
@@ -157,13 +158,10 @@ function class.Zone:New()
     instance.pts = class.Pts:New()
     return instance
 end
-class.Zone.rulebreakers = {
-    [134619] = true, -- [Rewards for the Worthy]
-}
 
 function class.Zone:Match(data)
   
-    if self.rulebreakers[data.itemId] then
+    if zone[data.itemId] then
         return true, -- isMatch
                true  -- canUnbox
     end
@@ -193,23 +191,44 @@ function class.Zone:Match(data)
     end
     
     
-    
-    --[[ EVERYTHING BELOW HERE SHOULD EXCLUDE SPECIFICALLY-MATCHED PTS GEAR ]]--
-    if self.pts:Match(data) then return end
-    
-    
-    
-    -- Matches "Merit" containers like 96387 [Undaunted Merits] for guild skill tree lines
-    if self:MatchGuildSkillLineName(data.name) then
+    -- Matches daily reward containers
+    if data.bindType == BIND_TYPE_ON_PICKUP
+       and (self:MatchDailyQuestText(data.name)
+            or self:MatchDailyQuestText(data.flavorText))
+    then
         return true, -- isMatch
                true  -- canUnbox
     end
     
     
-    -- Matches daily reward containers
-    if data.bindType == BIND_TYPE_ON_PICKUP
-       and self:MatchDailyQuestText(data.flavorText)
+    -- Matches "Unknown Item" boxes
+    if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_UNKNOWN_ITEM_PATTERN)
+       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_UNKNOWN_ITEM_LOWER)
+       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_UNKNOWN_ITEM_LOWER)
     then
+        return true, -- isMatch
+               true  -- canUnbox
+    end
+    
+    
+    -- Matches "coffer" and "strongbox" items
+    if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_COFFER_LOWER)
+       or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_STRONG_BOX_LOWER)
+       or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_STRONG_BOX2_LOWER)
+    then
+        return true, -- isMatch
+               true  -- canUnbox
+    end
+    
+    
+    
+    --[[ EVERYTHING BELOW HERE SHOULD EXCLUDE SPECIFICALLY-MATCHED PTS GEAR ]]--
+    if self.pts:MatchExceptIcon(data) then return end
+    
+    
+    
+    -- Matches "Merit" containers like 96387 [Undaunted Merits] for guild skill tree lines
+    if self:MatchGuildSkillLineName(data.name) then
         return true, -- isMatch
                true  -- canUnbox
     end
@@ -254,6 +273,7 @@ end
 function class.Zone:MatchDailyQuestText(text)
     return addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_REWARD_LOWER)
            or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_DAILY_LOWER)
+           or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_DAILY2_LOWER)
            or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_JOB_LOWER)
            or addon:StringContainsStringIdOrDefault(dext, SI_UNBOXER_CONTRACT_LOWER)
     
@@ -299,3 +319,9 @@ function class.Zone:GetDlcs()
     end
     return staticDlcs
 end
+
+zone = {
+  [54986] -- Sealed Urn
+}
+
+  

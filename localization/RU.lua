@@ -88,6 +88,7 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_PTSOTHER_TOOLTIP"] =        "Open PTS template boxes that don't fit into the above categories.",
     ["SI_UNBOXER_OTHER"] =                   "Unbox Other Containers",
     ["SI_UNBOXER_OTHER_TOOLTIP"] =           "Open all other non-specific containers.",
+    ["SI_UNBOXER_DAILY2_LOWER"] =            "раз в день",
     ["SI_UNBOXER_FISHING_LOWER"] =           "рыболовная",
     ["SI_UNBOXER_EQUIPMENT_BOX_LOWER"] =     "коробка со снаряжением",
     ["SI_UNBOXER_JEWELRY_BOX_LOWER"] =       "коробка с ювелирными изделиями",
@@ -102,4 +103,9 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_LAUNDERED_LOWER"] =         "отмытых",
     ["SI_UNBOXER_ALL_LOWER"] =               " все ",
     ["SI_UNBOXER_FOUND_LOWER"] =             " Нашел в ",
+    ["SI_UNBOXER_FULL_SUITE_LOWER"] =        "полный",
+    ["SI_UNBOXER_UNKNOWN_ITEM_LOWER"] =      "неизвестный предмет",
+    ["SI_UNBOXER_COFFER_LOWER"] =            "сейф",
+    ["SI_UNBOXER_STRONG_BOX_LOWER"] =        "сейф",
+}
 }
