@@ -110,4 +110,8 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_MEDIUM_ARMOR_LOWER"] =      "mittlere rüstung",
     ["SI_UNBOXER_STAFF_LOWER"] =             "stab",
     ["SI_UNBOXER_JOB_LOWER"] =               "kontrakt",
+    ["SI_UNBOXER_LAUNDERED_LOWER"] =         "geschobene",
+    ["SI_UNBOXER_ALL_LOWER"] =               " alle ",
+    ["SI_UNBOXER_FOUND_LOWER"] =             " aus den ",
+    ["SI_UNBOXER_FOUND2_LOWER"] =            " aus dem ",
 }

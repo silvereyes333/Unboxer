@@ -110,4 +110,8 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_MEDIUM_ARMOR_LOWER"] =      "armure moyenne",
     ["SI_UNBOXER_STAFF_LOWER"] =             "bâton",
     ["SI_UNBOXER_JOB_LOWER"] =               "contrat",
+    ["SI_UNBOXER_LAUNDERED_LOWER"] =         "blanchie",
+    ["SI_UNBOXER_ALL_LOWER"] =               " tout ",
+    ["SI_UNBOXER_FOUND_LOWER"] =             " trouvé ",
+    ["SI_UNBOXER_FOUND2_LOWER"] =            " obtenu ",
 }

@@ -126,4 +126,9 @@ UNBOXER_DEFAULT_STRINGS = {
     ["SI_UNBOXER_RAW_MATERIAL_LOWER"] =      "raw material",
     ["SI_UNBOXER_FURNISHING_LOWER"] =        "furnishing",
     ["SI_UNBOXER_JOB_LOWER"] =               "job",
+    ["SI_UNBOXER_STOLEN_LOWER"] =            "stolen",
+    ["SI_UNBOXER_LAUNDERED_LOWER"] =         "laundered",
+    ["SI_UNBOXER_ALL_LOWER"] =               " all ",
+    ["SI_UNBOXER_CRAGLORN_LOWER"] =          "craglorn",
+    ["SI_UNBOXER_FOUND_LOWER"] =             " found in ",
 }

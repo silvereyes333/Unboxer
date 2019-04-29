@@ -2,6 +2,7 @@ local addon = Unboxer
 local class = addon.classes
 local debug = false
 local staticLocations
+local staticDlcs
 
 --[[ REPEATABLE ACTIVITY REWARDS RULES ]]--
 
@@ -106,7 +107,10 @@ function class.Dungeon:New()
 end
 
 function class.Dungeon:Match(data)
-    if self:MatchActivityByNameAndFlavorText(data) == LFG_ACTIVITY_DUNGEON then
+    if not string.find(data.name, ":")
+       and data.quality < ITEM_QUALITY_LEGENDARY
+       and self:MatchActivityByNameAndFlavorText(data) == LFG_ACTIVITY_DUNGEON
+    then
         return true, -- isMatch
                true  -- canUnbox
     end
@@ -127,7 +131,8 @@ function class.Trial:Match(data)
     if (  addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_UNDAUNTED_LOWER)
           and addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_WEEKLY_LOWER)
        )
-       or self:MatchActivityByNameAndFlavorText(data) == LFG_ACTIVITY_TRIAL
+       or (not string.find(data.name, ":") 
+           and self:MatchActivityByNameAndFlavorText(data) == LFG_ACTIVITY_TRIAL)
     then
         return true, -- isMatch
                true  -- canUnbox
@@ -138,15 +143,19 @@ end
 -- Zone repeatable activites (e.g. dailies, Rewards for the Worthy, etc.)
 class.Zone = class.Rule:Subclass()
 function class.Zone:New()
-    return class.Rule.New(self, 
+    local instance = class.Rule.New(self, 
       "zone",
       140296, -- [Unidentified Summerset Chest Armor]
       { -- dependencies
-          "vendorGear",
-          "trial",
           "crafting",
-      } 
+          "festival",
+          "thief",
+          "trial",
+          "vendorGear",
+      }
     )
+    instance.pts = class.Pts:New()
+    return instance
 end
 class.Zone.rulebreakers = {
     [134619] = true, -- [Rewards for the Worthy]
@@ -183,6 +192,13 @@ function class.Zone:Match(data)
                true  -- canUnbox
     end
     
+    
+    
+    --[[ EVERYTHING BELOW HERE SHOULD EXCLUDE SPECIFICALLY-MATCHED PTS GEAR ]]--
+    if self.pts:Match(data) then return end
+    
+    
+    
     -- Matches "Merit" containers like 96387 [Undaunted Merits] for guild skill tree lines
     if self:MatchGuildSkillLineName(data.name) then
         return true, -- isMatch
@@ -192,11 +208,15 @@ function class.Zone:Match(data)
     
     -- Matches daily reward containers
     if data.bindType == BIND_TYPE_ON_PICKUP
-       and (addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_REWARD_LOWER)
-            or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_DAILY_LOWER)
-            or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_JOB_LOWER)
-            or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_CONTRACT_LOWER))
+       and self:MatchDailyQuestText(data.flavorText)
     then
+        return true, -- isMatch
+               true  -- canUnbox
+    end
+    
+    
+    -- Matches DLC zone names
+    if self:MatchDlcNameText(data.name) or self:MatchDlcNameText(data.flavorText) then
         return true, -- isMatch
                true  -- canUnbox
     end
@@ -231,6 +251,51 @@ function class.Zone:MatchGuildSkillLineName(text)
         end
     end
 end
-local function ContainsDailyQuestText(search)
-    local self = class.Zone
+function class.Zone:MatchDailyQuestText(text)
+    return addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_REWARD_LOWER)
+           or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_DAILY_LOWER)
+           or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_JOB_LOWER)
+           or addon:StringContainsStringIdOrDefault(dext, SI_UNBOXER_CONTRACT_LOWER)
+    
+end
+function class.Zone:MatchDlcNameText(text)
+    for _, dlc in ipairs(self:GetDlcs()) do
+        if string.find(text, dlc.name) or string.find(text, dlc.zoneName) then
+            return true
+        end
+    end
+end
+
+
+function class.Zone:GetDlcs()
+    if staticDlcs then return staticDlcs end
+    
+    local dlcType=COLLECTIBLE_CATEGORY_TYPE_DLC
+    local dlcCollectibles = {}
+    staticDlcs = {}
+    for index=1,GetTotalCollectiblesByCategoryType(dlcType) do
+        local collectibleId = GetCollectibleIdFromType(dlcType, index)
+        local name = LocaleAwareToLower(GetCollectibleName(collectibleId))
+        dlcCollectibles[collectibleId] = name
+    end
+    local zoneIndex = 1
+    while true do
+        local zoneName = GetZoneNameByIndex(zoneIndex)
+        if(zoneName == "") then break end
+        local zoneId = GetZoneId(zoneIndex)
+        local parentZoneId = GetParentZoneId(zoneId)
+        local collectibleId = GetCollectibleIdForZone(zoneIndex)
+        if collectibleId and dlcCollectibles[collectibleId] and zoneId == parentZoneId then
+            zoneName = LocaleAwareToLower(zoneName)
+            local collectibleName = dlcCollectibles[collectibleId]
+            table.insert(staticDlcs, {
+                    ["collectibleId"] = collectibleId,
+                    ["name"] = collectibleName,
+                    ["zoneIndex"] = zoneIndex,
+                    ["zoneName"] = zoneName,
+                })
+        end
+        zoneIndex = zoneIndex + 1
+    end
+    return staticDlcs
 end

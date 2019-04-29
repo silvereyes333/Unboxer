@@ -27,6 +27,8 @@ function class.Pts:Match(data)
        or GetItemLinkOnUseAbilityInfo(data.itemLink) -- only PTS boxes grant abilities
        or string.find(data.flavorText, " pts ")
        or self:MatchItemSetsText(data.name)
+       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_ALL_LOWER) -- Contains the word " all " surrounded by spaces (if supported by locale)
+       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FOUND_LOWER) -- Contains the phrase " found in " surrounded by spaces (if supported by locale)
        or (string.find(data.icon, "quest_container_001") -- misc containers
            and data.quality < ITEM_QUALITY_ARTIFACT)
     then

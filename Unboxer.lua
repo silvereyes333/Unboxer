@@ -268,7 +268,7 @@ local function LookupOldFilterCategories(itemId)
     end
 end
 
-function addon:GetItemLinkData(itemLink)
+function addon:GetItemLinkData(itemLink, language)
 
     local itemType, specializedItemType = GetItemLinkItemType(itemLink)
     local itemId = GetItemLinkItemId(itemLink)
@@ -303,6 +303,12 @@ function addon:GetItemLinkData(itemLink)
         data["collectibleUnlocked"]     = IsCollectibleUnlocked(data.collectibleId)
     end
     
+    local text = addon.settings.containerDetails[itemId] and addon.settings.containerDetails[itemId]["text"] or {}
+    if language and text[language] then
+        data["name"] = text.name
+        data["flavorText"] = text.flavorText
+    end
+    
   
     local containerType = "unknown"
     for ruleIndex, rule in ipairs(self.rules) do
@@ -313,7 +319,6 @@ function addon:GetItemLinkData(itemLink)
     end
     
     local interactionType = addon.settings.containerDetails[itemId] and addon.settings.containerDetails[itemId]["interactionType"]
-    local text = addon.settings.containerDetails[itemId] and addon.settings.containerDetails[itemId]["text"] or {}
     text[GetCVar("language.2")] = {
         ["name"] = name,
         ["flavorText"] = flavorText,
@@ -802,16 +807,10 @@ function addon:RegisterEvents()
 end
 function addon:GetRuleInsertIndex(instance)
     
-    local dependencies = instance.dependencies
-    
     for ruleIndex = 1, #self.rules do
         local rule = self.rules[ruleIndex]
-        if rule.dependencies then
-            for _, dependency in ipairs(rule.dependencies) do
-                if dependency == instance.name then
-                    return ruleIndex
-                end
-            end
+        if rule:IsDependentUpon(instance) then
+            return ruleIndex
         end
     end
     
@@ -825,6 +824,18 @@ function addon:RegisterCategoryRule(class)
     
     local instance = class:New()
     local insertIndex = self:GetRuleInsertIndex(instance)
+    local rulesToMove = {}
+    for ruleIndex=insertIndex + 1, #self.rules do
+        local rule = self.rules[ruleIndex]
+        if instance:IsDependentUpon(rule) then
+            table.insert(rulesToMove, ruleIndex)
+        end
+    end
+    for _, ruleIndex in ipairs(rulesToMove) do
+        local rule = table.remove(self.rules, ruleIndex)
+        table.insert(self.rules, insertIndex, rule)
+        insertIndex = insertIndex + 1
+    end
     table.insert(self.rules, insertIndex, instance)
 end
 local function OnAddonLoaded(event, name)
@@ -834,21 +845,22 @@ local function OnAddonLoaded(event, name)
     EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_ADD_ON_LOADED)
 
     self:AddKeyBind()
-    self:RegisterCategoryRule("Runeboxes")
-    self:RegisterCategoryRule("StylePages")
     self:RegisterCategoryRule("CraftingMaterials")
     self:RegisterCategoryRule("CraftingWrits")
-    self:RegisterCategoryRule("Pts")
     self:RegisterCategoryRule("Dungeon")
-    self:RegisterCategoryRule("Trial")
-    self:RegisterCategoryRule("Zone")
     self:RegisterCategoryRule("Festival")
     self:RegisterCategoryRule("Fishing")
+    self:RegisterCategoryRule("Furnisher")
+    self:RegisterCategoryRule("MagesGuildReprints")
+    self:RegisterCategoryRule("Pts")
+    self:RegisterCategoryRule("Runeboxes")
+    self:RegisterCategoryRule("StylePages")
+    self:RegisterCategoryRule("Thief")
     self:RegisterCategoryRule("Transmutation")
     self:RegisterCategoryRule("TreasureMaps")
-    self:RegisterCategoryRule("MagesGuildReprints")
-    self:RegisterCategoryRule("Furnisher")
+    self:RegisterCategoryRule("Trial")
     self:RegisterCategoryRule("VendorGear")
+    self:RegisterCategoryRule("Zone")
     self:SetupSettings()
 end
 

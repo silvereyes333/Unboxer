@@ -15,7 +15,7 @@ function class.CraftingMaterials:New()
 end
 
 function class.CraftingMaterials:Match(data)
-    if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_RAW_MATERIAL_LOWER) then
+    if addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_RAW_MATERIAL_LOWER) then
         return true, -- isMatch
                true  -- canUnbox
     end

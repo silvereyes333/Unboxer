@@ -99,4 +99,7 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_ITEM_SETS_LOWER"] =         "комплекты",
     ["SI_UNBOXER_RENOWNED_LOWER"] =          "знаменитый",
     ["SI_UNBOXER_JOB_LOWER"] =               "контракта",
+    ["SI_UNBOXER_LAUNDERED_LOWER"] =         "отмытых",
+    ["SI_UNBOXER_ALL_LOWER"] =               " все ",
+    ["SI_UNBOXER_FOUND_LOWER"] =             " Нашел в ",
 }

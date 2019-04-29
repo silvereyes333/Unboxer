@@ -114,4 +114,7 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_STAFF_LOWER"] =             "杖",
     ["SI_UNBOXER_JOB_LOWER"] =               "任務を",
     ["SI_UNBOXER_REWARD_LOWER"] =            "報酬"
+    ["SI_UNBOXER_LAUNDERED_LOWER"] =         "洗浄済",
+    ["SI_UNBOXER_ALL_LOWER"] =               "全て",
+    ["SI_UNBOXER_FOUND_LOWER"] =             "で見つかった",
 }

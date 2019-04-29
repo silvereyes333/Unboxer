@@ -23,7 +23,10 @@ function class.Rule:Initialize(name, exampleItemId, dependencies)
     if type(dependencies) ~= "table" then
         dependencies = { dependencies }
     end
-    self.dependencies = dependencies
+    self.dependencies = {}
+    for _, dependencyName in ipairs(dependencies) do
+        self.dependencies[dependencyName] = true
+    end
 end
 
 --[[ Generates LibAddonMenu2 configuration options for enabling/disabling this rule ]]--
@@ -89,6 +92,10 @@ end
 
 function class.Rule:IsAutolootEnabled()
     return addon.settings[self.autolootSettingName]
+end
+
+function class.Rule:IsDependentUpon(rule)
+    return self.dependencies[rule.name]
 end
 
 function class.Rule:IsEnabled()

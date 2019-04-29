@@ -45,6 +45,25 @@ function class.Fishing:Match(data)
 end
 
 
+-- Thief
+class.Thief = class.Rule:Subclass()
+function class.Thief:New()
+    return class.Rule.New(self, 
+      "thief",
+      119561 -- Professional Thief's Satchel of Laundered Goods
+    )
+end
+
+function class.Thief:Match(data)
+    if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_STOLEN_LOWER)
+       or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_LAUNDERED_LOWER)
+    then
+        return true, -- isMatch
+               true  -- canUnbox
+    end
+end
+
+
 -- Transmutation Geodes
 class.Transmutation = class.Rule:Subclass()
 function class.Transmutation:New()
