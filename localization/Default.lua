@@ -138,4 +138,5 @@ UNBOXER_DEFAULT_STRINGS = {
     ["SI_UNBOXER_UNKNOWN_ITEM_PATTERN"] =    "^unknown .+ item$",
     ["SI_UNBOXER_COFFER_LOWER"] =            "coffer",
     ["SI_UNBOXER_STRONG_BOX_LOWER"] =        "strong box",
+    ["SI_UNBOXER_WAXED_LOWER"] =             "^waxed ",
 }

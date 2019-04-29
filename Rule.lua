@@ -114,6 +114,11 @@ function class.Rule:OnAutolootSet(value)
     -- Optional: Override this in your child class
 end
 
+function class.Rule:IsUnboxableMatch()
+    return true, true
+end
+
+
 function class.Rule:SetAutolootEnabled(value) 
     addon.settings[self.autolootSettingName] = value
     addon.Debug("auto loot set for " .. self.name, debug)

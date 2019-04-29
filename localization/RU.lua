@@ -107,5 +107,6 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_UNKNOWN_ITEM_LOWER"] =      "неизвестный предмет",
     ["SI_UNBOXER_COFFER_LOWER"] =            "сейф",
     ["SI_UNBOXER_STRONG_BOX_LOWER"] =        "сейф",
+    ["SI_UNBOXER_WAXED_LOWER"] =             "вощеный",
 }
 }

@@ -111,8 +111,7 @@ function class.Dungeon:Match(data)
        and data.quality < ITEM_QUALITY_LEGENDARY
        and self:MatchActivityByNameAndFlavorText(data) == LFG_ACTIVITY_DUNGEON
     then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
 end
 
@@ -134,8 +133,7 @@ function class.Trial:Match(data)
        or (not string.find(data.name, ":") 
            and self:MatchActivityByNameAndFlavorText(data) == LFG_ACTIVITY_TRIAL)
     then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
 end
 
@@ -162,8 +160,7 @@ end
 function class.Zone:Match(data)
   
     if zone[data.itemId] then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
   
     if string.find(data.name, ":") then
@@ -177,8 +174,12 @@ function class.Zone:Match(data)
        and (addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_UNIDENTIFIED_LOWER)
             or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_UNIDENTIFIED2_LOWER))
     then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
+    end
+    
+    -- Match champion caches
+    if string.find(data.icon, "mail_armor_container") then
+        return self:IsUnboxableMatch()
     end
   
     -- Matches containers like 81226 [Unidentified Craglorn Weapon] and 87704 [Serpent's Celestial Recompense],
@@ -186,8 +187,7 @@ function class.Zone:Match(data)
     if data.flavorText == "" and string.find(data.icon, "quest_container_001") 
        and data.quality < ITEM_QUALITY_ARTIFACT
     then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
     
     
@@ -196,8 +196,7 @@ function class.Zone:Match(data)
        and (self:MatchDailyQuestText(data.name)
             or self:MatchDailyQuestText(data.flavorText))
     then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
     
     
@@ -206,8 +205,7 @@ function class.Zone:Match(data)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_UNKNOWN_ITEM_LOWER)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_UNKNOWN_ITEM_LOWER)
     then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
     
     
@@ -216,8 +214,7 @@ function class.Zone:Match(data)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_STRONG_BOX_LOWER)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_STRONG_BOX2_LOWER)
     then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
     
     
@@ -229,15 +226,13 @@ function class.Zone:Match(data)
     
     -- Matches "Merit" containers like 96387 [Undaunted Merits] for guild skill tree lines
     if self:MatchGuildSkillLineName(data.name) then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
     
     
     -- Matches DLC zone names
     if self:MatchDlcNameText(data.name) or self:MatchDlcNameText(data.flavorText) then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
 end
 
@@ -321,7 +316,7 @@ function class.Zone:GetDlcs()
 end
 
 zone = {
-  [54986] -- Sealed Urn
+  [54986] = true -- Sealed Urn
 }
 
   

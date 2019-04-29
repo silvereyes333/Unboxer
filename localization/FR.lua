@@ -122,4 +122,5 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_COFFER_LOWER"] =            "coffre",
     ["SI_UNBOXER_STRONG_BOX_LOWER"] =        "cantine",
     ["SI_UNBOXER_STRONG_BOX2_LOWER"] =       "cassette",
+    ["SI_UNBOXER_WAXED_LOWER"] =             " ciré$",
 }

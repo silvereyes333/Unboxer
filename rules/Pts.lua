@@ -26,8 +26,7 @@ function class.Pts:Match(data)
        or (string.find(data.icon, "quest_container_001") -- misc containers
            and data.quality < ITEM_QUALITY_ARTIFACT)
     then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
 end
 
@@ -45,8 +44,7 @@ function class.Pts:MatchExceptIcon(data)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FULL_SUITE2_LOWER)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FULL_SUITE3_LOWER)
     then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
 end
 

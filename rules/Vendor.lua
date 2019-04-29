@@ -16,8 +16,7 @@ end
 
 function class.MagesGuildReprints:Match(data)
     if string.find(data.icon, 'housing.*book') then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
 end
 
@@ -35,8 +34,7 @@ function class.Furnisher:Match(data)
     if data.bindType == BIND_TYPE_ON_PICKUP 
        and addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FURNISHING_LOWER)
     then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
 end
 
@@ -66,8 +64,7 @@ function class.VendorGear:Match(data)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_OFFENSIVE_LOWER)         -- Elite Gear Vendor 
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_DEFENSIVE_LOWER)         -- Elite Gear Vendor
     then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
     
     -- Match generic leveling containers like 55328	[Secret Heavy Armor], which have no flavor text
@@ -75,8 +72,7 @@ function class.VendorGear:Match(data)
        and data.quality < ITEM_QUALITY_ARTIFACT
        and self:MatchGenericEquipmentText(data.name)
     then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
 end
 

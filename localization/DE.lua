@@ -123,4 +123,5 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_UNKNOWN_ITEM_PATTERN"] =    "^unbekannter gegenstand ",
     ["SI_UNBOXER_COFFER_LOWER"] =            "kassette",
     ["SI_UNBOXER_STRONG_BOX_LOWER"] =        "kassette",
+    ["SI_UNBOXER_WAXED_LOWER"] =             "^gewachstes ",
 }

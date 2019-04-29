@@ -22,13 +22,13 @@ function class.Festival:Match(data)
                 or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_BOX_LOWER)
                 or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_BOX2_LOWER)))
     then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
 end
 
 
 -- Fishing
+local fishing
 class.Fishing = class.Rule:Subclass()
 function class.Fishing:New()
     return class.Rule.New(self, 
@@ -38,11 +38,15 @@ function class.Fishing:New()
 end
 
 function class.Fishing:Match(data)
-    if addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FISHING_LOWER) then
-        return true, -- isMatch
-               true  -- canUnbox
+    if fishing[data.itemId] 
+       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FISHING_LOWER)
+    then
+        return self:IsUnboxableMatch()
     end
 end
+fishing = {
+  [139011] = true -- Waterlogged Psijic Satchel
+}
 
 
 -- Thief
@@ -58,8 +62,7 @@ function class.Thief:Match(data)
     if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_STOLEN_LOWER)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_LAUNDERED_LOWER)
     then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
 end
 
@@ -75,8 +78,7 @@ end
 
 function class.Transmutation:Match(data)
     if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_TRANSMUTATION_LOWER) then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
 end
 
@@ -92,7 +94,6 @@ end
 
 function class.TreasureMaps:Match(data)
     if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_TREASURE_MAP_LOWER) then
-        return true, -- isMatch
-               true  -- canUnbox
+        return self:IsUnboxableMatch()
     end
 end

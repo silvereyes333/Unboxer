@@ -124,4 +124,6 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_UNKNOWN_ITEM_PATTERN"] =    "^不明な.*アイテム$",
     ["SI_UNBOXER_COFFER_LOWER"] =            "貴品箱",
     ["SI_UNBOXER_STRONG_BOX_LOWER"] =        "金庫",
+    ["SI_UNBOXER_WAXED_LOWER"] =             "のロウ引き",
+    ["SI_UNBOXER_WAXED2_LOWER"] =            "^蝋塗さ",
 }
