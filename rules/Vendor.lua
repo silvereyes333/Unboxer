@@ -5,17 +5,26 @@ local debug = false
 --[[ VENDOR CONTAINER RULES ]]--
 
 
--- Mages Guild Reprints
-class.MagesGuildReprints  = class.Rule:Subclass()
-function class.MagesGuildReprints:New()
-    return class.Rule.New(self, 
-      "mageGuildReprints",
+-- Lore Book Reprints
+class.LoreBookReprints  = class.Rule:Subclass()
+function class.LoreBookReprints:New()
+    local instance = class.Rule.New(self, 
+      "reprints",
       120384 -- [Guild Reprint: Daedric Princes]
     )
+    instance.pts = addon.classes.Pts:New()
+    return instance
 end
 
-function class.MagesGuildReprints:Match(data)
+function class.LoreBookReprints:Match(data)
+  
+    -- Mages Guild reprints
     if string.find(data.icon, 'housing.*book') then
+        return self:IsUnboxableMatch()
+    end
+    
+    -- Match any non-PTS containers that have an icon with "book" in the name
+    if string.find(data.icon, 'book') and not self.pts:MatchExceptColonAndIcon(data) then
         return self:IsUnboxableMatch()
     end
 end
@@ -59,6 +68,7 @@ function class.VendorGear:Match(data)
        or addon:StringContainsNotAtStart(data.name, SI_UNBOXER_JEWELRY_BOX_LOWER)                    -- Tel-Var Jewelry Merchant (legacy)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_EQUIPMENT_BOX_LOWER)           -- Tel-Var Equipment Vendor (current)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_EQUIPMENT_BOX2_LOWER)
+       or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_ARMOR_BOX_LOWER)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_CP160_ADVENTURERS_LOWER) -- Tel-Var Equipment Vendor (legacy)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_COMMON_LOWER)            -- Legacy "Unidentified" gear
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_OFFENSIVE_LOWER)         -- Elite Gear Vendor 
@@ -74,13 +84,21 @@ function class.VendorGear:Match(data)
     then
         return self:IsUnboxableMatch()
     end
+    
+    -- Match non-legendary enchantment boxes (legacy)
+    if data.quality < ITEM_QUALITY_LEGENDARY
+       and addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_ENCHANTMENT_LOWER)
+    then
+        return self:IsUnboxableMatch()
+    end
 end
 
 function class.VendorGear:MatchGenericEquipmentText(text)
     local stringIds = { 
         SI_UNBOXER_1H_WEAPON_LOWER, SI_UNBOXER_2H_WEAPON_LOWER, SI_UNBOXER_METAL_WEAPON_LOWER,
         SI_UNBOXER_WOOD_WEAPON_LOWER, SI_UNBOXER_ACCESSORY_LOWER, SI_UNBOXER_HEAVY_ARMOR_LOWER,
-        SI_UNBOXER_LIGHT_ARMOR_LOWER, SI_UNBOXER_MEDIUM_ARMOR_LOWER, SI_UNBOXER_STAFF_LOWER
+        SI_UNBOXER_LIGHT_ARMOR_LOWER, SI_UNBOXER_MEDIUM_ARMOR_LOWER, SI_UNBOXER_STAFF_LOWER,
+        SI_UNBOXER_EQUIPMENT_LOWER
     }
     for _, stringId in ipairs(stringIds) do
         if addon:StringContainsStringIdOrDefault(text, stringId) then
@@ -90,6 +108,10 @@ function class.VendorGear:MatchGenericEquipmentText(text)
 end
 
 vendorGear = {
-  [69416] = true,
-  [69418] = true,
+  [69416]  = true, -- Unknown Imperial Reward
+  [69418]  = true, -- Superb Imperial Reward
+  [44798]  = true, -- Unidentified Accessory
+  [44891]  = true, -- Unidentified Armor
+  [44892]  = true, -- Unidentified Weapon
+  [117924] = true  -- Superb Imperial Reward
 }

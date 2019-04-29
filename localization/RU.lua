@@ -91,6 +91,8 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_DAILY2_LOWER"] =            "раз в день",
     ["SI_UNBOXER_FISHING_LOWER"] =           "рыболовная",
     ["SI_UNBOXER_EQUIPMENT_BOX_LOWER"] =     "коробка со снаряжением",
+    ["SI_UNBOXER_EQUIPMENT_LOWER"] =         "снаряжением",
+    ["SI_UNBOXER_ARMOR_BOX_LOWER"] =         "коробка со броня",
     ["SI_UNBOXER_JEWELRY_BOX_LOWER"] =       "коробка с ювелирными изделиями",
     ["SI_UNBOXER_UNIDENTIFIED_LOWER"] =      "нераспознанный",
     ["SI_UNBOXER_BOX_LOWER"] =               "коробка",
@@ -108,5 +110,8 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_COFFER_LOWER"] =            "сейф",
     ["SI_UNBOXER_STRONG_BOX_LOWER"] =        "сейф",
     ["SI_UNBOXER_WAXED_LOWER"] =             "вощеный",
+    ["SI_UNBOXER_FOR_CRAFTING_LOWER"] =      "предметы для изготовления",
+    ["SI_UNBOXER_GIFT_FROM_LOWER"] =         "дар от",
+    ["SI_UNBOXER_GIFT_FROM2_LOWER"] =        "подарок",
 }
 }

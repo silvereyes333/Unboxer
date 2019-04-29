@@ -117,6 +117,7 @@ end
 
 
 -- Trial
+local trial
 class.Trial = class.LFGActivity:Subclass()
 function class.Trial:New()
     return class.Rule.New(self, 
@@ -132,10 +133,15 @@ function class.Trial:Match(data)
        )
        or (not string.find(data.name, ":") 
            and self:MatchActivityByNameAndFlavorText(data) == LFG_ACTIVITY_TRIAL)
+       or trial[data.itemId]
     then
         return self:IsUnboxableMatch()
     end
 end
+
+trial = {
+  [87704] = true -- Serpent's Celestial Recompense
+}
 
 
 -- Zone repeatable activites (e.g. dailies, Rewards for the Worthy, etc.)
@@ -147,7 +153,8 @@ function class.Zone:New()
       140296, -- [Unidentified Summerset Chest Armor]
       { -- dependencies
           "crafting",
-          "festival",
+          "festival"
+          "materials",
           "thief",
           "trial",
           "vendorGear",
@@ -200,19 +207,14 @@ function class.Zone:Match(data)
     end
     
     
-    -- Matches "Unknown Item" boxes
-    if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_UNKNOWN_ITEM_PATTERN)
+    if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_UNKNOWN_ITEM_PATTERN) -- "Unknown Item" boxes
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_UNKNOWN_ITEM_LOWER)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_UNKNOWN_ITEM_LOWER)
-    then
-        return self:IsUnboxableMatch()
-    end
-    
-    
-    -- Matches "coffer" and "strongbox" items
-    if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_COFFER_LOWER)
+       or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_COFFER_LOWER) -- "coffer" and "strongbox" items
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_STRONG_BOX_LOWER)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_STRONG_BOX2_LOWER)
+       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_GIFT_FROM_LOWER) -- "gift from" boxes
+       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_GIFT_FROM2_LOWER)
     then
         return self:IsUnboxableMatch()
     end
@@ -224,14 +226,11 @@ function class.Zone:Match(data)
     
     
     
-    -- Matches "Merit" containers like 96387 [Undaunted Merits] for guild skill tree lines
-    if self:MatchGuildSkillLineName(data.name) then
-        return self:IsUnboxableMatch()
-    end
     
-    
-    -- Matches DLC zone names
-    if self:MatchDlcNameText(data.name) or self:MatchDlcNameText(data.flavorText) then
+    if self:MatchGuildSkillLineName(data.name) -- Matches "Merit" for guild skill tree lines
+       or self:MatchDlcNameText(data.name) or self:MatchDlcNameText(data.flavorText) -- DLC zone names
+       or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_CYRODIIL_LOWER) -- cyrodiil in name
+    then
         return self:IsUnboxableMatch()
     end
 end
@@ -316,7 +315,11 @@ function class.Zone:GetDlcs()
 end
 
 zone = {
-  [54986] = true -- Sealed Urn
+  [54986] = true, -- Sealed Urn
+  [79502] = true, -- Bloody Bag
+  [79503] = true, -- Sealed Crate
+  [79504] = true, -- Unmarked Sack, dropped from DB shadowy supplier
+  [79677] = true -- Assassin's Potion Kit, dropped from DB shadowy supplier
 }
 
   

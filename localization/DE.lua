@@ -94,6 +94,8 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_FISHING_LOWER"] =           "angel",
     ["SI_UNBOXER_EQUIPMENT_BOX_LOWER"] =     "ausrüstungskiste",
     ["SI_UNBOXER_EQUIPMENT_BOX2_LOWER"] =    "ausrüstungskassette",
+    ["SI_UNBOXER_EQUIPMENT_LOWER"] =         "ausrüstung",
+    ["SI_UNBOXER_ARMOR_BOX_LOWER"] =         "rüstungskasette",
     ["SI_UNBOXER_JEWELRY_BOX_LOWER"] =       "schmuckkassette",
     ["SI_UNBOXER_UNIDENTIFIED_LOWER"] =      "unidentifizierte",
     ["SI_UNBOXER_BOX_LOWER"] =               "gabe",
@@ -124,4 +126,6 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_COFFER_LOWER"] =            "kassette",
     ["SI_UNBOXER_STRONG_BOX_LOWER"] =        "kassette",
     ["SI_UNBOXER_WAXED_LOWER"] =             "^gewachstes ",
+    ["SI_UNBOXER_FOR_CRAFTING_LOWER"] =      "gegenstände für die herstellung",
+    ["SI_UNBOXER_GIFT_FROM_LOWER"] =         "geschenk von",
 }

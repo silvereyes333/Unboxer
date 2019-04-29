@@ -102,6 +102,7 @@ UNBOXER_DEFAULT_STRINGS = {
     ["SI_UNBOXER_GIFT_LOWER"] =              "gift",
     ["SI_UNBOXER_FISHING_LOWER"] =           "fishing",
     ["SI_UNBOXER_EQUIPMENT_BOX_LOWER"] =     "equipment box",
+    ["SI_UNBOXER_ARMOR_BOX_LOWER"] =         "armor box",
     ["SI_UNBOXER_EQUIPMENT_BOX2_LOWER"] =    "",
     ["SI_UNBOXER_JEWELRY_BOX_LOWER"] =       "jewelry box",
     ["SI_UNBOXER_UNIDENTIFIED_LOWER"] =      "unidentified",
@@ -139,4 +140,7 @@ UNBOXER_DEFAULT_STRINGS = {
     ["SI_UNBOXER_COFFER_LOWER"] =            "coffer",
     ["SI_UNBOXER_STRONG_BOX_LOWER"] =        "strong box",
     ["SI_UNBOXER_WAXED_LOWER"] =             "^waxed ",
-}
+    ["SI_UNBOXER_ENCHANTMENT_LOWER"] =       "coffer",
+    ["SI_UNBOXER_CYRODIIL_LOWER"] =          "cyrodiil",
+    ["SI_UNBOXER_FOR_CRAFTING_LOWER"] =      "items for crafting",
+    ["SI_UNBOXER_GIFT_FROM_LOWER"] =         "gift from",

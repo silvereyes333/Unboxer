@@ -18,6 +18,7 @@ end
 function class.CraftingMaterials:Match(data)
     if materials[data.itemId] 
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_RAW_MATERIAL_LOWER)
+       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FOR_CRAFTING_LOWER)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_WAXED_LOWER)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_WAXED2_LOWER)
     then

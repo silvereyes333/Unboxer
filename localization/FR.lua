@@ -93,6 +93,7 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_DAILY2_LOWER"] =            "une fois par jour",
     ["SI_UNBOXER_FISHING_LOWER"] =           "votre ligne",
     ["SI_UNBOXER_EQUIPMENT_BOX_LOWER"] =     "boîte d'équipement",
+    ["SI_UNBOXER_ARMOR_BOX_LOWER"] =         "boîte d'armure",
     ["SI_UNBOXER_JEWELRY_BOX_LOWER"] =       "boîte à bijoux",
     ["SI_UNBOXER_UNIDENTIFIED_LOWER"] =      "non-identif",
     ["SI_UNBOXER_BOX_LOWER"] =               "boîte",
@@ -123,4 +124,6 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_STRONG_BOX_LOWER"] =        "cantine",
     ["SI_UNBOXER_STRONG_BOX2_LOWER"] =       "cassette",
     ["SI_UNBOXER_WAXED_LOWER"] =             " ciré$",
+    ["SI_UNBOXER_FOR_CRAFTING_LOWER"] =      "objets pour fabriquer",
+    ["SI_UNBOXER_GIFT_FROM_LOWER"] =         "cadeau d",
 }

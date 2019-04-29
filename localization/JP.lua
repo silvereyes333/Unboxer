@@ -93,6 +93,8 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_DAILY2_LOWER"] =            "に1日に1度",
     ["SI_UNBOXER_FISHING_LOWER"] =           "釣り",
     ["SI_UNBOXER_EQUIPMENT_BOX_LOWER"] =     "装備箱",
+    ["SI_UNBOXER_EQUIPMENT_LOWER"] =         "装備",
+    ["SI_UNBOXER_ARMOR_BOX_LOWER"] =         "鎧の箱",
     ["SI_UNBOXER_JEWELRY_BOX_LOWER"] =       "宝石箱",
     ["SI_UNBOXER_UNIDENTIFIED_LOWER"] =      "未確認",
     ["SI_UNBOXER_UNIDENTIFIED2_LOWER"] =     "未鑑定",
@@ -126,4 +128,6 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_STRONG_BOX_LOWER"] =        "金庫",
     ["SI_UNBOXER_WAXED_LOWER"] =             "のロウ引き",
     ["SI_UNBOXER_WAXED2_LOWER"] =            "^蝋塗さ",
+    ["SI_UNBOXER_FOR_CRAFTING_LOWER"] =      "を作るためのアイテム",
+    ["SI_UNBOXER_GIFT_FROM_LOWER"] =         "贈り物",
 }

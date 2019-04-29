@@ -23,6 +23,7 @@ end
 
 
 -- Style Pages
+local stylePages
 class.StylePages  = class.Rule:Subclass()
 function class.StylePages:New()
     return class.Rule.New(self, 
@@ -38,4 +39,12 @@ function class.StylePages:Match(data)
         return true,                     -- isMatch
                data.collectibleUnlocked  -- canUnbox
     end
+    
+    if stylePages[data.itemId] then
+        return self:IsUnboxableMatch()
+    end
 end
+
+stylePages = {
+  [135005] = true -- Ragged Style Box
+}
