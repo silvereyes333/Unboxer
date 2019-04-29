@@ -144,3 +144,4 @@ UNBOXER_DEFAULT_STRINGS = {
     ["SI_UNBOXER_CYRODIIL_LOWER"] =          "cyrodiil",
     ["SI_UNBOXER_FOR_CRAFTING_LOWER"] =      "items for crafting",
     ["SI_UNBOXER_GIFT_FROM_LOWER"] =         "gift from",
+}

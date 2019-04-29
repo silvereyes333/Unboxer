@@ -153,7 +153,7 @@ function class.Zone:New()
       140296, -- [Unidentified Summerset Chest Armor]
       { -- dependencies
           "crafting",
-          "festival"
+          "festival",
           "materials",
           "thief",
           "trial",
