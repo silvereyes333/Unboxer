@@ -15,6 +15,12 @@ function class.Festival:New()
 end
 
 function class.Festival:Match(data)
+    
+    -- Exclude PTS items
+    if data.flavorText == "" then
+        return
+    end
+  
     if string.find(data.icon, 'event_') -- Icons with "event_" in them
        or (string.find(data.icon, 'gift') -- Icons with "gift" in them need to have additional name checks to exclude some PTS containers
            and (addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_GIFT_LOWER)

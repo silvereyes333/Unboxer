@@ -170,7 +170,9 @@ function class.Zone:Match(data)
         return self:IsUnboxableMatch()
     end
   
-    if string.find(data.name, ":") then
+    if string.find(data.name, ":") 
+       or data.quality == ITEM_QUALITY_LEGENDARY
+    then
         return
     end
     

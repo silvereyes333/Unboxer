@@ -93,6 +93,7 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_DAILY2_LOWER"] =            "une fois par jour",
     ["SI_UNBOXER_FISHING_LOWER"] =           "votre ligne",
     ["SI_UNBOXER_EQUIPMENT_BOX_LOWER"] =     "boîte d'équipement",
+    ["SI_UNBOXER_EQUIPMENT_LOWER"] =         "équipement",
     ["SI_UNBOXER_ARMOR_BOX_LOWER"] =         "boîte d'armure",
     ["SI_UNBOXER_JEWELRY_BOX_LOWER"] =       "boîte à bijoux",
     ["SI_UNBOXER_UNIDENTIFIED_LOWER"] =      "non-identif",

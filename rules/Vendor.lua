@@ -52,13 +52,21 @@ end
 local vendorGear
 class.VendorGear = class.Rule:Subclass()
 function class.VendorGear:New()
-    return class.Rule.New(self, 
+    local instance = class.Rule.New(self, 
       "vendorGear",
       117643 -- [Black Rose Equipment Box]
     )
+    instance.pts = addon.classes.Pts:New()
+    return instance
 end
 
 function class.VendorGear:Match(data)
+    
+    if string.find(data.name, ":") 
+       or self.pts:MatchAbsoluteIndicators(data)
+    then
+        return
+    end
     
     -- Match various known vendors
     if vendorGear[data.itemId]
