@@ -1,5 +1,6 @@
 local addon = Unboxer
 local LibSavedVars = LibStub("LibSavedVars")
+local LAM2 = LibStub("LibAddonMenu-2.0")
 
 -- Local functions
 local addSettingOptions, addSettingsForFilterCategory, disableWritCreaterAutoloot, setAutolootDefaults
@@ -17,99 +18,12 @@ local exampleItemIds = {
 }
 local renamedSettings
 
-local function GetSetupSettingsCallback(retries)
-    return function()
-        EVENT_MANAGER:UnregisterForUpdate(addon.name..".SetupSettings")
-        addon:SetupSettings(retries)
-    end
-end
-
------------------ Settings -----------------------
-function addon:SetupSettings(retries)
-    local LAM2 = LibStub("LibAddonMenu-2.0")
+local optionsCreated = false
+local onLamPanelEffectivelyShown
+local function CreateOptionsOnLamPanelOpened(panel)
     
-    -- Wait up to five seconds for Lazy Writ Crafter to initialize account settings.
-    if WritCreater and not WritCreater.savedVarsAccountWide then
-        if not retries then
-            retries = 5
-        end
-        if retries >= 0 then
-            EVENT_MANAGER:RegisterForUpdate(self.name..".SetupSettings", 1000, GetSetupSettingsCallback(retries - 1))
-            return
-        end
-    end
-    
-    self.defaults = 
-    {
-        autoloot = tonumber(GetSetting(SETTING_TYPE_LOOT,LOOT_SETTING_AUTO_LOOT)) ~= 0,
-        autolootDelay = 2,
-        reservedSlots = 0,
-        verbose = true,
-        other = true,
-        monster = true,
-        armor = true,
-        weapons = true,
-        jewelry = true,
-        overworld = true,
-        dungeon = true,
-        cyrodiil = true,
-        imperialCity = true,
-        battlegrounds = true,
-        darkBrotherhood = true,
-        nonSet = true,
-        consumables = true,
-        enchantments = true,
-        festival = true,
-        generic = true,
-        rewards = true,
-        runeboxes = false,
-        treasureMaps = true,
-        transmutation = false,
-        alchemy = true,
-        blacksmithing = true,
-        clothier = true,
-        enchanting = true,
-        jewelrycrafting = true,
-        provisioning = true,
-        woodworking = true,
-        furnisher = true,
-        mageGuildReprints = true,
-        questContainers = {},
-        containerDetails = {},
-    }
-    
-    for filterCategory, subfilters in pairs(self.filters) do
-       for settingName in pairs(subfilters) do
-            if not self.defaults[settingName] then
-                self.defaults[settingName] = false
-            end
-            self.defaults[settingName .. "Autoloot"] = self.defaults[settingName]
-            self.defaults[settingName .. "Summary"] = false
-        end
-    end
-
-    self.settings =
-      LibSavedVars:NewAccountWide(self.name .. "_Account", self.defaults)
-                  :AddCharacterSettingsToggle(self.name .. "_Character")
-                  :MigrateFromAccountWide( { name=self.name .. "_Data" } )
-                  :RenameSettings(2, renamedSettings)
-                  :Version(2, setAutolootDefaults)
-                  :RemoveSettings(3, "dataVersion")
-    
-    self.Debug("SetupSettings()", debug)
-
-    local panelData = {
-        type = "panel",
-        name = addon.title,
-        displayName = addon.title,
-        author = addon.author,
-        version = addon.version,
-        slashCommand = "/unboxer",
-        registerForRefresh = true,
-        registerForDefaults = true,
-    }
-    LAM2:RegisterAddonPanel(self.name.."Options", panelData)
-
+    local self = addon
+  
     local optionsTable = {
         
         -- Account-wide settings
@@ -172,6 +86,88 @@ function addon:SetupSettings(retries)
     addSettingOptions(optionsTable, false, "other")
     
     LAM2:RegisterOptionControls(self.name.."Options", optionsTable)
+    
+    onLamPanelEffectivelyShown(panel)
+end
+
+----------------- Settings -----------------------
+function addon:SetupSettings(retries)
+    
+    
+    self.defaults = 
+    {
+        autoloot = tonumber(GetSetting(SETTING_TYPE_LOOT,LOOT_SETTING_AUTO_LOOT)) ~= 0,
+        autolootDelay = 2,
+        reservedSlots = 0,
+        verbose = true,
+        other = true,
+        monster = true,
+        armor = true,
+        weapons = true,
+        jewelry = true,
+        overworld = true,
+        dungeon = true,
+        cyrodiil = true,
+        imperialCity = true,
+        battlegrounds = true,
+        darkBrotherhood = true,
+        nonSet = true,
+        consumables = true,
+        enchantments = true,
+        festival = true,
+        generic = true,
+        rewards = true,
+        runeboxes = false,
+        treasureMaps = true,
+        transmutation = false,
+        alchemy = true,
+        blacksmithing = true,
+        clothier = true,
+        enchanting = true,
+        jewelrycrafting = true,
+        provisioning = true,
+        woodworking = true,
+        furnisher = true,
+        mageGuildReprints = true,
+        questContainers = {},
+        containerDetails = {},
+    }
+    
+    for filterCategory, subfilters in pairs(self.filters) do
+       for settingName in pairs(subfilters) do
+            if not self.defaults[settingName] then
+                self.defaults[settingName] = false
+            end
+            self.defaults[settingName .. "Autoloot"] = self.defaults[settingName]
+            self.defaults[settingName .. "Summary"] = false
+        end
+    end
+
+    self.settings =
+      LibSavedVars:NewAccountWide(self.name .. "_Account", self.defaults)
+                  :AddCharacterSettingsToggle(self.name .. "_Character")
+                  :MigrateFromAccountWide( { name=self.name .. "_Data" } )
+                  :RenameSettings(2, renamedSettings)
+                  :Version(2, setAutolootDefaults)
+                  :RemoveSettings(3, "dataVersion")
+    
+    self.Debug("SetupSettings()", debug)
+    
+    local panelData = {
+        type = "panel",
+        name = addon.title,
+        displayName = addon.title,
+        author = addon.author,
+        version = addon.version,
+        slashCommand = "/unboxer",
+        registerForRefresh = true,
+        registerForDefaults = true,
+    }
+    self.optionsPanel = LAM2:RegisterAddonPanel(self.name.."Options", panelData)
+    
+    -- Hook into the panel creation handler for LAM2
+    onLamPanelEffectivelyShown = self.optionsPanel:GetHandler("OnEffectivelyShown")
+    self.optionsPanel:SetHandler("OnEffectivelyShown", CreateOptionsOnLamPanelOpened)
     
     self:RegisterEvents()
 end
