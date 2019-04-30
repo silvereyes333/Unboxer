@@ -317,11 +317,12 @@ function class.Zone:GetDlcs()
 end
 
 zone = {
-  [54986] = true, -- Sealed Urn
-  [79502] = true, -- Bloody Bag
-  [79503] = true, -- Sealed Crate
-  [79504] = true, -- Unmarked Sack, dropped from DB shadowy supplier
-  [79677] = true -- Assassin's Potion Kit, dropped from DB shadowy supplier
+  [54986]  = true, -- Sealed Urn
+  [79502]  = true, -- Bloody Bag
+  [79503]  = true, -- Sealed Crate
+  [79504]  = true, -- Unmarked Sack, dropped from DB shadowy supplier
+  [79677]  = true, -- Assassin's Potion Kit, dropped from DB shadowy supplier
+  [134969] = true  -- Item Set: Health Rings, level up bonus
 }
 
   

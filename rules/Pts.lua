@@ -3,6 +3,7 @@ local class = addon.classes
 local debug = false
 
 -- PTS
+local pts
 class.Pts = class.Rule:Subclass()
 function class.Pts:New()
     return class.Rule.New(self, 
@@ -52,7 +53,8 @@ function class.Pts:MatchExceptColonAndIcon(data)
 end
 
 function class.Pts:MatchAbsoluteIndicators(data)
-    if GetItemLinkOnUseAbilityInfo(data.itemLink) -- only PTS boxes grant abilities
+    if pts[data.itemId]
+       or GetItemLinkOnUseAbilityInfo(data.itemLink) -- only PTS boxes grant abilities
        or self:MatchItemSetsText(data.name)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_ALL_LOWER) -- Contains the word " all " surrounded by spaces (if supported by locale)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FOUND_LOWER) -- Contains the phrase " found in " surrounded by spaces (if supported by locale)
@@ -78,3 +80,7 @@ function class.Pts:MatchItemSetsText(text)
         return true
     end
 end
+
+pts = {
+  [79670] = true -- Novice Assassin's Kit
+}
