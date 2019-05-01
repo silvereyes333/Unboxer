@@ -15,25 +15,35 @@ function class.Rule:New(...)
     return instance
 end
 
-function class.Rule:Initialize(name, exampleItemId, dependencies)
-    self.name = name
-    self.exampleItemId = exampleItemId
+function class.Rule:Initialize(options)
+    if not options then
+        addon.Debug("Parameter #1 to Rule:New() constructor missing.  Expected options table containing, at the least, an entry for 'name', specifying the rule id / setting name.", debug)
+        return
+    elseif not options.name then
+        addon.Debug("options parameter to Rule:New() missing required table entry 'name', specifying the rule id / setting name.")
+    end
+    self.name = options.name
+    self.exampleItemId = options.exampleItemId
     self.autolootSettingName = self.name .. "Autoloot"
     self.summarySettingName = self.name .. "Summary"
-    if type(dependencies) ~= "table" then
-        dependencies = { dependencies }
+    self.title = options.title or GetString(_G[string.format("SI_UNBOXER_%s", self.name:upper())])
+    self.tooltip = options.tooltip or GetString(_G[string.format("SI_UNBOXER_%s_TOOLTIP", self.name:upper())])
+    self.submenu = options.submenu
+    if type(options.dependencies) ~= "table" then
+        options.dependencies = { options.dependencies }
     end
     self.dependencies = {}
-    for _, dependencyName in ipairs(dependencies) do
+    for _, dependencyName in ipairs(options.dependencies) do
         self.dependencies[dependencyName] = true
     end
+    self.hidden = options.hidden or false
 end
 
 --[[ Generates LibAddonMenu2 configuration options for enabling/disabling this rule ]]--
 function class.Rule:CreateLAM2Options()
-    if not self.name then return end
-    local title = GetString(_G[string.format("SI_UNBOXER_%s", self.name:upper())])
-    local tooltip = GetString(_G[string.format("SI_UNBOXER_%s_TOOLTIP", self.name:upper())])
+    if not self.name or self.hidden then return end
+    local title = self.title
+    local tooltip = self.tooltip
     if self.exampleItemId then
         tooltip = tooltip .. string.format(exampleFormat, self.exampleItemId)
     end

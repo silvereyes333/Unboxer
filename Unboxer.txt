@@ -29,12 +29,23 @@ filters/PtsFilters.lua
 
 ; Rules engines for different categories
 Rule.lua
-rules/Collectibles.lua
-rules/Crafting.lua
+rules/Collectibles/Runeboxes.lua
+rules/Collectibles/StylePages.lua
+rules/Crafting/CraftingRewards.lua
+rules/Crafting/Materials.lua
+rules/General/Festival.lua
+rules/General/Fishing.lua
+rules/General/Legerdemain.lua
+rules/General/TreasureMaps.lua
+rules/General/Vendor.lua
+rules/Rewards/LFGActivity.lua
+rules/Rewards/Dungeon.lua
+rules/Rewards/Trial.lua
+rules/Rewards/Zone.lua
+rules/Vendor/Furnisher.lua
+rules/Vendor/LorebookReprints.lua
+rules/Vendor/VendorGear.lua
 rules/Pts.lua
-rules/Rewards.lua
-rules/Special.lua
-rules/Vendor.lua
 
 
 Bindings.xml

@@ -1,55 +1,12 @@
-local addon = Unboxer
-local class = addon.classes
-local debug = false
-
---[[ VENDOR CONTAINER RULES ]]--
-
-
--- Lore Book Reprints
-class.LoreBookReprints  = class.Rule:Subclass()
-function class.LoreBookReprints:New()
-    local instance = class.Rule.New(self, 
-      "reprints",
-      120384 -- [Guild Reprint: Daedric Princes]
-    )
-    instance.pts = addon.classes.Pts:New()
-    return instance
-end
-
-function class.LoreBookReprints:Match(data)
-  
-    -- Mages Guild reprints
-    if string.find(data.icon, 'housing.*book') then
-        return self:IsUnboxableMatch()
-    end
-    
-    -- Match any non-PTS containers that have an icon with "book" in the name
-    if string.find(data.icon, 'book') and not self.pts:MatchExceptColonAndIcon(data) then
-        return self:IsUnboxableMatch()
-    end
-end
-
-
--- Furnisher Documents
-class.Furnisher = class.Rule:Subclass()
-function class.Furnisher:New()
-    return class.Rule.New(self, 
-      "furnisher",
-      134683 -- [Morrowind Master Furnisher's Document]
-    )
-end
-
-function class.Furnisher:Match(data)
-    if data.bindType == BIND_TYPE_ON_PICKUP 
-       and addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FURNISHING_LOWER)
-    then
-        return self:IsUnboxableMatch()
-    end
-end
-
 
 -- Vendor Equipment Boxes
+
+local addon = Unboxer
+local class = addon.classes
 local vendorGear
+local debug = false
+local submenu = GetString(SI_GAMEPAD_VENDOR_CATEGORY_HEADER)
+
 class.VendorGear = class.Rule:Subclass()
 function class.VendorGear:New()
     local instance = class.Rule.New(self, 
