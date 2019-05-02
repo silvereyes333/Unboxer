@@ -28,6 +28,34 @@ function class.CraftingRewards:Match(data)
     end
 end
 
+function class.CraftingRewards:DisableWritCreaterAutoloot(savedVars)
+    if not savedVars then return end
+    local displayLazyWarning
+    if not savedVars.ignoreAuto then
+        savedVars.ignoreAuto = true
+        displayLazyWarning = true
+    end
+    if savedVars.autoLoot then
+        savedVars.autoLoot = false
+        displayLazyWarning = true
+    end
+    if savedVars.lootContainerOnReceipt then
+        savedVars.lootContainerOnReceipt = false
+        displayLazyWarning = true
+    end
+    return displayLazyWarning
+end
+
+function class.CraftingRewards:OnAutolootSet(value)
+    if not value or not WritCreater then return end
+    local displayLazyWarning = self:DisableWritCreaterAutoloot(WritCreater.savedVars)
+    local displayLazyWarningAccountWide = self:DisableWritCreaterAutoloot(
+        WritCreater.savedVarsAccountWide and WritCreater.savedVarsAccountWide.accountWideProfile)
+    if displayLazyWarning or displayLazyWarningAccountWide then
+        addon.Print("Disabled autoloot settings for |r"..tostring(WritCreater.settings["panel"].displayName))
+    end
+end
+
 crafting = {
   [30333] = true, -- Provisioner Kit
   [30335] = true, -- Blacksmith's Chest

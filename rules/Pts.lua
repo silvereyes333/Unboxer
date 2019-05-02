@@ -22,7 +22,8 @@ function class.Pts:New()
                 "trial",
                 "vendorGear",
                 "zone",
-            }
+            },
+            hidden = true,
         })
 end
 

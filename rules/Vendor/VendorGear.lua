@@ -15,6 +15,7 @@ function class.VendorGear:New()
             name          = "vendorGear",
             exampleItemId = 117643, -- [Black Rose Equipment Box]
             title         = GetString(SI_UNBOXER_VENDOR_GEAR),
+            submenu       = submenu,
         })
     instance.pts = addon.classes.Pts:New()
     return instance

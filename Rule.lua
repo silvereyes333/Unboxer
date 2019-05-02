@@ -26,9 +26,9 @@ function class.Rule:Initialize(options)
     self.exampleItemId = options.exampleItemId
     self.autolootSettingName = self.name .. "Autoloot"
     self.summarySettingName = self.name .. "Summary"
-    self.title = options.title or GetString(_G[string.format("SI_UNBOXER_%s", self.name:upper())])
-    self.tooltip = options.tooltip or GetString(_G[string.format("SI_UNBOXER_%s_TOOLTIP", self.name:upper())])
-    self.submenu = options.submenu
+    self.title = options.title or options.name
+    self.tooltip = options.tooltip or ""
+    self.submenu = options.submenu or GetString(SI_GAMEPLAY_OPTIONS_GENERAL)
     if type(options.dependencies) ~= "table" then
         options.dependencies = { options.dependencies }
     end
@@ -48,6 +48,7 @@ function class.Rule:CreateLAM2Options()
         tooltip = tooltip .. string.format(exampleFormat, self.exampleItemId)
     end
     local optionsTable = {}
+    table.insert(optionsTable, { type = "divider" })
     table.insert(optionsTable,
         {
             type     = "checkbox",
@@ -84,6 +85,8 @@ function class.Rule:CreateLAM2Options()
         })
     
     self:OnAutolootSet(self:IsAutolootEnabled())
+    
+    return optionsTable
 end
 
 --[[ Abstract: determines if this rule applies to a given item link. 

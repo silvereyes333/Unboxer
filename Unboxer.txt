@@ -3,8 +3,9 @@
 ## Description: Adds an Unbox All command that loots all containers of a configured type in the player inventory.
 ## Version: 3.0.0
 ## APIVersion: 100026 100027
-## DependsOn: LibStub LibSavedVars LibAddonMenu-2.0 LibCustomMenu
-## OptionalDependsOn: DolgubonsLazyWritCreator
+## AddOnVersion: 30000
+## DependsOn: LibSavedVars LibAddonMenu-2.0 LibCustomMenu
+## OptionalDependsOn: DolgubonsLazyWritCreator LibStub
 ## SavedVariables: Unboxer_Account
 ## SavedVariables: Unboxer_Character
 
@@ -21,11 +22,6 @@ localization\CreateStrings.lua
 
 Unboxer.lua
 Settings.lua
-filters/CraftingFilters.lua
-filters/GearFilters.lua
-filters/HousingFilters.lua
-filters/LootFilters.lua
-filters/PtsFilters.lua
 
 ; Rules engines for different categories
 Rule.lua

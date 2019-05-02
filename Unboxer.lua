@@ -2,13 +2,13 @@ Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "|c99CCEFsilvereyes|r",
-    version = "2.9.1",
-    filters = {},
+    version = "3.0.0",
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
     classes = {},
     rules = {},
+    submenuOptions = {},
 }
 
 local addon = Unboxer
@@ -89,58 +89,34 @@ function addon:IsItemLinkUnboxable(itemLink)
     local itemType = GetItemLinkItemType(itemLink)
     if itemType ~= ITEMTYPE_CONTAINER then return false end
     
-    local itemId = GetItemLinkItemId(itemLink)
+    local data = self:GetItemLinkData(itemLink)
     
     -- not sure why there's no item id, but return false to be safe
-    if not itemId then return false end
+    if not data.itemId then return false end
     
-    local filterMatched = false
-    
-    -- Do not unbox collectible containers that have already been collected
-    local collectibleId = GetItemLinkContainerCollectibleId(itemLink)
-    if type(collectibleId) == "number" and collectibleId > 0 then
-        
-        local collectibleCategoryType = GetCollectibleCategoryType(collectibleId)
-        if collectibleCategoryType == COLLECTIBLE_CATEGORY_TYPE_OUTFIT_STYLE then
-            filterMatched = "outfitstyles"
-        else
-            filterMatched = "runeboxes"
-        end
-        
-        if IsCollectibleUnlocked(collectibleId) then
-            return false, filterMatched
-        end
-    
-    -- perform filtering for non-collectible containers
-    else
-        for filterCategory, filters in pairs(self.filters) do
-            if filterCategory ~= "collectibles" then
-                for settingName, subFilters in pairs(filters) do
-                    if subFilters[itemId] ~= nil then
-                        filterMatched = settingName
-                        break
-                    end
-                end
-                if filterMatched then
-                    break
-                end
-            end
+    local matchedRule, canUnbox
+    for _, rule in ipairs(self.rules) do
+        local isMatch
+        isMatch, canUnbox = rule:Match(data)
+        if isMatch and canUnbox then
+            matchedRule = rule
+            break
         end
     end
     
-    -- No filters matched.  Handle special cases and catch-all...
-    if not filterMatched then
-        filterMatched = "other"
+    -- No rules matched
+    if not matchedRule then
+        return false
     end
     
-    if not self.settings[filterMatched] 
+    if not matchedRule:IsEnabled()
        or (self.autolooting
-           and (not self.settings.autoloot or not self.settings[filterMatched.."Autoloot"]))
+           and matchedRule:IsAutolootEnabled())
     then
-        return false, filterMatched
+        return false, matchedRule
     end
     
-    return true, filterMatched
+    return true, matchedRule
 end
 
 function addon:IsItemUnboxable(bagId, slotIndex)
@@ -148,14 +124,14 @@ function addon:IsItemUnboxable(bagId, slotIndex)
     
     local itemLink = GetItemLink(bagId, slotIndex)
 
-    local unboxable, filterMatched = self:IsItemLinkUnboxable(itemLink)
+    local unboxable, matchedRule = self:IsItemLinkUnboxable(itemLink)
     if not unboxable then
-        return false, filterMatched
+        return false, matchedRule
     end
     
     local usable, onlyFromActionSlot = IsItemUsable(bagId, slotIndex)
     self.Debug(tostring(itemLink)..", usable: "..tostring(usable)..", onlyFromActionSlot: "..tostring(onlyFromActionSlot))
-    return usable and not onlyFromActionSlot, filterMatched
+    return usable and not onlyFromActionSlot, matchedRule
 end
 
 local HudStateChange
@@ -164,7 +140,7 @@ local itemLink
 local timeoutItemUniqueIds = {}
 local updateExpected = false
 local lootReceived
-local filterSetting
+local matchedRule
 
 local function AbortAction(...)
     addon.Debug("AbortAction")
@@ -183,7 +159,7 @@ local function AbortAction(...)
     addon.itemSlotStack = {}
     lootReceived = nil
     updateExpected = false
-    filterSetting = nil
+    matchedRule = nil
     addon.unboxingItemLink = nil
     KEYBIND_STRIP:UpdateKeybindButtonGroup(addon.unboxAllKeybindButtonGroup)
     -- Print summary
@@ -257,17 +233,6 @@ function addon:IsDefaultLanguageSelected()
     return GetCVar("language.2") == self.defaultLanguage
 end
 
-local function LookupOldFilterCategories(itemId)
-    local self = addon
-    for filterCategory1, category1Filters in pairs(self.filters) do
-        for filterCategory2, filters in pairs(category1Filters) do
-            if filters[itemId] then
-                return filterCategory1, filterCategory2
-            end
-        end
-    end
-end
-
 function addon:GetItemLinkData(itemLink, language)
 
     local itemType, specializedItemType = GetItemLinkItemType(itemLink)
@@ -281,7 +246,6 @@ function addon:GetItemLinkData(itemLink, language)
     local requiredLevel = GetItemLinkRequiredLevel(itemLink)
     local quality = GetItemLinkQuality(itemLink)
     local bindType = GetItemLinkBindType(itemLink)
-    local filterCategory1, filterCategory2 = LookupOldFilterCategories(itemId)
     
     local data = {
         ["itemId"]                 = itemId,
@@ -327,8 +291,6 @@ function addon:GetItemLinkData(itemLink, language)
     return {
         ["containerType"] = containerType,
         ["itemLink"] = itemLink,
-        ["filterCategory1"] = filterCategory1,
-        ["filterCategory2"] = filterCategory2,
         ["bindType"] = bindType,
         ["icon"] = icon,
         ["abilities"] = GetItemLinkOnUseAbilityInfo(itemLink),
@@ -385,8 +347,8 @@ local function HandleEventLootReceived(eventCode, receivedBy, itemLink, quantity
     local self = addon
     lootReceived = true
     PrintUnboxedLink()
-    if filterSetting and lootedBySelf and lootType == LOOT_TYPE_ITEM then
-        if addon.settings[filterSetting .. "Summary"] then
+    if matchedRule and lootedBySelf and lootType == LOOT_TYPE_ITEM then
+        if matchedRule:IsSummaryEnabled() then
             LLS:AddItemLink(itemLink, quantity)
         end
     end
@@ -536,7 +498,7 @@ UnboxCurrent = function()
         return
     end
     local isUnboxable
-    isUnboxable, filterSetting = self:IsItemUnboxable(BAG_BACKPACK, slotIndex)
+    isUnboxable, matchedRule = self:IsItemUnboxable(BAG_BACKPACK, slotIndex)
     if isUnboxable then
         if INTERACT_WINDOW:IsInteracting() then
             self.Debug("Interaction window is open.")
@@ -664,7 +626,7 @@ UnboxCurrent = function()
         self.Debug("slot index "..tostring(slotIndex).." is not unboxable: "..tostring(GetItemLink(BAG_BACKPACK, slotIndex)))
         local usable, onlyFromActionSlot = IsItemUsable(BAG_BACKPACK, slotIndex)
         local canInteractWithItem = CanInteractWithItem(BAG_BACKPACK, slotIndex)
-        self.Debug(tostring(itemLink).." usable: "..tostring(usable)..", onlyFromActionSlot: "..tostring(onlyFromActionSlot)..", canInteractWithItem: "..tostring(canInteractWithItem)..", filterMatched: "..tostring(filterMatched))
+        self.Debug(tostring(itemLink).." usable: "..tostring(usable)..", onlyFromActionSlot: "..tostring(onlyFromActionSlot)..", canInteractWithItem: "..tostring(canInteractWithItem)..", matchedRule: "..tostring(matchedRule and matchedRule.name))
         -- The current item from the slot stack was not unboxable.  Move on.
         EVENT_MANAGER:RegisterForUpdate(self.name, 40, UnboxCurrent)
     end
@@ -816,27 +778,76 @@ function addon:GetRuleInsertIndex(instance)
     
     return #self.rules + 1
 end
+local function tableInsertSorted(targetTable, newEntry, key, startIndex, endIndex)
+    local insertAtIndex
+    for optionIndex = startIndex, endIndex do
+        local entry = targetTable[optionIndex]
+        if entry[key] > newEntry[key] then
+            insertAtIndex = optionIndex
+            break
+        end
+    end
+    if not insertAtIndex then
+        insertAtIndex = endIndex
+    end
+    table.insert(targetTable, newEntry, insertAtIndex)
+end
 function addon:RegisterCategoryRule(class)
     if type(class) == "string" then
         class = self.classes[class]
     end
     if not class then return end
     
-    local instance = class:New()
-    local insertIndex = self:GetRuleInsertIndex(instance)
+    -- Create the new rule
+    local rule = class:New()
+    
+    -- Get the index the new rule needs to be inserted at in
+    -- order to satisfy existing rule dependencies on it.
+    local insertIndex = self:GetRuleInsertIndex(rule)
+    
+    -- Detect rules that the new rule is dependent upon that need
+    -- shifted up in priority to satisfy the dependency
     local rulesToMove = {}
     for ruleIndex=insertIndex + 1, #self.rules do
-        local rule = self.rules[ruleIndex]
-        if instance:IsDependentUpon(rule) then
+        local compareToRule = self.rules[ruleIndex]
+        if rule:IsDependentUpon(compareToRule) then
             table.insert(rulesToMove, ruleIndex)
         end
     end
+    
+    -- Move the existing rules that need to be moved
     for _, ruleIndex in ipairs(rulesToMove) do
-        local rule = table.remove(self.rules, ruleIndex)
-        table.insert(self.rules, insertIndex, rule)
+        local ruleToMove = table.remove(self.rules, ruleIndex)
+        table.insert(self.rules, insertIndex, ruleToMove)
         insertIndex = insertIndex + 1
     end
-    table.insert(self.rules, insertIndex, instance)
+    
+    -- Register the new rule
+    table.insert(self.rules, insertIndex, rule)
+    
+    -- The remaining logic pertains to creating LAM options.
+    -- Skip if the rule is marked hidden.
+    if rule.hidden then return end
+    
+    local sub
+    
+    -- If this is the first rule in its sub-menu, initialize it
+    if not self.submenuRules[rule.submenu] then
+        self.submenuOptions[rule.submenu] = {}
+        local submenu = { type = "submenu", name = rule.submenu, controls = self.submenuOptions[rule.submenu] }
+        tableInsertSorted(self.optionsTable, submenu, "name", self.firstSubmenuOptionIndex, #self.optionsTable)
+    end
+    
+    -- Create the new sub-menu option control config
+    local ruleSubmenuOption = rule:CreateLAM2Options()
+    
+    -- Insert the new sub-menu option config into its sub-menu's "controls" table.
+    tableInsertSorted(
+        self.submenuOptions[rule.submenu], 
+        ruleSubmenuOption, 
+        "name", 
+        1, 
+        #self.submenuOptions[rule.submenu])
 end
 local function OnAddonLoaded(event, name)
   
