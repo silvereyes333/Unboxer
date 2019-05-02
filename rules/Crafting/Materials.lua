@@ -1,3 +1,4 @@
+
 -- Materials
 
 local addon = Unboxer
@@ -6,16 +7,13 @@ local materials
 local debug = false
 local submenu = GetString("SI_QUESTTYPE", QUEST_TYPE_CRAFTING)
 
---[[ CRAFTING RULES ]]--
-
-
 class.Materials = class.Rule:Subclass()
 function class.Materials:New()
     return class.Rule.New(
         self, 
         {
             name          = "materials",
-            exampleItemId = 142173 -- [Shipment of Ounces IV]
+            exampleItemId = 142173, -- [Shipment of Ounces IV]
             submenu       = submenu,
             title         = GetString("SI_SMITHINGFILTERTYPE", SMITHING_FILTER_TYPE_RAW_MATERIALS),
         })

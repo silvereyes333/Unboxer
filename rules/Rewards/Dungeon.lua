@@ -12,7 +12,7 @@ function class.Dungeon:New()
         self, 
         {
             name          = "dungeon",
-            exampleItemId = 84519 -- [Unidentified Mazzatun Armaments]
+            exampleItemId = 84519, -- [Unidentified Mazzatun Armaments]
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_DUNGEONS)
         })

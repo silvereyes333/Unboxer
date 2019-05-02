@@ -1,3 +1,4 @@
+
 -- Crafting Quest Rewards
 
 local addon = Unboxer
@@ -6,15 +7,13 @@ local crafting
 local debug = false
 local submenu = GetString("SI_QUESTTYPE", QUEST_TYPE_CRAFTING)
 
---[[ CRAFTING RULES ]]--
-
 class.CraftingRewards = class.Rule:Subclass()
 function class.CraftingRewards:New()
     return class.Rule.New(
         self, 
         {
             name          = "crafting",
-            exampleItemId = 138810 -- [Enchanter's Coffer X]
+            exampleItemId = 138810, -- [Enchanter's Coffer X]
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_CRAFTING_REWARDS),
         })

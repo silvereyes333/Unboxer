@@ -12,7 +12,7 @@ function class.TreasureMaps:New()
         self, 
         {
             name          = "treasureMaps",
-            exampleItemId = 45882	-- [Coldharbour Treasure Map]
+            exampleItemId = 45882,	-- [Coldharbour Treasure Map]
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_TREASURE_MAPS),
         })

@@ -9,10 +9,13 @@ local submenu = GetString(SI_GAMEPAD_VENDOR_CATEGORY_HEADER)
 
 class.VendorGear = class.Rule:Subclass()
 function class.VendorGear:New()
-    local instance = class.Rule.New(self, 
-      "vendorGear",
-      117643 -- [Black Rose Equipment Box]
-    )
+    local instance = class.Rule.New(
+        self, 
+        {
+            name          = "vendorGear",
+            exampleItemId = 117643, -- [Black Rose Equipment Box]
+            title         = GetString(SI_UNBOXER_VENDOR_GEAR),
+        })
     instance.pts = addon.classes.Pts:New()
     return instance
 end

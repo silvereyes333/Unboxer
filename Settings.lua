@@ -23,52 +23,6 @@ local onLamPanelEffectivelyShown
 local function CreateOptionsOnLamPanelOpened(panel)
     
     local self = addon
-    
-    
-    
-    
-    self.defaults = 
-    {
-        autoloot = tonumber(GetSetting(SETTING_TYPE_LOOT,LOOT_SETTING_AUTO_LOOT)) ~= 0,
-        autolootDelay = 2,
-        reservedSlots = 0,
-        verbose = true,
-        containerDetails = {},
-    }
-    
-    -- TODO: 
-    self.defaults.crafting = true
-    self.defaults.dungeon = true
-    self.defaults.festival = true
-    self.defaults.furnisher = true
-    self.defaults.materials = true
-    self.defaults.outfitstyles = false
-    self.defaults.reprints = true
-    self.defaults.runeboxes = false
-    self.defaults.transmutation = false
-    self.defaults.treasureMaps = true
-    self.defaults.trial = true
-    self.defaults.unknown = true
-    self.defaults.vendorGear = true
-    self.defaults.zone = true
-    
-    for filterCategory, subfilters in pairs(self.filters) do
-       for settingName in pairs(subfilters) do
-            if not self.defaults[settingName] then
-                self.defaults[settingName] = false
-            end
-            self.defaults[settingName .. "Autoloot"] = self.defaults[settingName]
-            self.defaults[settingName .. "Summary"] = false
-        end
-    end
-
-    self.settings =
-      LibSavedVars:NewAccountWide(self.name .. "_Account", self.defaults)
-                  :AddCharacterSettingsToggle(self.name .. "_Character")
-                  :MigrateFromAccountWide( { name=self.name .. "_Data" } )
-                  :RenameSettings(2, renamedSettings)
-                  :Version(2, setAutolootDefaults)
-                  :RemoveSettings(3, "dataVersion")
   
     local optionsTable = {
         
@@ -140,6 +94,45 @@ end
 function addon:SetupSettings()
     
     self.Debug("SetupSettings()", debug)
+    
+    self.defaults = 
+    {
+        autoloot = tonumber(GetSetting(SETTING_TYPE_LOOT,LOOT_SETTING_AUTO_LOOT)) ~= 0,
+        autolootDelay = 2,
+        reservedSlots = 0,
+        verbose = true,
+        containerDetails = {},
+        crafting = true,
+        dungeon = true,
+        festival = true,
+        furnisher = true,
+        materials = true,
+        outfitstyles = false,
+        reprints = true,
+        runeboxes = false,
+        transmutation = false,
+        treasureMaps = true,
+        trial = true,
+        unknown = true,
+        vendorGear = true,
+        zone = true,
+    }
+    
+    for _, rule in ipairs(self.rules) do
+        if not self.defaults[rule.name] then
+            self.defaults[rule.name] = false
+        end
+        self.defaults[rule.autolootSettingName] = self.defaults[rule.name]
+        self.defaults[rule.summarySettingName] = false
+    end
+
+    self.settings =
+      LibSavedVars:NewAccountWide(self.name .. "_Account", self.defaults)
+                  :AddCharacterSettingsToggle(self.name .. "_Character")
+                  :MigrateFromAccountWide( { name=self.name .. "_Data" } )
+                  :RenameSettings(2, renamedSettings)
+                  :Version(2, setAutolootDefaults)
+                  :RemoveSettings(3, "dataVersion")
     
     local panelData = {
         type = "panel",

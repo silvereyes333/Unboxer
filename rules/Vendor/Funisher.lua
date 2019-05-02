@@ -7,11 +7,14 @@ local debug = false
 local submenu = GetString(SI_GAMEPAD_VENDOR_CATEGORY_HEADER)
 
 class.Furnisher = class.Rule:Subclass()
-function class.Furnisher:New()
-    return class.Rule.New(self, 
-      "furnisher",
-      134683 -- [Morrowind Master Furnisher's Document]
-    )
+function class.Rule.New(
+        self, 
+        {
+            name          = "furnisher",
+            exampleItemId = 134683, -- [Morrowind Master Furnisher's Document]
+            submenu       = submenu,
+            title         = GetString(SI_UNBOXER_FURNISHER),
+        })
 end
 
 function class.Furnisher:Match(data)

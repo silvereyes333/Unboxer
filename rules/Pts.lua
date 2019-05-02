@@ -6,21 +6,24 @@ local debug = false
 local pts
 class.Pts = class.Rule:Subclass()
 function class.Pts:New()
-    return class.Rule.New(self, 
-      "pts",
-      119566, -- [Exquisite Furniture Tome]
-      { -- dependencies
-          "dungeon",
-          "mageGuildReprints",
-          "materials",
-          "outfitstyles",
-          "runeboxes",
-          "treasureMaps",
-          "trial",
-          "vendorGear",
-          "zone",
-      }
-    )
+    return class.Rule.New(
+        self, 
+        {
+            name = "pts",
+            title = "PTS",
+            exampleItemId = 119566, -- [Exquisite Furniture Tome]
+            dependencies = { 
+                "dungeon",
+                "mageGuildReprints",
+                "materials",
+                "outfitstyles",
+                "runeboxes",
+                "treasureMaps",
+                "trial",
+                "vendorGear",
+                "zone",
+            }
+        })
 end
 
 function class.Pts:Match(data)

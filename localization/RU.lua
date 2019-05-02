@@ -94,6 +94,9 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_QUEST_REWARDS"] =           "Награды за Задания",
     ["SI_UNBOXER_ZONE"] =                    "Зональные Задания",
     ["SI_UNBOXER_DUNGEONS"] =                "Подземелья",
+    ["SI_UNBOXER_FURNISHER"] =               "документы мебельщика",
+    ["SI_UNBOXER_REPRINTS"] =                "Библиотека книга Перепечатки",
+    ["SI_UNBOXER_VENDOR_GEAR"] =             "коробка со снаряжением, которые продаются торговцами",
     ["SI_UNBOXER_DAILY2_LOWER"] =            "раз в день",
     ["SI_UNBOXER_FISHING_LOWER"] =           "рыболовная",
     ["SI_UNBOXER_EQUIPMENT_BOX_LOWER"] =     "коробка со снаряжением",
@@ -119,5 +122,4 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_FOR_CRAFTING_LOWER"] =      "предметы для изготовления",
     ["SI_UNBOXER_GIFT_FROM_LOWER"] =         "дар от",
     ["SI_UNBOXER_GIFT_FROM2_LOWER"] =        "подарок",
-}
 }

@@ -6,17 +6,21 @@ local class = addon.classes
 local debug = false
 local submenu = GetString(SI_GAMEPAD_VENDOR_CATEGORY_HEADER)
 
-class.LorebookReprints  = class.Rule:Subclass()
-function class.LorebookReprints:New()
-    local instance = class.Rule.New(self, 
-      "reprints",
-      120384 -- [Guild Reprint: Daedric Princes]
-    )
+class.LoreLibraryReprints  = class.Rule:Subclass()
+function class.LoreLibraryReprints:New()
+    local instance = class.Rule.New(
+        self, 
+        {
+            name          = "reprints",
+            exampleItemId = 120384, -- [Guild Reprint: Daedric Princes]
+            submenu       = submenu,
+            title         = GetString(SI_UNBOXER_REPRINTS),
+        })
     instance.pts = addon.classes.Pts:New()
     return instance
 end
 
-function class.LorebookReprints:Match(data)
+function class.LoreLibraryReprints:Match(data)
   
     -- Mages Guild reprints
     if string.find(data.icon, 'housing.*book') then

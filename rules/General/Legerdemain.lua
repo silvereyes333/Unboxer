@@ -12,7 +12,7 @@ function class.Legerdemain:New()
         self, 
         {
             name          = "legerdemain",
-            exampleItemId = 119561 -- Professional Thief's Satchel of Laundered Goods
+            exampleItemId = 119561, -- Professional Thief's Satchel of Laundered Goods
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_LEGERDEMAIN),
         })

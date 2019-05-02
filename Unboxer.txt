@@ -43,7 +43,7 @@ rules/Rewards/Dungeon.lua
 rules/Rewards/Trial.lua
 rules/Rewards/Zone.lua
 rules/Vendor/Furnisher.lua
-rules/Vendor/LorebookReprints.lua
+rules/Vendor/LoreLibraryReprints.lua
 rules/Vendor/VendorGear.lua
 rules/Pts.lua
 

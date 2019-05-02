@@ -1,3 +1,4 @@
+
 -- Style Pages
 
 local addon = Unboxer
@@ -14,7 +15,7 @@ function class.StylePages:New()
         self, 
         {
             name          = "outfitstyles",
-            exampleItemId = 140309 --	[Style Page: Molag Kena's Shoulder]
+            exampleItemId = 140309, --	[Style Page: Molag Kena's Shoulder]
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_OUTFITSTYLES),
             tooltip       = GetString(SI_UNBOXER_OUTFITSTYLES_TOOLTIP),

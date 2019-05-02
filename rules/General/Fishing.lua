@@ -13,7 +13,7 @@ function class.Fishing:New()
         self, 
         {
             name          = "fishing",
-            exampleItemId = 43757 -- [Wet Gunny Sack]
+            exampleItemId = 43757, -- [Wet Gunny Sack]
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_FISHING),
         })

@@ -13,7 +13,7 @@ function class.Trial:New()
         self, 
         {
             name          = "trial",
-            exampleItemId = 139668 -- [Mage's Knowledgeable Coffer]
+            exampleItemId = 139668, -- [Mage's Knowledgeable Coffer]
             submenu       = submenu,
             title         = GetString("SI_RAIDCATEGORY", RAID_CATEGORY_TRIAL)
         })
