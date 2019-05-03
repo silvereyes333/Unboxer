@@ -18,6 +18,7 @@ function class.Pts:New()
                 "materials",
                 "outfitstyles",
                 "runeboxes",
+                "transmutation",
                 "treasureMaps",
                 "trial",
                 "vendorGear",

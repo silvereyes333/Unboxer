@@ -116,7 +116,7 @@ function addon:SetupSettings()
         },
     }
     
-    self.firstSubmenuOptionIndex = #self.optionsTable
+    self.firstSubmenuOptionIndex = #self.optionsTable + 1
     
     LAM2:RegisterAddonPanel(self.name.."Options", panelData)
     

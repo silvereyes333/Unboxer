@@ -41,21 +41,6 @@ function class.LFGActivity:GetLocations()
         table.insert(staticLocations[activityType], { ["id"] = raidId, ["name"] = LocaleAwareToLower(raidName) })
     end
     
-    -- TODO: REMOVE THIS
-    addon.Debug("Scanning container details...")
-    local c = 0
-    for filterCategory1, category1Filters in pairs(addon.filters) do
-        for filterCategory2, filters in pairs(category1Filters) do
-            for itemId, _ in pairs(filters) do
-                local itemLink = addon.GetItemLinkFromItemId(itemId)
-                c = c + 1
-                local itemLinkData = addon:GetItemLinkData(itemLink)
-                addon.settings.containerDetails[itemId] = itemLinkData
-            end
-        end
-    end
-    addon.Debug(tostring(c).." containers scanned.")
-    
     return staticLocations
 end
 

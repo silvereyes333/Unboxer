@@ -55,7 +55,7 @@ function class.Rule:CreateLAM2Options()
             name     = title,
             tooltip  = tooltip,
             getFunc  = function() return self:IsEnabled() end,
-            setFunc  = function(value) self:SetIsEnabled(value) end,
+            setFunc  = function(value) self:SetEnabled(value) end,
             default  = addon.defaults[self.name],
         })
     table.insert(optionsTable,
@@ -65,7 +65,7 @@ function class.Rule:CreateLAM2Options()
             tooltip  = GetString(SI_UNBOXER_AUTOLOOT_TOOLTIP),
             width    = "half",
             getFunc  = function() return self:IsAutolootEnabled() end,
-            setFunc  = function(value) self:SetAutoloot(value) end,
+            setFunc  = function(value) self:SetAutolootEnabled(value) end,
             default  = self:IsAutolootDefault(),
             disabled = function()
                            return not addon.settings.autoloot

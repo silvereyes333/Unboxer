@@ -14,7 +14,7 @@ function class.Transmutation:New()
             name          = "transmutation",
             exampleItemId = 134623, -- [Uncracked Transmutation Geode]
             submenu       = submenu,
-            title         = GetString(SI_CUSTOMERSERVICESUBMITFEEDBACKSUBCATEGORIES211),
+            title         = GetString(SI_UNBOXER_TRANSMUTATION),
         })
 end
 

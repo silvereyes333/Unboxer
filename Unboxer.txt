@@ -29,6 +29,7 @@ rules/Collectibles/Runeboxes.lua
 rules/Collectibles/StylePages.lua
 rules/Crafting/CraftingRewards.lua
 rules/Crafting/Materials.lua
+rules/Crafting/Transmutation.lua
 rules/General/Festival.lua
 rules/General/Fishing.lua
 rules/General/Legerdemain.lua
