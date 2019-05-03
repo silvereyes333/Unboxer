@@ -3,7 +3,7 @@
 
 local addon = Unboxer
 local class = addon.classes
-local materials
+local knownIds
 local debug = false
 local submenu = GetString("SI_QUESTTYPE", QUEST_TYPE_CRAFTING)
 
@@ -16,11 +16,12 @@ function class.Materials:New()
             exampleItemId = 142173, -- [Shipment of Ounces IV]
             submenu       = submenu,
             title         = GetString("SI_SMITHINGFILTERTYPE", SMITHING_FILTER_TYPE_RAW_MATERIALS),
+            -- knownIds      = knownIds
         })
 end
 
 function class.Materials:Match(data)
-    if materials[data.itemId] 
+    if knownIds[data.itemId] 
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_RAW_MATERIAL_LOWER)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FOR_CRAFTING_LOWER)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_WAXED_LOWER)
@@ -29,6 +30,6 @@ function class.Materials:Match(data)
         return self:IsUnboxableMatch()
     end
 end
-materials = {
+knownIds = {
   [79675] = true, -- Toxin Sachel
 }

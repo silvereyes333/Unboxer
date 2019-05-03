@@ -4,7 +4,7 @@
 local addon = Unboxer
 local class = addon.classes
 local debug = false
-local trial
+local knownIds
 local submenu = GetString(SI_UNBOXER_QUEST_REWARDS)
 
 class.Trial = class.LFGActivity:Subclass()
@@ -16,6 +16,7 @@ function class.Trial:New()
             exampleItemId = 139668, -- [Mage's Knowledgeable Coffer]
             submenu       = submenu,
             title         = GetString("SI_RAIDCATEGORY", RAID_CATEGORY_TRIAL)
+            -- knownIds      = knownIds
         })
 end
 
@@ -26,12 +27,12 @@ function class.Trial:Match(data)
        )
        or (not string.find(data.name, ":") 
            and self:MatchActivityByNameAndFlavorText(data) == LFG_ACTIVITY_TRIAL)
-       or trial[data.itemId]
+       or knownIds[data.itemId]
     then
         return self:IsUnboxableMatch()
     end
 end
 
-trial = {
+knownIds = {
   [87704] = true -- Serpent's Celestial Recompense
 }

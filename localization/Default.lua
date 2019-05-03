@@ -25,6 +25,8 @@ UNBOXER_DEFAULT_STRINGS = {
     ["SI_UNBOXER_TREASURE_MAPS"] =           "Treasure Maps",
     ["SI_UNBOXER_QUEST_REWARDS"] =           "Activity Rewards",
     ["SI_UNBOXER_ZONE"] =                    "Zone-Specific Activities",
+    ["SI_UNBOXER_REPEATABLE"] =              "Repeatable Solo Activities",
+    ["SI_UNBOXER_SOLO"] =                    "Non-repeatable Solo Activities",
     ["SI_UNBOXER_DUNGEONS"] =                "Dungeons",
     ["SI_UNBOXER_FURNISHER"] =               "Fournisher's Documents",
     ["SI_UNBOXER_REPRINTS"] =                "Lore Library Reprints",
@@ -90,4 +92,6 @@ UNBOXER_DEFAULT_STRINGS = {
     ["SI_UNBOXER_FOR_CRAFTING_LOWER"] =      "items for crafting",
     ["SI_UNBOXER_GIFT_FROM_LOWER"] =         "gift from",
     ["SI_UNBOXER_GIFT_FROM2_LOWER"] =        "gift from",
+    ["SI_UNBOXER_INFINITE_LOWER"] =          "infinite",
+    ["SI_UNBOXER_TESTER_LOWER"] =            "tester",
 }

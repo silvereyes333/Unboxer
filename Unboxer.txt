@@ -37,8 +37,9 @@ rules/General/TreasureMaps.lua
 rules/General/Vendor.lua
 rules/Rewards/LFGActivity.lua
 rules/Rewards/Dungeon.lua
+rules/Rewards/Solo.lua
+rules/Rewards/SoloRepeatable.lua
 rules/Rewards/Trial.lua
-rules/Rewards/Zone.lua
 rules/Vendor/Furnisher.lua
 rules/Vendor/LoreLibraryReprints.lua
 rules/Vendor/VendorGear.lua

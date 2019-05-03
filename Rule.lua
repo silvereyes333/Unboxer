@@ -29,6 +29,7 @@ function class.Rule:Initialize(options)
     self.title = options.title or options.name
     self.tooltip = options.tooltip or ""
     self.submenu = options.submenu or GetString(SI_GAMEPLAY_OPTIONS_GENERAL)
+    self.knownIds = options.knownIds or {}
     if type(options.dependencies) ~= "table" then
         options.dependencies = { options.dependencies }
     end
@@ -97,6 +98,14 @@ end
 ]]--
 function class.Rule:Match(data)
     error("Unboxer.Rule:Match() must be overriden in child class for rule '" .. self.name .. "'")
+end
+
+function class.Rule:MatchKnownIds(itemId)
+    return self.knownIds[itemId]
+end
+
+function class.Rule:GetKnownIds()
+    return self.knownIds
 end
 
 function class.Rule:IsAutolootDefault()

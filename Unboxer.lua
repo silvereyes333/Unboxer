@@ -5,7 +5,7 @@ Unboxer = {
     version = "3.0.0",
     itemSlotStack = {},
     defaultLanguage = "en",
-    debugMode = true,
+    debugMode = false,
     classes = {},
     rules = {},
     submenuOptions = {},
@@ -133,7 +133,9 @@ local matchedRule
 local function AbortAction(...)
     addon.Debug("AbortAction")
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_CLOSED)
+    EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_RECEIVED)
     EVENT_MANAGER:UnregisterForUpdate(addon.name)
+    EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_UPDATED)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_COLLECTIBLE_NOTIFICATION_NEW)
     HUD_SCENE:UnregisterCallback("StateChange", HudStateChange)
     if addon.originalUpdateLootWindow then
@@ -234,10 +236,6 @@ function addon:GetItemLinkData(itemLink, language)
     local requiredLevel = GetItemLinkRequiredLevel(itemLink)
     local quality = GetItemLinkQuality(itemLink)
     local bindType = GetItemLinkBindType(itemLink)
-    local interactionType = addon.settings.containerDetails[itemId] 
-                            and addon.settings.containerDetails[itemId]["interactionType"]
-    local store = addon.settings.containerDetails[itemId] 
-                  and addon.settings.containerDetails[itemId]["store"]
     local data = {
         ["itemId"]                 = itemId,
         ["itemLink"]               = itemLink,
@@ -251,8 +249,6 @@ function addon:GetItemLinkData(itemLink, language)
         ["setId"]                  = setId,
         ["requiredLevel"]          = GetItemLinkRequiredLevel(itemLink),
         ["requiredChampionPoints"] = GetItemLinkRequiredChampionPoints(itemLink),
-        ["interactionType"]        = interactionType,
-        ["store"]                  = store,
         ["collectibleId"]          = GetItemLinkContainerCollectibleId(itemLink),
     }
     if type(data.collectibleId) == "number" and data.collectibleId > 0 then
@@ -289,16 +285,6 @@ local function PrintUnboxedLink()
     addon.Print(zo_strformat(SI_UNBOXER_UNBOXED, addon.unboxingItemLink))
     addon.unboxingItemLink = nil
 end
-local function UpdateInteractionType()
-    local self = addon
-    if GetInteractionType() > 0 and GetInteractionType() ~= 14 then
-        self.mostRecentInteractionType = GetInteractionType()
-        self.mostRecentInteractionTime = os.time()
-    elseif self.mostRecentInteractionTime and (os.time() - self.mostRecentInteractionTime) > 5 then
-        self.mostRecentInteractionType = nil
-        self.mostRecentInteractionTime = nil
-    end
-end
 local function HandleEventPlayerCombatState(eventCode, inCombat)
     if not inCombat then
         addon.Debug("Combat ended. Resume unboxing.")
@@ -328,19 +314,13 @@ local function HandleEventLootReceived(eventCode, receivedBy, itemLink, quantity
             LLS:AddItemLink(itemLink, quantity)
         end
     end
-    if GetInteractionType() > 0 and GetInteractionType() ~= 14 then
-        self.mostRecentInteractionType = GetInteractionType()
-        self.mostRecentInteractionTime = os.time()
-    elseif self.mostRecentInteractionTime and (os.time() - self.mostRecentInteractionTime) > 5 then
-        self.mostRecentInteractionType = nil
-        self.mostRecentInteractionTime = nil
-    end
-    addon.Debug("LootReceived("..tostring(eventCode)..", "..zo_strformat("<<1>>", receivedBy)..", "..tostring(itemLink)..", "..tostring(quantity)..", "..tostring(itemSound)..", "..tostring(lootType)..", "..tostring(lootedBySelf)..", "..tostring(isPickpocketLoot)..", "..tostring(questItemIcon)..", "..tostring(itemId)..") InteractionType: "..tostring(self.mostRecentInteractionType))
+    addon.Debug("LootReceived("..tostring(eventCode)..", "..zo_strformat("<<1>>", receivedBy)..", "..tostring(itemLink)..", "..tostring(quantity)..", "..tostring(itemSound)..", "..tostring(lootType)..", "..tostring(lootedBySelf)..", "..tostring(isPickpocketLoot)..", "..tostring(questItemIcon)..", "..tostring(itemId)..")")
 end
 local InventoryStateChange
 local function HandleEventLootClosed(eventCode)
     addon.Debug("LootClosed("..tostring(eventCode)..")")
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_CLOSED)
+    EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_RECEIVED)
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_COLLECTIBLE_NOTIFICATION_NEW)
     if lootReceived then
         lootReceived = nil
@@ -389,32 +369,9 @@ local function LootAllItemsTimeout()
         LOOT_SHARED:LootAllItems()
     end
 end
-local function HandleEventLootUpdated(eventCode)
-    
+local function HandleEventLootUpdated(eventCode)  
     local self = addon
-    self.Debug("LootUpdated("..tostring(eventCode)..")")
-    local lootCount = GetNumLootItems()
-    self.lastLootedContainers = {}
-    for lootIndex = 1, lootCount do
-        local lootId = GetLootItemInfo(lootIndex)
-        local itemLink = GetLootItemLink(lootId)
-        local itemId = GetItemLinkItemId(itemLink)
-        local itemType, specializedItemType = GetItemLinkItemType(itemLink)
-        if itemType == ITEMTYPE_CONTAINER 
-           or (ITEMTYPE_CONTAINER_CURRENCY and itemType == ITEMTYPE_CONTAINER_CURRENCY)
-        then
-            local targetName = GetLootTargetInfo()
-            table.insert(self.lastLootedContainers, {
-                    ["itemId"] = itemId,
-                    ["itemLink"] = itemLink,
-                    ["specializedItemType"] = specializedItemType,
-                    ["lootId"] = lootId,
-                    ["targetName"] = targetName
-                })
-        end
-        self.Debug("Loot index "..tostring(lootIndex).." "..tostring(itemLink).." with target name "..tostring(targetName).." InteractionType: "..tostring(GetInteractionType()))
-    end
-  
+    EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_UPDATED)
     if not self.slotIndex then
         self.Debug("addon slotindex is empty")
         if addon.unboxingAll or addon.autolooting then
@@ -573,6 +530,7 @@ UnboxCurrent = function()
             self.Debug("Setting self.slotIndex = "..tostring(slotIndex))
             self.slotIndex = slotIndex
             LLS:SetPrefix(prefix)
+            EVENT_MANAGER:RegisterForEvent(self.name, EVENT_LOOT_RECEIVED, HandleEventLootReceived)
             lootReceived = false
             EVENT_MANAGER:RegisterForEvent(self.name, EVENT_LOOT_UPDATED, HandleEventLootUpdated)
             EVENT_MANAGER:RegisterForEvent(self.name, EVENT_LOOT_CLOSED, HandleEventLootClosed)
@@ -649,123 +607,23 @@ end
 
 local function OnInventorySingleSlotUpdate(eventCode, bagId, slotIndex, isNewItem, itemSoundCategory, inventoryUpdateReason, stackCountChange)
     local self = addon
-    if bagId ~= BAG_BACKPACK and bagId ~= BAG_VIRTUAL then return end
-    local itemType, specializedItemType = GetItemType(bagId, slotIndex)
-    local itemLink = GetItemLink(bagId, slotIndex)
-    UpdateInteractionType()
-    self.Debug("Bag "..tostring(bagId).." slotIndex "..tostring(slotIndex).." changed by "..tostring(stackCountChange).." item link "..tostring(itemLink).." item type "..tostring(itemType).." InteractionType: "..tostring(self.mostRecentInteractionType))
+    if self.running then return end
+    local itemType = GetItemType(bagId, slotIndex)
     if itemType ~= ITEMTYPE_CONTAINER
        and (not ITEMTYPE_CONTAINER_CURRENCY or itemType ~= ITEMTYPE_CONTAINER_CURRENCY)
     then
         self.Debug("Item isn't a container. Not going to autoloot.")
         return
     end
-    
-    local itemId = GetItemLinkItemId(itemLink)
-    if self.settings.containerDetails[itemId] then return end
-    
-    local itemLinkData = self:GetItemLinkData(itemLink)
-    if not itemLinkData["interactionType"] then
-        itemLinkData["interactionType"] = self.mostRecentInteractionType
-    end
-    
-    self.settings.containerDetails[itemId] = itemLinkData
-    
-    if self.running then
-        self.Debug("Manual unboxing running. Not going to autoloot.")
-        return
-    elseif not isNewItem then
-        self.Debug("Item is not new. Not going to autoloot.")
-        return
-    elseif inventoryUpdateReason ~= INVENTORY_UPDATE_REASON_DEFAULT then
-        self.Debug("Non default update reason given. Not going to autoloot.")
-        return
-    elseif bagId ~= BAG_BACKPACK then
-        self.Debug("Bag is not backpack. Not going to autoloot.")
-        return
-    end
-    
     table.insert(self.itemSlotStack, slotIndex)
     addon.autolooting = true
     EVENT_MANAGER:RegisterForUpdate(self.name, 40, UnboxCurrent)
 end
-local function ScanStoreEntry(entryIndex)
-    local self = addon
-    local itemLink = GetStoreItemLink(entryIndex)
-    local itemType = GetItemLinkItemType(itemLink)
-    if itemType ~= ITEMTYPE_CONTAINER and
-       (not ITEMTYPE_CONTAINER_CURRENCY or itemType ~= ITEMTYPE_CONTAINER_CURRENCY)
-    then
-        return
-    end
-    
-    local itemLinkData = self:GetItemLinkData(itemLink)
-    --if itemLinkData["containerType"] ~= "unknown" then return end
-    
-    local _, _, stack, price, sellPrice, meetsRequirementsToBuy, meetsRequirementsToEquip, quality, questNameColor, currencyType1, currencyQuantity1,
-        currencyType2, currencyQuantity2, entryType = GetStoreEntryInfo(entryIndex)
-    if stack <= 0 then
-        self.Debug("Not recording store for container "..tostring(itemLink).." because stack is <= 0")
-        return
-    end
-    
-    local itemId = GetItemLinkItemId(itemLink)
-    local avaContainerType =  IsInCyrodiil() and "cyrodiil" or IsInImperialCity() and "imperialCity"
-    if not avaContainerType then
-        --self.Debug("Not recording store for container "..tostring(itemLink).." avaContainerType is nil")
-        --return
-    end
-    
-    if not itemLinkData["interactionType"] then
-        itemLinkData["interactionType"] = self.mostRecentInteractionType
-    end
-    local zoneId, worldX, worldY, worldZ = GetUnitWorldPosition("player")
-    local sellInformation = GetItemLinkSellInformation(itemLink)
-    
-    local text = self.settings.containerDetails[itemId] and self.settings.containerDetails[itemId]["store"] and self.settings.containerDetails[itemId]["store"]["text"] or {}
-    text[GetCVar("language.2")] = {
-        ["vendor"] = GetChatterOption(GetChatterOptionCount()),
-    }
-    itemLinkData["store"] = {
-        ["entryType"] = entryType,
-        ["zoneId"] = zoneId,
-        ["worldPosition"] = { ["x"] = worldX, ["y"] = worldY, ["z"] = worldZ },
-        ["stack"] = stack,
-        ["price"] = price,
-        ["sellPrice"] = sellPrice,
-        ["meetsRequirementsToBuy"] = meetsRequirementsToBuy,
-        ["meetsRequirementsToEquip"] = meetsRequirementsToEquip,
-        ["quality"] = quality,
-        ["questNameColor"] = questNameColor,
-        ["currencyType1"] = currencyType1,
-        ["currencyQuantity1"] = currencyQuantity1,
-        ["currencyType2"] = currencyType2,
-        ["currencyQuantity2"] = currencyQuantity2,
-        ["sellInformation"] = sellInformation,
-        ["sellInformationSortOrder"] = ZO_GetItemSellInformationCustomSortOrder(sellInformation),
-        ["text"] = text
-    }
-    if entryType == STORE_ENTRY_TYPE_QUEST_ITEM then
-        itemLinkData["questItemId"] = GetStoreEntryQuestItemId(entryIndex)
-    end
-    self.settings.containerDetails[itemId] = itemLinkData
-end
-local function OnOpenStore(eventCode)
-    local self = addon
-    self.Debug("EVENT_OPEN_STORE")
-    UpdateInteractionType()
-    for entryIndex = 1, GetNumStoreItems() do
-        ScanStoreEntry(entryIndex)
-    end
-end
 function addon:RegisterEvents()
-    EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, OnInventorySingleSlotUpdate)
-    --EVENT_MANAGER:AddFilterForEvent(addon.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_BAG_ID, BAG_BACKPACK)
-    --EVENT_MANAGER:AddFilterForEvent(addon.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_INVENTORY_UPDATE_REASON, INVENTORY_UPDATE_REASON_DEFAULT)
-    --EVENT_MANAGER:AddFilterForEvent(addon.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_IS_NEW_ITEM, true)
-    EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_LOOT_RECEIVED , HandleEventLootReceived)
-    EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_LOOT_UPDATED , HandleEventLootUpdated)
-    EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_OPEN_STORE, OnOpenStore)
+    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, OnInventorySingleSlotUpdate)
+    EVENT_MANAGER:AddFilterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_BAG_ID, BAG_BACKPACK)
+    EVENT_MANAGER:AddFilterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_INVENTORY_UPDATE_REASON, INVENTORY_UPDATE_REASON_DEFAULT)
+    EVENT_MANAGER:AddFilterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_IS_NEW_ITEM, true)
 end
 function addon:GetRuleInsertIndex(instance)
     
@@ -879,12 +737,13 @@ local function OnAddonLoaded(event, name)
     self:RegisterCategoryRule(self.classes.LoreLibraryReprints)
     self:RegisterCategoryRule(self.classes.Materials)
     self:RegisterCategoryRule(self.classes.Runeboxes)
+    self:RegisterCategoryRule(self.classes.Solo)
+    self:RegisterCategoryRule(self.classes.SoloRepeatable)
     self:RegisterCategoryRule(self.classes.StylePages)
     self:RegisterCategoryRule(self.classes.Transmutation)
     self:RegisterCategoryRule(self.classes.TreasureMaps)
     self:RegisterCategoryRule(self.classes.Trial)
     self:RegisterCategoryRule(self.classes.VendorGear)
-    self:RegisterCategoryRule(self.classes.Zone)
 end
 
 EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_ADD_ON_LOADED, OnAddonLoaded)

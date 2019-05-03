@@ -3,7 +3,7 @@
 
 local addon = Unboxer
 local class = addon.classes
-local crafting
+local knownIds
 local debug = false
 local submenu = GetString("SI_QUESTTYPE", QUEST_TYPE_CRAFTING)
 
@@ -16,11 +16,12 @@ function class.CraftingRewards:New()
             exampleItemId = 138810, -- [Enchanter's Coffer X]
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_CRAFTING_REWARDS),
+            -- knownIds      = knownIds
         })
 end
 
 function class.CraftingRewards:Match(data)
-    if crafting[data.itemId]
+    if knownIds[data.itemId]
        or (addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_CRAFTED_LOWER)
            and addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_REWARD_LOWER))
     then
@@ -56,7 +57,7 @@ function class.CraftingRewards:OnAutolootSet(value)
     end
 end
 
-crafting = {
+knownIds = {
   [30333] = true, -- Provisioner Kit
   [30335] = true, -- Blacksmith's Chest
   [30337] = true, -- Enchanter's Chest

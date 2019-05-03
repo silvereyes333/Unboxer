@@ -11,7 +11,7 @@ function class.TreasureMaps:New()
     return class.Rule.New(
         self, 
         {
-            name          = "treasureMaps",
+            name          = "treasuremaps",
             exampleItemId = 45882,	-- [Coldharbour Treasure Map]
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_TREASURE_MAPS),

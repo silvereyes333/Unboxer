@@ -22,6 +22,8 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_TREASURE_MAPS"] =           "宝の地図",
     ["SI_UNBOXER_QUEST_REWARDS"] =           "アクティビティ報酬",
     ["SI_UNBOXER_ZONE"] =                    "ユニークゾーンアクティビティト",
+    ["SI_UNBOXER_REPEATABLE"] =              "再プレイ可能ソロアクティビティト",
+    ["SI_UNBOXER_SOLO"] =                    "再プレイ可能ないソロアクティビティト",
     ["SI_UNBOXER_DUNGEONS"] =                "ダンジョン",
     ["SI_UNBOXER_FURNISHER"] =               "家具商人の文書",
     ["SI_UNBOXER_VENDOR_GEAR"] =             "商人が販売する機器ボックス",
@@ -66,4 +68,6 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_WAXED2_LOWER"] =            "^蝋塗さ",
     ["SI_UNBOXER_FOR_CRAFTING_LOWER"] =      "を作るためのアイテム",
     ["SI_UNBOXER_GIFT_FROM_LOWER"] =         "贈り物",
+    ["SI_UNBOXER_INFINITE_LOWER"] =          "無限",
+    ["SI_UNBOXER_TESTER_LOWER"] =            "テスター",
 }

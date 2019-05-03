@@ -3,7 +3,7 @@
 
 local addon = Unboxer
 local class = addon.classes
-local vendorGear
+local knownIds
 local debug = false
 local submenu = GetString(SI_GAMEPAD_VENDOR_CATEGORY_HEADER)
 
@@ -12,10 +12,11 @@ function class.VendorGear:New()
     local instance = class.Rule.New(
         self, 
         {
-            name          = "vendorGear",
+            name          = "vendorgear",
             exampleItemId = 117643, -- [Black Rose Equipment Box]
             title         = GetString(SI_UNBOXER_VENDOR_GEAR),
             submenu       = submenu,
+            knownIds      = knownIds,
         })
     instance.pts = addon.classes.Pts:New()
     return instance
@@ -30,7 +31,7 @@ function class.VendorGear:Match(data)
     end
     
     -- Match various known vendors
-    if vendorGear[data.itemId]
+    if knownIds[data.itemId]
        or string.find(data.icon, 'zonebag')                                                          -- Regional Equipment Vendor
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_RENOWNED_LOWER)          -- Regional Equipment Vendor (backup in case icon changes)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_BATTLEGROUND_LOWER)            -- Battlegrounds Equipment Vendor
@@ -76,7 +77,7 @@ function class.VendorGear:MatchGenericEquipmentText(text)
     end
 end
 
-vendorGear = {
+knownIds = {
   [69416]  = true, -- Unknown Imperial Reward
   [69418]  = true, -- Superb Imperial Reward
   [44798]  = true, -- Unidentified Accessory

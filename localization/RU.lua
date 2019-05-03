@@ -18,7 +18,9 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_FESTIVAL"] =                "события/Фестивали",
     ["SI_UNBOXER_TREASURE_MAPS"] =           "Карты сокровищ",
     ["SI_UNBOXER_QUEST_REWARDS"] =           "Награды",
-    ["SI_UNBOXER_ZONE"] =                    "Зонально-зависимая деятельность",
+    ["SI_UNBOXER_ZONE"] =                    "Зонально-зависимая деятельносты",
+    ["SI_UNBOXER_REPEATABLE"] =              "Повторяющееся Одиночные деятельносты",
+    ["SI_UNBOXER_SOLO"] =                    "Единовременные Одиночные деятельносты",
     ["SI_UNBOXER_DUNGEONS"] =                "Подземелья",
     ["SI_UNBOXER_FURNISHER"] =               "документы мебельщика",
     ["SI_UNBOXER_REPRINTS"] =                "Библиотека книга Перепечатки",
@@ -48,4 +50,6 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_FOR_CRAFTING_LOWER"] =      "предметы для изготовления",
     ["SI_UNBOXER_GIFT_FROM_LOWER"] =         "дар от",
     ["SI_UNBOXER_GIFT_FROM2_LOWER"] =        "подарок",
+    ["SI_UNBOXER_INFINITE_LOWER"] =          "бесконечная",
+    ["SI_UNBOXER_TESTER_LOWER"] =            "тестир",
 }

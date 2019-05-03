@@ -8,7 +8,7 @@ local submenu = GetString("SI_QUESTTYPE", QUEST_TYPE_CRAFTING)
 
 class.Transmutation = class.Rule:Subclass()
 function class.Transmutation:New()
-    return class.Rule.New(
+    local instance = class.Rule.New(
         self, 
         {
             name          = "transmutation",
@@ -16,10 +16,16 @@ function class.Transmutation:New()
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_TRANSMUTATION),
         })
+    instance.pts = class.Pts:New()
+    return instance
 end
 
 function class.Transmutation:Match(data)
-    if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_TRANSMUTATION_LOWER) then
+    if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_TRANSMUTATION_LOWER)
+       and not self.pts:MatchAbsoluteIndicators(data)
+       and data.flavorText ~= ""
+       and not string.find(data.name, ":")
+    then
         return self:IsUnboxableMatch()
     end
 end

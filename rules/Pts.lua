@@ -1,9 +1,9 @@
 local addon = Unboxer
 local class = addon.classes
 local debug = false
+local knownIds
 
 -- PTS
-local pts
 class.Pts = class.Rule:Subclass()
 function class.Pts:New()
     return class.Rule.New(
@@ -14,17 +14,20 @@ function class.Pts:New()
             exampleItemId = 119566, -- [Exquisite Furniture Tome]
             dependencies = { 
                 "dungeon",
-                "mageGuildReprints",
+                "fishing",
                 "materials",
                 "outfitstyles",
+                "solorepeatable",
+                "reprints",
                 "runeboxes",
+                "solo",
                 "transmutation",
-                "treasureMaps",
+                "treasuremaps",
                 "trial",
-                "vendorGear",
-                "zone",
+                "vendorgear",
             },
             hidden = true,
+            -- knownIds = knownIds,
         })
 end
 
@@ -51,6 +54,7 @@ function class.Pts:MatchExceptColonAndIcon(data)
        or data.hasSet -- if item set information is displayed on the container, even after all the tel-var merchant containers are processed, assume PTS box
        or data.bindType == BIND_TYPE_NONE -- incorrectly-bound
        or data.bindType == BIND_TYPE_ON_PICKUP_BACKPACK -- character-bound
+       or string.find(data.name, "[0-9]") -- numbers in name
        or self:MatchAbsoluteIndicators(data)
     then
         return self:IsUnboxableMatch()
@@ -58,7 +62,7 @@ function class.Pts:MatchExceptColonAndIcon(data)
 end
 
 function class.Pts:MatchAbsoluteIndicators(data)
-    if pts[data.itemId]
+    if knownIds[data.itemId]
        or GetItemLinkOnUseAbilityInfo(data.itemLink) -- only PTS boxes grant abilities
        or self:MatchItemSetsText(data.name)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_ALL_LOWER) -- Contains the word " all " surrounded by spaces (if supported by locale)
@@ -67,8 +71,10 @@ function class.Pts:MatchAbsoluteIndicators(data)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FULL_SUITE_LOWER) -- Contains the phrase "full set" or "full suite"
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FULL_SUITE2_LOWER)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FULL_SUITE3_LOWER)
-       or string.find(data.name, "[0-9]") -- numbers in name
        or string.find(data.flavorText, " pts ")
+       or string.find(data.flavorText, "^pts ")
+       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_INFINITE_LOWER)
+       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_TESTER_LOWER)
     then
         return self:IsUnboxableMatch()
     end
@@ -86,6 +92,7 @@ function class.Pts:MatchItemSetsText(text)
     end
 end
 
-pts = {
-  [79670] = true -- Novice Assassin's Kit
+knownIds = {
+  [69414] = true, -- Medium Tel Var Sack
+  [79670] = true  -- Novice Assassin's Kit
 }

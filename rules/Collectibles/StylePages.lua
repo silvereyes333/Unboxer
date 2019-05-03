@@ -3,7 +3,7 @@
 
 local addon = Unboxer
 local class = addon.classes
-local stylePages
+local knownIds
 local debug = false
 
 -- Collectibles submenu
@@ -19,6 +19,7 @@ function class.StylePages:New()
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_OUTFITSTYLES),
             tooltip       = GetString(SI_UNBOXER_OUTFITSTYLES_TOOLTIP),
+            --knownIds      = knownIds
         }
     )
 end
@@ -31,12 +32,12 @@ function class.StylePages:Match(data)
                data.collectibleUnlocked  -- canUnbox
     end
     
-    if stylePages[data.itemId] then
+    if knownIds[data.itemId] then
         return self:IsUnboxableMatch()
     end
 end
 
-stylePages = {
+knownIds = {
   [135005] = true, -- Ragged Style Box
   [147442] = true, -- Event Style Page: Lyris Titanborn's Helmet
   [147459] = true  -- Event Style Page: Abner Tharn's Hat

@@ -21,6 +21,8 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_TREASURE_MAPS"] =           "Cartes au trésor",
     ["SI_UNBOXER_QUEST_REWARDS"] =           "Récompenses de activités",
     ["SI_UNBOXER_ZONE"] =                    "Activités spécifiques à une zone",
+    ["SI_UNBOXER_REPEATABLE"] =              "Activités solo répétables",
+    ["SI_UNBOXER_SOLO"] =                    "Activités solo non répétables",
     ["SI_UNBOXER_DUNGEONS"] =                "Donjons",
     ["SI_UNBOXER_FURNISHER"] =               "Documents du fournisseur",
     ["SI_UNBOXER_REPRINTS"] =                "Rééditions de livres de bibliothèque",
@@ -65,4 +67,6 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_WAXED_LOWER"] =             " ciré$",
     ["SI_UNBOXER_FOR_CRAFTING_LOWER"] =      "objets pour fabriquer",
     ["SI_UNBOXER_GIFT_FROM_LOWER"] =         "cadeau d",
+    ["SI_UNBOXER_INFINITE_LOWER"] =          "infinie",
+    ["SI_UNBOXER_TESTER_LOWER"] =            "testeur",
 }
