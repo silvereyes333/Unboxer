@@ -274,25 +274,29 @@ local function PrintUnboxedLink()
     addon.Print(zo_strformat(SI_UNBOXER_UNBOXED, addon.unboxingItemLink))
     addon.unboxingItemLink = nil
 end
+local function GetAutolootDelayMS()
+    local delay = math.max(40, addon.settings.autolootDelay * 1000)
+    return delay
+end
 local function HandleEventPlayerCombatState(eventCode, inCombat)
     if not inCombat then
         addon.Debug("Combat ended. Resume unboxing.")
         EVENT_MANAGER:UnregisterForEvent(addon.name,  EVENT_PLAYER_COMBAT_STATE)
         -- Continue unboxings
-        EVENT_MANAGER:RegisterForUpdate(addon.name, addon.settings.autolootDelay * 1000, UnboxCurrent)
+        EVENT_MANAGER:RegisterForUpdate(addon.name, GetAutolootDelayMS(), UnboxCurrent)
     end
 end
 local function HandleEventPlayerNotSwimming(eventCode)
     addon.Debug("Player not swimming. Resume unboxing.")
     EVENT_MANAGER:UnregisterForEvent(addon.name,  EVENT_PLAYER_NOT_SWIMMING)
     -- Continue unboxings
-    EVENT_MANAGER:RegisterForUpdate(addon.name, addon.settings.autolootDelay * 1000, UnboxCurrent)
+    EVENT_MANAGER:RegisterForUpdate(addon.name, GetAutolootDelayMS(), UnboxCurrent)
 end
 local function HandleEventPlayerAlive(eventCode)
     addon.Debug("Player alive again. Resume unboxing.")
     EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_PLAYER_ALIVE)
     -- Continue unboxings
-    EVENT_MANAGER:RegisterForUpdate(addon.name, addon.settings.autolootDelay * 1000, UnboxCurrent)
+    EVENT_MANAGER:RegisterForUpdate(addon.name, GetAutolootDelayMS(), UnboxCurrent)
 end
 local function HandleEventLootReceived(eventCode, receivedBy, itemLink, quantity, itemSound, lootType, lootedBySelf, isPickpocketLoot, questItemIcon, itemId)
     local self = addon
@@ -354,7 +358,7 @@ local function LootAllItemsTimeout()
     if lootingItemUniqueId and AreId64sEqual(lootingItemUniqueId,timeoutItemUniqueId) then
         addon.Debug("Looting again, ids match")
         table.insert(timeoutItemUniqueIds, lootingItemUniqueId)
-        zo_callLater(LootAllItemsTimeout, addon.settings.autolootDelay * 1000) -- If still not looted after X secs, try to loot again
+        zo_callLater(LootAllItemsTimeout, GetAutolootDelayMS()) -- If still not looted after X secs, try to loot again
         LOOT_SHARED:LootAllItems()
     end
 end
@@ -399,7 +403,7 @@ local function StartInteractWait()
     INTERACT_WINDOW:UnregisterCallback("Hidden", HandleInteractWindowHidden)
     HUD_SCENE:UnregisterCallback("StateChange", HudStateChange)
     EVENT_MANAGER:UnregisterForUpdate(addon.name.."InteractWait")
-    EVENT_MANAGER:RegisterForUpdate(addon.name.."InteractWait", addon.settings.autolootDelay * 1000, EndInteractWait)
+    EVENT_MANAGER:RegisterForUpdate(addon.name.."InteractWait", GetAutolootDelayMS(), EndInteractWait)
 end
 local HandleInteractWindowHidden
 HandleInteractWindowHidden = function()
@@ -606,7 +610,7 @@ local function OnInventorySingleSlotUpdate(eventCode, bagId, slotIndex, isNewIte
     end
     table.insert(self.itemSlotStack, slotIndex)
     addon.autolooting = true
-    EVENT_MANAGER:RegisterForUpdate(self.name, 40, UnboxCurrent)
+    EVENT_MANAGER:RegisterForUpdate(self.name, GetAutolootDelayMS(), UnboxCurrent)
 end
 function addon:RegisterEvents()
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, OnInventorySingleSlotUpdate)
