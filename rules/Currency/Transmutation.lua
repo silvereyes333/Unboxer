@@ -4,7 +4,7 @@
 local addon = Unboxer
 local class = addon.classes
 local debug = false
-local submenu = GetString("SI_QUESTTYPE", QUEST_TYPE_CRAFTING)
+local submenu = GetString(SI_INVENTORY_MODE_CURRENCY)
 
 class.Transmutation = class.Rule:Subclass()
 function class.Transmutation:New()

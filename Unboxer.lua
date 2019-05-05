@@ -232,6 +232,7 @@ function addon:GetItemLinkData(itemLink, language)
     local flavorText = LocaleAwareToLower(GetItemLinkFlavorText(itemLink))
     local setInfo = { GetItemLinkSetInfo(itemLink) }
     local hasSet, setName, _, _, _, setId = GetItemLinkSetInfo(itemLink)
+    if setName == "" then setName = nil end
     local requiredChampionPoints = GetItemLinkRequiredChampionPoints(itemLink)
     local requiredLevel = GetItemLinkRequiredLevel(itemLink)
     local quality = GetItemLinkQuality(itemLink)
@@ -245,7 +246,7 @@ function addon:GetItemLinkData(itemLink, language)
         ["quality"]                = GetItemLinkQuality(itemLink),
         ["icon"]                   = LocaleAwareToLower(GetItemLinkIcon(itemLink)),
         ["hasSet"]                 = hasSet,
-        ["setName"]                = LocaleAwareToLower(setName),
+        ["setName"]                = setName,
         ["setId"]                  = setId,
         ["requiredLevel"]          = GetItemLinkRequiredLevel(itemLink),
         ["requiredChampionPoints"] = GetItemLinkRequiredChampionPoints(itemLink),
@@ -254,12 +255,6 @@ function addon:GetItemLinkData(itemLink, language)
     if type(data.collectibleId) == "number" and data.collectibleId > 0 then
         data["collectibleCategoryType"] = GetCollectibleCategoryType(data.collectibleId)
         data["collectibleUnlocked"]     = IsCollectibleUnlocked(data.collectibleId)
-    end
-    
-    data["text"] = addon.settings.containerDetails[itemId] and addon.settings.containerDetails[itemId]["text"] or {}
-    if language and data["text"][language] then
-        data["name"] = data["text"].name
-        data["flavorText"] = data["text"].flavorText
     end
   
     data["containerType"] = "unknown"
@@ -272,12 +267,6 @@ function addon:GetItemLinkData(itemLink, language)
             break
         end
     end
-    
-    data["text"][GetCVar("language.2")] = {
-        ["name"] = name,
-        ["flavorText"] = flavorText,
-        ["setName"] = setName,
-    }
     return data
 end
 local function PrintUnboxedLink()
@@ -740,6 +729,7 @@ local function OnAddonLoaded(event, name)
     self:RegisterCategoryRule(self.classes.Solo)
     self:RegisterCategoryRule(self.classes.SoloRepeatable)
     self:RegisterCategoryRule(self.classes.StylePages)
+    self:RegisterCategoryRule(self.classes.TelVar)
     self:RegisterCategoryRule(self.classes.Transmutation)
     self:RegisterCategoryRule(self.classes.TreasureMaps)
     self:RegisterCategoryRule(self.classes.Trial)

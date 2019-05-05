@@ -8,14 +8,14 @@ local staticDlcs
 local knownIds
 local submenu = GetString(SI_UNBOXER_QUEST_REWARDS)
 
-class.Repeatable = class.Rule:Subclass()
-function class.Repeatable:New()
+class.SoloRepeatable = class.Rule:Subclass()
+function class.SoloRepeatable:New()
     local instance = class.Rule.New(
         self, 
         {
             name          = "solorepeatable",
             exampleItemId = 134619, -- Rewards for the Worthy
-            dependencies  = { "crafting", "festival", "furnisher", "materials", "legerdemain", "trial", "vendorgear" },
+            dependencies  = { "crafting", "festival", "furnisher", "materials", "legerdemain", "trial", "vendorgear", "telvar" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_REPEATABLE),
             -- knownIds      = knownIds
@@ -24,7 +24,7 @@ function class.Repeatable:New()
     return instance
 end
 
-function class.Repeatable:Match(data)
+function class.SoloRepeatable:Match(data)
   
     if knownIds[data.itemId] then
         return self:IsUnboxableMatch()
@@ -46,14 +46,21 @@ function class.Repeatable:Match(data)
         return self:IsUnboxableMatch()
     end
     
-    -- Matches daily reward containers
-    if data.bindType == BIND_TYPE_ON_PICKUP
-       and (self:MatchDailyQuestText(data.name)
-            or self:MatchDailyQuestText(data.flavorText))
-    then
-        return self:IsUnboxableMatch()
+    if data.bindType == BIND_TYPE_ON_PICKUP then
+      
+        -- Daily reward containers
+        if self:MatchDailyQuestText(data.name)
+           or self:MatchDailyQuestText(data.flavorText)
+        then
+            return self:IsUnboxableMatch()
+        
+        -- Light tel var sachels
+        elseif data.quality < ITEM_QUALITY_ARTIFACT
+               and addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_TEL_VAR_LOWER) -- tel var in name
+        then
+            return self:IsUnboxableMatch()
+        end
     end
-    
     
     if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_COFFER_LOWER) -- "coffer"
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_GIFT_FROM_LOWER) -- "gift from" boxes
@@ -87,7 +94,7 @@ local defaultGuildSkillLineNames = {
     "undaunted",
     "psijic order",
 }
-function class.Repeatable:MatchGuildSkillLineName(text)
+function class.SoloRepeatable:MatchGuildSkillLineName(text)
   
     local skillType = SKILL_TYPE_GUILD
     for skillLineIndex=1, GetNumSkillLines(skillType) do
@@ -106,7 +113,7 @@ function class.Repeatable:MatchGuildSkillLineName(text)
         end
     end
 end
-function class.Repeatable:MatchDailyQuestText(text)
+function class.SoloRepeatable:MatchDailyQuestText(text)
     return addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_REWARD_LOWER)
            or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_DAILY_LOWER)
            or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_DAILY2_LOWER)

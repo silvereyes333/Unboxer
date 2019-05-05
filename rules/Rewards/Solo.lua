@@ -15,7 +15,7 @@ function class.Solo:New()
         {
             name          = "solo",
             exampleItemId = 140296, -- [Unidentified Summerset Chest Armor]
-            dependencies  = { "crafting", "festival", "furnisher", "materials", "legerdemain", "trial", "vendorgear", "solorepeatable" },
+            dependencies  = { "crafting", "festival", "furnisher", "materials", "legerdemain", "trial", "vendorgear", "solorepeatable", "telvar" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_SOLO),
             -- knownIds      = knownIds
@@ -26,12 +26,13 @@ end
 
 function class.Solo:Match(data)
   
+    -- Match preloaded ids
     if knownIds[data.itemId] then
         return self:IsUnboxableMatch()
     end
-  
-    if string.find(data.name, ":") 
-       or data.quality == ITEM_QUALITY_LEGENDARY
+    
+    if string.find(data.name, ":") -- Exclude items with a colon in the name
+       or data.quality == ITEM_QUALITY_LEGENDARY -- Exclude all other legendary containers
     then
         return
     end
@@ -53,7 +54,6 @@ function class.Solo:Match(data)
     then
         return self:IsUnboxableMatch()
     end
-    
     
     if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_UNKNOWN_ITEM_PATTERN) -- "Unknown Item" boxes
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_UNKNOWN_ITEM_LOWER)
