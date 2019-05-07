@@ -68,7 +68,7 @@ function addon:StringContainsStringIdOrDefault(searchIn, stringId, ...)
         defaultStringId = stringId + 1
     end
     searchFor = LocaleAwareToLower(GetString(defaultStringId, ...))
-    if not searchFor or searchFor == "" then
+    if searchFor and searchFor ~= "" then
         return string.find(searchIn, searchFor)
     end
 end

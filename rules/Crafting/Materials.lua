@@ -21,6 +21,11 @@ function class.Materials:New()
 end
 
 function class.Materials:Match(data)
+    
+    if data.bindType ~= BIND_TYPE_ON_PICKUP or data.quality > ITEM_QUALITY_ARCANE then
+        return
+    end
+    
     if knownIds[data.itemId] 
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_RAW_MATERIAL_LOWER)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FOR_CRAFTING_LOWER)

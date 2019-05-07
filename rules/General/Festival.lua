@@ -20,8 +20,8 @@ end
 
 function class.Festival:Match(data)
     
-    -- Exclude PTS items
-    if data.flavorText == "" then
+    -- Exclude PTS item
+    if data.itemId == 147759 then
         return
     end
   
@@ -30,7 +30,8 @@ function class.Festival:Match(data)
            and (addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_GIFT_LOWER)
                 or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_REWARD_LOWER)
                 or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_BOX_LOWER)
-                or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_BOX2_LOWER)))
+                or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_BOX2_LOWER)
+                or data.name == "CONTAINER")) -- fix for untranslated ruESO boxes
     then
         return self:IsUnboxableMatch()
     end
