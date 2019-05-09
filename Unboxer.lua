@@ -279,24 +279,30 @@ local function GetAutolootDelayMS()
     return delay
 end
 local function HandleEventPlayerCombatState(eventCode, inCombat)
+    local self = addon
     if not inCombat then
-        addon.Debug("Combat ended. Resume unboxing.")
-        EVENT_MANAGER:UnregisterForEvent(addon.name,  EVENT_PLAYER_COMBAT_STATE)
+        self.Debug("Combat ended. Resume unboxing.")
+        EVENT_MANAGER:UnregisterForEvent(self.name,  EVENT_PLAYER_COMBAT_STATE)
         -- Continue unboxings
-        EVENT_MANAGER:RegisterForUpdate(addon.name, GetAutolootDelayMS(), UnboxCurrent)
+        self.Debug("RegisterForUpdate("..self.name..", "..GetAutolootDelayMS()..", UnboxCurrent)")
+        EVENT_MANAGER:RegisterForUpdate(self.name, GetAutolootDelayMS(), UnboxCurrent)
     end
 end
 local function HandleEventPlayerNotSwimming(eventCode)
-    addon.Debug("Player not swimming. Resume unboxing.")
-    EVENT_MANAGER:UnregisterForEvent(addon.name,  EVENT_PLAYER_NOT_SWIMMING)
+    local self = addon
+    self.Debug("Player not swimming. Resume unboxing.")
+    EVENT_MANAGER:UnregisterForEvent(self.name,  EVENT_PLAYER_NOT_SWIMMING)
     -- Continue unboxings
-    EVENT_MANAGER:RegisterForUpdate(addon.name, GetAutolootDelayMS(), UnboxCurrent)
+    self.Debug("RegisterForUpdate("..self.name..", "..GetAutolootDelayMS()..", UnboxCurrent)")
+    EVENT_MANAGER:RegisterForUpdate(self.name, GetAutolootDelayMS(), UnboxCurrent)
 end
 local function HandleEventPlayerAlive(eventCode)
-    addon.Debug("Player alive again. Resume unboxing.")
-    EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_PLAYER_ALIVE)
+    local self = addon
+    self.Debug("Player alive again. Resume unboxing.")
+    EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_PLAYER_ALIVE)
     -- Continue unboxings
-    EVENT_MANAGER:RegisterForUpdate(addon.name, GetAutolootDelayMS(), UnboxCurrent)
+    self.Debug("RegisterForUpdate("..self.name..", "..GetAutolootDelayMS()..", UnboxCurrent)")
+    EVENT_MANAGER:RegisterForUpdate(self.name, GetAutolootDelayMS(), UnboxCurrent)
 end
 local function HandleEventLootReceived(eventCode, receivedBy, itemLink, quantity, itemSound, lootType, lootedBySelf, isPickpocketLoot, questItemIcon, itemId)
     local self = addon
@@ -311,31 +317,33 @@ local function HandleEventLootReceived(eventCode, receivedBy, itemLink, quantity
 end
 local InventoryStateChange
 local function HandleEventLootClosed(eventCode)
+    local self = addon
     addon.Debug("LootClosed("..tostring(eventCode)..")")
-    EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_CLOSED)
-    EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_LOOT_RECEIVED)
-    EVENT_MANAGER:UnregisterForEvent(addon.name, EVENT_COLLECTIBLE_NOTIFICATION_NEW)
+    EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_LOOT_CLOSED)
+    EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_LOOT_RECEIVED)
+    EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_COLLECTIBLE_NOTIFICATION_NEW)
     if lootReceived then
         lootReceived = nil
-        if addon.running then
+        if self.running then
             local menuBarState = BACKPACK_MENU_BAR_LAYOUT_FRAGMENT:GetState()
             if menuBarState == SCENE_HIDDEN then
-                addon.Debug("Menu bar is hidden")
+                self.Debug("Menu bar is hidden")
                 AbortAction()
                 return
             end
             if not addon.UnboxAll() then
-                addon.Debug("UnboxAll returned false")
+                self.Debug("UnboxAll returned false")
                 AbortAction()
                 return
             end
         end
-    elseif addon.slotIndex then
-        addon.Debug("lootReceived is false. attempting to loot again.")
+    elseif self.slotIndex then
+        self.Debug("lootReceived is false. attempting to loot again.")
         timeoutItemUniqueIds = {}
-        table.insert(addon.itemSlotStack, addon.slotIndex)
+        table.insert(self.itemSlotStack, self.slotIndex)
     end
-    EVENT_MANAGER:RegisterForUpdate(addon.name, 40, UnboxCurrent)
+    self.Debug("RegisterForUpdate("..self.name..", 40, UnboxCurrent)")
+    EVENT_MANAGER:RegisterForUpdate(self.name, 40, UnboxCurrent)
 end
 InventoryStateChange = function(oldState, newState)
     if newState == SCENE_SHOWING then
@@ -385,7 +393,7 @@ local function HandleEventLootUpdated(eventCode)
         return
     end
     table.insert(timeoutItemUniqueIds, GetItemUniqueId(BAG_BACKPACK, self.slotIndex))
-    zo_callLater(LootAllItemsTimeout, self.settings.autolootDelay * 1000) -- If still not looted after X secs, try to loot again
+    zo_callLater(LootAllItemsTimeout, GetAutolootDelayMS()) -- If still not looted after X secs, try to loot again
     LOOT_SHARED:LootAllItems()
 end
 local function HandleEventNewCollectible(eventCode, collectibleId)
@@ -398,6 +406,7 @@ local function EndInteractWait()
     EVENT_MANAGER:UnregisterForUpdate(addon.name.."InteractWait")
     UnboxCurrent()
 end
+local HandleInteractWindowHidden
 local function StartInteractWait()
     addon.Debug("Interaction ended. Waiting ".. addon.settings.autolootDelay .." seconds to try unboxing again.")
     INTERACT_WINDOW:UnregisterCallback("Hidden", HandleInteractWindowHidden)
@@ -405,7 +414,6 @@ local function StartInteractWait()
     EVENT_MANAGER:UnregisterForUpdate(addon.name.."InteractWait")
     EVENT_MANAGER:RegisterForUpdate(addon.name.."InteractWait", GetAutolootDelayMS(), EndInteractWait)
 end
-local HandleInteractWindowHidden
 HandleInteractWindowHidden = function()
     StartInteractWait()
 end
@@ -416,6 +424,7 @@ end
 local suppressLootWindow = function() end
 UnboxCurrent = function()
     local self = addon
+    self.Debug("UnregisterForUpdate("..self.name..")")
     EVENT_MANAGER:UnregisterForUpdate(self.name)
     local slotIndex
     if #self.itemSlotStack > 0 then
@@ -457,6 +466,7 @@ UnboxCurrent = function()
             else
                 self.Debug("Waiting 1 second...")
                 table.insert(self.itemSlotStack, slotIndex)
+                self.Debug("RegisterForUpdate("..self.name..", 1000, UnboxCurrent)")
                 EVENT_MANAGER:RegisterForUpdate(self.name, 1000, UnboxCurrent)
             end
             return
@@ -516,6 +526,7 @@ UnboxCurrent = function()
         if remaining > 0 and duration > 0 then
             self.Debug("item at slotIndex "..tostring(slotIndex).." is on cooldown for another "..tostring(remaining).." ms duration "..tostring(duration)..". wait until it is ready")
             table.insert(self.itemSlotStack, slotIndex)
+            self.Debug("RegisterForUpdate("..self.name..", "..duration..", UnboxCurrent)")
             EVENT_MANAGER:RegisterForUpdate(self.name, duration, UnboxCurrent)
             return
             
@@ -557,17 +568,20 @@ UnboxCurrent = function()
         local canInteractWithItem = CanInteractWithItem(BAG_BACKPACK, slotIndex)
         self.Debug(tostring(itemLink).." usable: "..tostring(usable)..", onlyFromActionSlot: "..tostring(onlyFromActionSlot)..", canInteractWithItem: "..tostring(canInteractWithItem)..", matchedRule: "..tostring(matchedRule and matchedRule.name))
         -- The current item from the slot stack was not unboxable.  Move on.
+        self.Debug("RegisterForUpdate("..self.name..", 40, UnboxCurrent)")
         EVENT_MANAGER:RegisterForUpdate(self.name, 40, UnboxCurrent)
     end
 end
 
 function addon.UnboxAll()
+    local self = addon
     local slotIndex = GetNextItemToUnbox()
     if not slotIndex then return end
-    table.insert(addon.itemSlotStack, slotIndex)
-    addon.running = true
-    EVENT_MANAGER:RegisterForUpdate(addon.name, 40, UnboxCurrent)
-    KEYBIND_STRIP:UpdateKeybindButtonGroup(addon.unboxAllKeybindButtonGroup)
+    table.insert(self.itemSlotStack, slotIndex)
+    self.running = true
+    self.Debug("RegisterForUpdate("..self.name..", 40, UnboxCurrent)")
+    EVENT_MANAGER:RegisterForUpdate(self.name, 40, UnboxCurrent)
+    KEYBIND_STRIP:UpdateKeybindButtonGroup(self.unboxAllKeybindButtonGroup)
     return true
 end
 
@@ -610,6 +624,7 @@ local function OnInventorySingleSlotUpdate(eventCode, bagId, slotIndex, isNewIte
     end
     table.insert(self.itemSlotStack, slotIndex)
     addon.autolooting = true
+    self.Debug("RegisterForUpdate("..self.name..", "..GetAutolootDelayMS()..", UnboxCurrent)")
     EVENT_MANAGER:RegisterForUpdate(self.name, GetAutolootDelayMS(), UnboxCurrent)
 end
 function addon:RegisterEvents()
