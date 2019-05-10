@@ -22,7 +22,7 @@ function addon.Print(input, force)
     if not force and not (addon.settings and addon.settings.verbose) then
         return
     end
-    local output = zo_strformat(prefix .. "<<1>>|r", input)
+    local output = zo_strformat(addon.prefix .. "<<1>>|r", input)
     d(output)
 end
 function addon.Debug(input, force)
@@ -160,13 +160,14 @@ local function InventoryStateChange(oldState, newState)
         KEYBIND_STRIP:UpdateKeybindButtonGroup(addon.unboxAllKeybindButtonGroup)
     end
 end
+local function RefreshUpdateAllKeybind()
+    local self = addon
+    KEYBIND_STRIP:UpdateKeybindButtonGroup(self.unboxAllKeybindButtonGroup)
+end
 local function UnboxAllStopped()
     local self = addon
     self.unboxAll:SetAutoQueue(false)
-end
-local function UnboxAllBeforeOpen()
-    local self = addon
-    KEYBIND_STRIP:UpdateKeybindButtonGroup(self.unboxAllKeybindButtonGroup)
+    RefreshUpdateAllKeybind()
 end
 function addon.UnboxAll()
     local self = addon
@@ -174,7 +175,7 @@ function addon.UnboxAll()
     self.unboxAll:QueueAllInBackpack()
     self.unboxAll:SetAutoQueue(true)
     self.unboxAll:RegisterCallback("Stopped", UnboxAllStopped)
-    self.unboxAll:RegisterCallback("BeforeOpen", UnboxAllBeforeOpen)
+    self.unboxAll:RegisterCallback("BeforeOpen", RefreshUpdateAllKeybind)
     self.unboxAll:Start()
     
 end
@@ -185,8 +186,8 @@ function addon:AddKeyBind()
         {
             name = "Unbox All",
             keybind = "UNBOX_ALL",
-            enabled = function() return self.unboxAll.state == "stopped" end,
-            visible = function() return self.unboxAll:HasUnboxableSlots(),
+            enabled = function() return self.unboxAll.state == "stopped" and self.unboxAll:HasEnoughSlots()  end,
+            visible = function() return self.unboxAll:HasUnboxableSlots() end,
             order = 100,
             callback = self.UnboxAll,
         },

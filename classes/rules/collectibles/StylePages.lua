@@ -9,9 +9,9 @@ local debug = false
 -- Collectibles submenu
 local submenu = GetString("SI_ITEMFILTERTYPE", ITEMFILTERTYPE_COLLECTIBLE)
 
-class.StylePages  = class.Rule:Subclass()
+class.StylePages  = addon.classes.Rule:Subclass()
 function class.StylePages:New()
-    return class.Rule.New(
+    return addon.classes.Rule.New(
         self, 
         {
             name          = "outfitstyles",

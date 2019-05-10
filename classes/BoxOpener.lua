@@ -4,14 +4,14 @@
 
 local addon = Unboxer
 local class = addon.classes
-local debug = false
+local debug = true
 local suppressLootWindow = function() end
 local HandleEventLootClosed, HandleEventLootReceived, HandleEventLootUpdated, HandleEventNewCollectible
 
 class.BoxOpener = ZO_CallbackObject:Subclass()
 
 function class.BoxOpener:New(...)
-    local instance = ZO_Object.New(self)
+    local instance = ZO_CallbackObject.New(self)
     instance:Initialize(...)
     return instance
 end
@@ -21,13 +21,15 @@ function class.BoxOpener:Initialize(slotIndex)
     self.isUnboxable, self.matchedRule = addon:IsItemUnboxable(BAG_BACKPACK, self.slotIndex)
     self.itemLink = GetItemLink(BAG_BACKPACK, self.slotIndex)
     self.lootReceived = {}
+    addon.Debug("BoxOpener:New("..tostring(self.slotIndex).."), name = " .. self.name, debug)
 end
 function class.BoxOpener:DelayOpen(delayMilliseconds)
+    addon.Debug("RegisterForUpdate('"..self.name.."', "..tostring(delayMilliseconds)..", function() self:Open("..tostring(self.slotIndex).."))", debug)
     EVENT_MANAGER:RegisterForUpdate(self.name, delayMilliseconds, function() self:Open(self.slotIndex) end)
 end
 
 function class.BoxOpener:Reset()
-    self.lootReceived = false
+    self.lootReceived = {}
     EVENT_MANAGER:UnregisterForUpdate(self.name)
     EVENT_MANAGER:UnregisterForUpdate(self.name .. "_Timeout")
     EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_LOOT_RECEIVED)
@@ -35,13 +37,24 @@ function class.BoxOpener:Reset()
     EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_LOOT_CLOSED)
     if self.originalUpdateLootWindow then
         local lootWindow = SYSTEMS:GetObject("loot")
-        lootWindow.UpdateLootWindow = addon.originalUpdateLootWindow
+        addon.Debug("current loot window update:"..tostring(suppressLootWindow), debug)
+        lootWindow.UpdateLootWindow = self.originalUpdateLootWindow
+        addon.Debug("new loot window update: "..tostring(lootWindow.UpdateLootWindow), debug)
+        self.originalUpdateLootWindow = nil
     end
 end
 function class.BoxOpener:Open()
+  
+    EVENT_MANAGER:UnregisterForUpdate(self.name)
     
     if not self.isUnboxable then
         return
+    end
+    
+    if IsLooting() then
+        addon.Debug("Loot window is already open.  Wait 1 second and try looting " ..self.itemLink.." ("..tostring(self.slotIndex)..") again.", debug)
+        self:DelayOpen(1000)
+        return true
     end
     
     if not CanInteractWithItem(BAG_BACKPACK, self.slotIndex) then
@@ -86,7 +99,7 @@ function class.BoxOpener:OnFailed()
     self:FireCallbacks("Failed", self.slotIndex, self.itemLink)
 end
 function class.BoxOpener:OnOpened()
-    self:FireCallbacks("Opened", self.itemLink, self.lootReceived)
+    self:FireCallbacks("Opened", self.itemLink, self.lootReceived, self.matchedRule)
 end
 
 function class.BoxOpener:CreateLootReceivedHandler()
@@ -103,9 +116,18 @@ end
 function class.BoxOpener:CreateLootClosedHandler()
     return function (eventCode)
         addon.Debug("LootClosed("..tostring(eventCode)..")", debug)
+        EVENT_MANAGER:UnregisterForUpdate(self.name .. "_Timeout")
         EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_LOOT_CLOSED)
         EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_LOOT_RECEIVED)
         --EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_COLLECTIBLE_NOTIFICATION_NEW)
+        
+        if self.originalUpdateLootWindow then
+            local lootWindow = SYSTEMS:GetObject("loot")
+            addon.Debug("current loot window update:"..tostring(suppressLootWindow), debug)
+            lootWindow.UpdateLootWindow = self.originalUpdateLootWindow
+            addon.Debug("new loot window update: "..tostring(lootWindow.UpdateLootWindow), debug)
+            self.originalUpdateLootWindow = nil
+        end
         
         self:OnOpened()
     end
@@ -116,6 +138,7 @@ function class.BoxOpener:RegisterLootAllItemsTimeout()
 end
 function class.BoxOpener:CreateLootUpdatedHandler()
     return function(eventCode)  
+        EVENT_MANAGER:UnregisterForUpdate(self.name .. "_Timeout")
         EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_LOOT_UPDATED)
         local inventorySlotsNeeded = addon.unboxAll:GetInventorySlotsNeeded()
         if not CheckInventorySpaceAndWarn(inventorySlotsNeeded) then

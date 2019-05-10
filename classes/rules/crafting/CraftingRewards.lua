@@ -7,9 +7,9 @@ local knownIds
 local debug = false
 local submenu = GetString("SI_QUESTTYPE", QUEST_TYPE_CRAFTING)
 
-class.CraftingRewards = class.Rule:Subclass()
+class.CraftingRewards = addon.classes.Rule:Subclass()
 function class.CraftingRewards:New()
-    return class.Rule.New(
+    return addon.classes.Rule.New(
         self, 
         {
             name          = "crafting",

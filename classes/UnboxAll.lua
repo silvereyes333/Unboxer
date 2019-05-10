@@ -4,21 +4,20 @@
 
 local addon = Unboxer
 local class = addon.classes
-local debug = false
+local debug = true
 local defaultStates = {}
 local LLS = LibStub("LibLootSummary")
 
-class.Manual = ZO_CallbackObject:Subclass()
+class.UnboxAll = ZO_CallbackObject:Subclass()
 
 function class.UnboxAll:New(...)
-    local instance = ZO_Object.New(self)
+    local instance = ZO_CallbackObject.New(self)
     instance:Initialize(...)
     return instance
 end
 
 function class.UnboxAll:Initialize(name)
     self.name = name or addon.name .. "_UnboxAll"
-    self:Reset()
     self.states = {}
     self.eventHandlers = {}
     self.callbackHandlers = {}
@@ -34,13 +33,12 @@ function class.UnboxAll:Initialize(name)
     EVENT_MANAGER:AddFilterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_BAG_ID, BAG_BACKPACK)
     EVENT_MANAGER:AddFilterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_INVENTORY_UPDATE_REASON, INVENTORY_UPDATE_REASON_DEFAULT)
     EVENT_MANAGER:AddFilterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_IS_NEW_ITEM, true)
+    self:Reset()
+    self:ListenForPause()
 end
 function class.UnboxAll:CreateFailedCallback()
     return function(slotIndex, itemLink, reason)
-        addon.Debug("Failed to unbox " .. tostring(itemLink), debug)
-        if reason then
-            addon.Debug(tostring(reason), true)
-        end
+        addon.Debug("Failed "..tostring(itemLink).." ("..tostring(slotIndex)..") "..tostring(reason), debug)
         self:FireCallbacks("Failed", slotIndex, itemLink, reason)
         EVENT_MANAGER:RegisterForUpdate(self.name .. "_Start", 40, function() self:Start() end)
     end
@@ -48,14 +46,22 @@ end
 function class.UnboxAll:CreateOpenedCallback()
     return function(itemLink, lootReceived, rule)
         addon.PrintUnboxedLink(itemLink)
-        if not rule or not rule:IsSummaryEnabled() then
-            return
-        end
-        for _, loot in ipairs(lootReceived) do
-            if loot.lootedBySelf and loot.lootType == LOOT_TYPE_ITEM then
-                LLS:AddItemLink(loot.itemLink, loot.quantity)
+        if rule and rule:IsSummaryEnabled() then
+            if #lootReceived == 0 then
+                addon.Debug("'Opened' callback parameter 'lootReceived' contains no items.", debug)
             end
+            for _, loot in ipairs(lootReceived) do
+                if loot.lootedBySelf and loot.lootType == LOOT_TYPE_ITEM then
+                    LLS:AddItemLink(loot.itemLink, loot.quantity)
+                end
+            end
+        elseif not rule then
+            addon.Debug("No match rule passed to 'Opened' callback", debug)
+        else
+            addon.Debug("Rule "..rule.name.." is not configured to output summaries.", debug)
         end
+        addon.Debug("Opened " .. tostring(itemLink) .. " containing " .. tostring(#lootReceived) .. " items. Matched rule "
+                    .. (rule and rule.name or ""), debug)
         self:FireCallbacks("Opened", itemLink, lootReceived, rule)
         EVENT_MANAGER:RegisterForUpdate(self.name .. "_Start", 40, function() self:Start() end)
     end
@@ -67,7 +73,6 @@ function class.UnboxAll:CreateSlotUpdateCallback()
         if itemType ~= ITEMTYPE_CONTAINER
            and (not ITEMTYPE_CONTAINER_CURRENCY or itemType ~= ITEMTYPE_CONTAINER_CURRENCY)
         then
-            addon.Debug("Item isn't a container. Not going to autoloot.", debug)
             return
         end
         if self:GetAutoQueue() then
@@ -83,8 +88,9 @@ function class.UnboxAll:DelayStart(item)
         table.insert(self.queue, item)
     end
     self.state = "delayed_start"
+    addon.Debug("Delay starting unbox for "..tostring(self:GetDelayMilliseconds()).." ms", debug)
     self:FireCallbacks("DelayStart", item)
-    EVENT_MANAGER:RegisterForUpdate(self.name "_Start", self:GetDelayMilliseconds(), function() self:Start() end)
+    EVENT_MANAGER:RegisterForUpdate(self.name .. "_Start", self:GetDelayMilliseconds(), function() self:Start() end)
 end
 function class.UnboxAll:GetAutoQueue(value)
     return addon.settings.autoloot or self.autoQueue
@@ -99,7 +105,7 @@ function class.UnboxAll:GetInventorySlotsNeeded(inventorySlotsNeeded)
         if HasCraftBagAccess() then
             for lootIndex = 1, GetNumLootItems() do
                 local lootId = GetLootItemInfo(lootIndex)
-                if GetLootItemType(lootId) == LOOT_TYPE_ITEM and CanItemLinkBeVirtual(GetLootItemLink(lootId)) do
+                if GetLootItemType(lootId) == LOOT_TYPE_ITEM and CanItemLinkBeVirtual(GetLootItemLink(lootId)) then
                     inventorySlotsNeeded = inventorySlotsNeeded - 1
                 end
             end
@@ -109,22 +115,6 @@ function class.UnboxAll:GetInventorySlotsNeeded(inventorySlotsNeeded)
         inventorySlotsNeeded = inventorySlotsNeeded + addon.settings.reservedSlots
     end
     return inventorySlotsNeeded
-end
--- Scan backpack for next unboxable container and return true if found
-function class.UnboxAll:GetNextItemToUnbox()
-    if not self:HasEnoughSlots() then
-        addon.Debug("Not enough bag space", debug)
-        return
-    end
-
-    local bagId = BAG_BACKPACK
-    local bagSlots = GetBagSize(bagId) -1
-    for index = 0, bagSlots do
-        if self:IsItemUnboxable(bagId, index) and CanInteractWithItem(bagId, index) then
-            return index
-        end
-    end
-    self.Debug("No unboxable items found", debug)
 end
 function class.UnboxAll:HasEnoughSlots(inventorySlotsNeeded)
     -- For performance reasons, just assume each box has 2 items, until the box is actually open.
@@ -136,23 +126,24 @@ function class.UnboxAll:HasEnoughSlots(inventorySlotsNeeded)
     return CheckInventorySpaceSilently(inventorySlotsNeeded)
 end
 function class.UnboxAll:HasUnboxableSlots()
-  
-    if not self:HasEnoughSlots() then 
-        return false
-    end
     
     for state, config in pairs(self.states) do
-        if state.active() then
+        if config.active() then
             return false
         end
     end
     
-    if #self.queue > 0 then return false end
+    if #self.queue > 0 then return true end
     
     local bagId = BAG_BACKPACK
     local bagSlots = GetBagSize(bagId) -1
-    for index = 0, bagSlots do
-        if self:IsItemUnboxable(bagId, index) and CanInteractWithItem(bagId, index) then return true end
+    for slotIndex = 0, bagSlots do
+        if addon:IsItemUnboxable(bagId, slotIndex) 
+           and CanInteractWithItem(bagId, slotIndex) 
+           and select(4,GetItemInfo(bagId, slotIndex)) -- meets usage requirement
+        then
+            return true
+        end
     end
 
     return false
@@ -161,21 +152,35 @@ function class.UnboxAll:ListenForPause()
     for _, events in pairs(self.eventHandlers) do
         EVENT_MANAGER:RegisterForEvent(self.name, events.pause.event, events.pause.handler)
     end
-    for _, pause in ipairs(self.callbackHandlers[name].pause) do
-        pause.target:RegisterCallback(pause.name,  pause.callback)
+    for name, callbackHandler in pairs(self.callbackHandlers) do
+        for _, pause in ipairs(callbackHandler.pause) do
+            pause.target:RegisterCallback(pause.name,  pause.callback)
+        end
     end
 end
 function class.UnboxAll:OnPausedEvent(name)
-    local unpause = self.eventHandlers[name].unpause
+    local unpause
+    if self.state ~= name and self.eventHandlers[self.state] then
+        unpause = self.eventHandlers[self.state].unpause
+        addon.Debug("Unregistering unpause event for " .. self.state, debug)
+        EVENT_MANAGER:UnregisterForEvent(self.name .. "_" .. self.state, unpause.event)
+    end
+    unpause = self.eventHandlers[name].unpause
     EVENT_MANAGER:RegisterForEvent(self.name .. "_" .. name,  unpause.event, unpause.handler)
     self.state = name
+    addon.Debug("Paused ("..tostring(name)..")", debug)
     self:FireCallbacks("Paused", name)
-    EVENT_MANAGER:UnregisterForUpdate(self.name "_Start")
+    EVENT_MANAGER:UnregisterForUpdate(self.name .. "_Start")
 end
 function class.UnboxAll:OnUnpausedEvent(name)
     local unpause = self.eventHandlers[name].unpause
     EVENT_MANAGER:UnregisterForEvent(self.name .. "_" .. name,  unpause.event)
+    if self.state ~= name then
+        addon.Debug("Not unpausing ("..tostring(name)..") because current state is " .. self.state, debug)
+        return
+    end
     self.state = "stopped"
+    addon.Debug("Unpaused ("..tostring(name)..")", debug)
     self:FireCallbacks("Unpaused", name)
     if #self.queue then
         self:DelayStart()
@@ -186,14 +191,20 @@ function class.UnboxAll:OnPausedCallback(name)
         unpause.target:RegisterCallback(unpause.name,  unpause.callback)
     end
     self.state = name
+    addon.Debug("Paused ("..tostring(name)..")", debug)
     self:FireCallbacks("Paused", name)
-    EVENT_MANAGER:UnregisterForUpdate(self.name "_Start")
+    EVENT_MANAGER:UnregisterForUpdate(self.name .. "_Start")
 end
-function class.UnboxAll:OnUnpausedEvent(name)
+function class.UnboxAll:OnUnpausedCallback(name)
     for _, unpause in ipairs(self.callbackHandlers[name].unpause) do
         unpause.target:UnregisterCallback(unpause.name,  unpause.callback)
     end
+    if self.state ~= name then
+        addon.Debug("Not unpausing ("..tostring(name)..") because current state is " .. self.state, debug)
+        return
+    end
     self.state = "stopped"
+    addon.Debug("Unpaused ("..tostring(name)..")", debug)
     self:FireCallbacks("Unpaused", name)
     if #self.queue then
         self:DelayStart()
@@ -201,12 +212,16 @@ function class.UnboxAll:OnUnpausedEvent(name)
 end
 function class.UnboxAll:Queue(item)
     table.insert(self.queue, item)
+    addon.Debug("Queued item "..tostring(item.itemLink).." ("..tostring(item.slotIndex)..")", debug)
 end
 function class.UnboxAll:QueueAllInBackpack()
     local bagId = BAG_BACKPACK
     local bagSlots = GetBagSize(bagId) - 1
     for slotIndex = 0, bagSlots do
-        if self:IsItemUnboxable(bagId, slotIndex) and CanInteractWithItem(bagId, slotIndex) then
+        if addon:IsItemUnboxable(bagId, slotIndex) 
+           and CanInteractWithItem(bagId, slotIndex) 
+           and select(4,GetItemInfo(bagId, slotIndex)) -- meets usage requirement
+        then
             self:Queue({slotIndex = slotIndex, itemLink = GetItemLink(bagId, slotIndex)})
         end
     end
@@ -225,7 +240,7 @@ function class.UnboxAll:Reset()
     self.state = "stopped"
     self.queue = {}
     self.autoQueue = nil
-    EVENT_MANAGER:UnregisterForUpdate(self.name "_Start")
+    EVENT_MANAGER:UnregisterForUpdate(self.name .. "_Start")
     for eventName, events in pairs(self.eventHandlers) do
         local unpause = events.unpause
         EVENT_MANAGER:UnregisterForEvent(self.name .. "_" .. eventName,  unpause.event)
@@ -246,8 +261,11 @@ function class.UnboxAll:RegisterPauseEvents(name, pauseEvent, unpauseEvent, stat
         pause   = {
             event   = pauseEvent,
             handler = function(...)
+                          if not activeFunc() then
+                              return
+                          end
                           if stateParameter then
-                              local params = unpack(...)
+                              local params = {...}
                               local value = params[stateParameter.index]
                               if value == stateParameter.pauseValue then
                                   self:OnPausedEvent(name)
@@ -261,7 +279,7 @@ function class.UnboxAll:RegisterPauseEvents(name, pauseEvent, unpauseEvent, stat
             event   = unpauseEvent,
             handler = function(...)
                           if stateParameter then
-                              local params = unpack(...)
+                              local params = {...}
                               local value = params[stateParameter.index]
                               if value == stateParameter.unpauseValue then
                                   self:OnUnpausedEvent(name)
@@ -272,6 +290,36 @@ function class.UnboxAll:RegisterPauseEvents(name, pauseEvent, unpauseEvent, stat
                       end
         },
     }
+end
+function class.UnboxAll:GeneratePauseCallback(callback, name)
+    return function(...)
+        local activeFunc = self.states[name].active
+        if not activeFunc() then
+            return
+        end
+        if callback.stateParameter then
+            local params = {...}
+            local value = params[callback.stateParameter.index]
+            if value == callback.stateParameter.pauseValue then
+                self:OnPausedCallback(name)
+            end
+            return
+        end
+        self:OnPausedCallback(name)
+    end
+end
+function class.UnboxAll:GenerateUnpauseCallback(callback, name)
+    return function(...)
+        if callback.stateParameter then
+            local params = {...}
+            local value = params[callback.stateParameter.index]
+            if value == callback.stateParameter.pauseValue then
+                self:OnUnpausedCallback(name)
+            end
+            return
+        end
+        self:OnUnpausedCallback(name)
+    end
 end
 function class.UnboxAll:RegisterPauseCallbacks(name, pauseCallbacks, unpauseCallbacks, activeFunc)
     self.states[name] = {
@@ -290,17 +338,7 @@ function class.UnboxAll:RegisterPauseCallbacks(name, pauseCallbacks, unpauseCall
             {
                 target = callback.target,
                 name = callback.name,
-                callback = function(...)
-                    if callback.stateParameter then
-                        local params = unpack(...)
-                        local value = params[callback.stateParameter.index]
-                        if value == callback.stateParameter.pauseValue then
-                            self:OnPausedCallback(name)
-                        end
-                        return
-                    end
-                    self:OnPausedCallback(name)
-                end,
+                callback = self:GeneratePauseCallback(callback, name),
             }
         )
     end
@@ -309,17 +347,7 @@ function class.UnboxAll:RegisterPauseCallbacks(name, pauseCallbacks, unpauseCall
             {
                 target = callback.target,
                 name = callback.name,
-                callback = function(...)
-                    if callback.stateParameter then
-                        local params = unpack(...)
-                        local value = params[callback.stateParameter.index]
-                        if value == callback.stateParameter.pauseValue then
-                            self:OnUnpausedCallback(name)
-                        end
-                        return
-                    end
-                    self:OnUnpausedCallback(name)
-                end,
+                callback = self:GenerateUnpauseCallback(callback, name),
             }
         )
     end
@@ -328,13 +356,20 @@ function class.UnboxAll:SetAutoQueue(value)
     self.autoQueue = value
 end
 function class.UnboxAll:Start(item)
+    EVENT_MANAGER:UnregisterForUpdate(self.name .. "_Start")
     if item then
         table.insert(self.queue, item)
+    end
+    if item then
+        addon.Debug("Start " .. tostring(item.itemLink) .. " (" .. tostring(item.slotIndex) .. ")", debug)
+    else
+        addon.Debug("Start", debug)
     end
     self:FireCallbacks("Start", item)
     
     if #self.queue == 0 then
         self:Reset()
+        addon.Debug("Stopped. Queue is empty.", debug)
         self:FireCallbacks("Stopped")
         -- Print summary
         LLS:SetPrefix(addon.prefix)
@@ -351,12 +386,14 @@ function class.UnboxAll:Start(item)
     local itemToUnbox = table.remove(self.queue, 1)
     
     self:ListenForPause()
+    addon.Debug("BeforeOpen " .. tostring(itemToUnbox.itemLink) .. " (" .. tostring(itemToUnbox.slotIndex) .. ")", debug)
     self:FireCallbacks("BeforeOpen", itemToUnbox)
     
     local opener = class.BoxOpener:New(itemToUnbox.slotIndex)
     local failedCallback = self:CreateFailedCallback()
     opener:RegisterCallback("Failed", failedCallback)
     opener:RegisterCallback("Opened", self:CreateOpenedCallback())
+    self:RegisterCallback("Paused", function() opener:Reset() end)
     if opener:Open() then
         return
     end
@@ -394,18 +431,50 @@ defaultStates = {
       active = function() return IsUnitInCombat("player") end,
   },
   swimming = {
-      events = {
-          { pause = EVENT_PLAYER_SWIMMING, unpause = EVENT_PLAYER_NOT_SWIMMING, }
-      },
+      events = { pause = EVENT_PLAYER_SWIMMING, unpause = EVENT_PLAYER_NOT_SWIMMING, },
       active = function() return IsUnitSwimming("player") end,
   },
   dead = {
-      events = {
-          { pause = EVENT_PLAYER_DEAD, unpause = EVENT_PLAYER_ALIVE, },
-      },
+      events = { pause = EVENT_PLAYER_DEAD, unpause = EVENT_PLAYER_ALIVE, },
       active = function() return IsUnitDeadOrReincarnating("player") end,
   },
+  mail = {
+      events = { pause = EVENT_MAIL_OPEN_MAILBOX, unpause = EVENT_MAIL_CLOSE_MAILBOX, },
+      active = function() return GetInteractionType() == INTERACTION_MAIL end,
+  },
+  crafting = {
+      events = { pause = EVENT_CRAFTING_STATION_INTERACT, unpause = EVENT_END_CRAFTING_STATION_INTERACT, },
+      active = function() return GetInteractionType() == INTERACTION_CRAFT end,
+  },
+  dyeing = {
+      events = { pause = EVENT_DYEING_STATION_INTERACT_START, unpause = EVENT_DYEING_STATION_INTERACT_END, },
+      active = function() return GetInteractionType() == INTERACTION_DYE_STATION end,
+  },
+  reading = {
+      events = { pause = EVENT_SHOW_BOOK, unpause = EVENT_HIDE_BOOK, },
+      active = function() return GetInteractionType() == INTERACTION_BOOK end,
+  },
+  bank = {
+      events = { pause = EVENT_OPEN_BANK, unpause = EVENT_CLOSE_BANK, },
+      active = function() return GetInteractionType() == INTERACTION_BANK end,
+  },
+  guildBank = {
+      events = { pause = EVENT_OPEN_GUILD_BANK, unpause = EVENT_CLOSE_GUILD_BANK, },
+      active = function() return GetInteractionType() == INTERACTION_GUILDBANK end,
+  },
+  tradingHouse = {
+      events = { pause = EVENT_OPEN_TRADING_HOUSE, unpause = EVENT_CLOSE_TRADING_HOUSE, },
+      active = function() return GetInteractionType() == INTERACTION_TRADINGHOUSE end,
+  },
   interacting = {
+      events = { pause = EVENT_CHATTER_BEGIN, unpause = EVENT_CHATTER_END, },
+      active = function() return GetInteractionType() == INTERACTION_CONVERSATION end,
+  },
+  vendor = {
+      events = { pause = EVENT_OPEN_STORE, unpause = EVENT_CLOSE_STORE, },
+      active = function() return GetInteractionType() == INTERACTION_VENDOR end,
+  },
+  --[[interacting = {
       callbacks = {
           pause = {
               { target = INTERACT_WINDOW, name = "Shown" },
@@ -414,7 +483,7 @@ defaultStates = {
               { target = INTERACT_WINDOW, name = "Hidden" },
               { target = HUD_SCENE, name = "Shown", stateParameter = { index = 2, value = SCENE_SHOWN } },
           }
-      }
+      },
       active = function() return INTERACT_WINDOW:IsInteracting() end,
-  }
+  }]]--
 }

@@ -7,9 +7,9 @@ local debug = false
 local knownIds
 local submenu = GetString(SI_GAMEPLAY_OPTIONS_GENERAL)
 
-class.Fishing = class.Rule:Subclass()
+class.Fishing = addon.classes.Rule:Subclass()
 function class.Fishing:New()
-    return class.Rule.New(
+    return addon.classes.Rule.New(
         self, 
         {
             name          = "fishing",

@@ -8,7 +8,7 @@ local submenu = GetString(SI_UNBOXER_QUEST_REWARDS)
 
 class.Dungeon = class.LFGActivity:Subclass()
 function class.Dungeon:New()
-    return class.Rule.New(
+    return addon.classes.Rule.New(
         self, 
         {
             name          = "dungeon",

@@ -4,9 +4,9 @@ local debug = false
 local knownIds
 
 -- PTS
-class.Pts = class.Rule:Subclass()
+class.Pts = addon.classes.Rule:Subclass()
 function class.Pts:New()
-    return class.Rule.New(
+    return addon.classes.Rule.New(
         self, 
         {
             name = "pts",

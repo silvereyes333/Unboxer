@@ -7,9 +7,9 @@ local knownIds
 local debug = false
 local submenu = GetString("SI_QUESTTYPE", QUEST_TYPE_CRAFTING)
 
-class.Materials = class.Rule:Subclass()
+class.Materials = addon.classes.Rule:Subclass()
 function class.Materials:New()
-    return class.Rule.New(
+    return addon.classes.Rule.New(
         self, 
         {
             name          = "materials",

@@ -6,9 +6,9 @@ local class = addon:Namespace("rules.general")
 local debug = false
 local submenu = GetString(SI_GAMEPLAY_OPTIONS_GENERAL)
 
-class.Legerdemain = class.Rule:Subclass()
+class.Legerdemain = addon.classes.Rule:Subclass()
 function class.Legerdemain:New()
-    return class.Rule.New(
+    return addon.classes.Rule.New(
         self, 
         {
             name          = "legerdemain",

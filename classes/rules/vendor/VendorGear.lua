@@ -3,13 +3,14 @@
 
 local addon = Unboxer
 local class = addon:Namespace("rules.vendor")
+local rules = addon.classes.rules
 local knownIds
 local debug = false
 local submenu = GetString(SI_GAMEPAD_VENDOR_CATEGORY_HEADER)
 
-class.VendorGear = class.Rule:Subclass()
+class.VendorGear = addon.classes.Rule:Subclass()
 function class.VendorGear:New()
-    local instance = class.Rule.New(
+    local instance = addon.classes.Rule.New(
         self, 
         {
             name          = "vendorgear",
@@ -18,7 +19,7 @@ function class.VendorGear:New()
             submenu       = submenu,
             knownIds      = knownIds,
         })
-    instance.pts = addon.classes.Pts:New()
+    instance.pts = rules.Pts:New()
     return instance
 end
 

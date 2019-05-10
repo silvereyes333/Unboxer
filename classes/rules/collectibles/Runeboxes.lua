@@ -9,9 +9,9 @@ local debug = false
 local submenu = GetString("SI_ITEMFILTERTYPE", ITEMFILTERTYPE_COLLECTIBLE)
 
 local runeboxCollectibleCategoryTypes
-class.Runeboxes  = class.Rule:Subclass()
+class.Runeboxes  = addon.classes.Rule:Subclass()
 function class.Runeboxes:New()
-    return class.Rule.New(
+    return addon.classes.Rule.New(
         self, 
         {
             name          = "runeboxes",

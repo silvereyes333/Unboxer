@@ -3,12 +3,13 @@
 
 local addon = Unboxer
 local class = addon:Namespace("rules.vendor")
+local rules = addon.classes.rules
 local debug = false
 local submenu = GetString(SI_GAMEPAD_VENDOR_CATEGORY_HEADER)
 
-class.LoreLibraryReprints  = class.Rule:Subclass()
+class.LoreLibraryReprints  = addon.classes.Rule:Subclass()
 function class.LoreLibraryReprints:New()
-    local instance = class.Rule.New(
+    local instance = addon.classes.Rule.New(
         self, 
         {
             name          = "reprints",
@@ -16,7 +17,7 @@ function class.LoreLibraryReprints:New()
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_REPRINTS),
         })
-    instance.pts = addon.classes.Pts:New()
+    instance.pts = rules.Pts:New()
     return instance
 end
 

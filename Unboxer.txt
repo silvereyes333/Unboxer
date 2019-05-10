@@ -23,6 +23,7 @@ localization\CreateStrings.lua
 Unboxer.lua
 classes\Settings.lua
 classes\Rule.lua
+classes\BoxOpener.lua
 classes\UnboxAll.lua
 
 ; Rules engines for different categories

@@ -1,5 +1,5 @@
 local addon = Unboxer
-local class = addon.classes
+local class = addon:Namespace("rules.rewards")
 local debug = false
 local staticLocations
 
@@ -7,9 +7,9 @@ local staticLocations
 
 
 -- LFG activities base class
-class.LFGActivity = class.Rule:Subclass()
+class.LFGActivity = addon.classes.Rule:Subclass()
 function class.LFGActivity:New(...)
-    local instance = class.Rule.New(self, ...)
+    local instance = addon.classes.Rule.New(self, ...)
     EVENT_MANAGER:RegisterForEvent(instance.name, EVENT_PLAYER_ACTIVATED, function() instance:GetLocations() end)
     return instance
 end

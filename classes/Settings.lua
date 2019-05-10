@@ -104,8 +104,6 @@ function addon:SetupSettings()
     LAM2:RegisterAddonPanel(self.name.."Options", panelData)
     
     LAM2:RegisterOptionControls(self.name.."Options", self.optionsTable)
-    
-    self:RegisterEvents()
 end
 
 ----------------------------------------------------------------------------

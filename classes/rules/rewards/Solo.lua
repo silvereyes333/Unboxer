@@ -3,14 +3,15 @@
 
 local addon = Unboxer
 local class = addon:Namespace("rules.rewards")
+local rules = addon.classes.rules
 local debug = false
 local staticDlcs
 local knownIds
 local submenu = GetString(SI_UNBOXER_QUEST_REWARDS)
 
-class.Solo = class.Rule:Subclass()
+class.Solo = addon.classes.Rule:Subclass()
 function class.Solo:New()
-    local instance = class.Rule.New(
+    local instance = addon.classes.Rule.New(
         self, 
         {
             name          = "solo",
@@ -20,7 +21,7 @@ function class.Solo:New()
             title         = GetString(SI_UNBOXER_SOLO),
             -- knownIds      = knownIds
         })
-    instance.pts = class.Pts:New()
+    instance.pts = rules.Pts:New()
     return instance
 end
 

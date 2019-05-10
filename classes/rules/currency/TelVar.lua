@@ -6,9 +6,9 @@ local class = addon:Namespace("rules.currency")
 local debug = false
 local submenu = GetString(SI_INVENTORY_MODE_CURRENCY)
 
-class.TelVar = class.Rule:Subclass()
+class.TelVar = addon.classes.Rule:Subclass()
 function class.TelVar:New()
-    return class.Rule.New(
+    return addon.classes.Rule.New(
         self, 
         {
             name          = "telvar",

@@ -3,12 +3,13 @@
 
 local addon = Unboxer
 local class = addon:Namespace("rules.currency")
+local rules = addon.classes.rules
 local debug = false
 local submenu = GetString(SI_INVENTORY_MODE_CURRENCY)
 
-class.Transmutation = class.Rule:Subclass()
+class.Transmutation = addon.classes.Rule:Subclass()
 function class.Transmutation:New()
-    local instance = class.Rule.New(
+    local instance = addon.classes.Rule.New(
         self, 
         {
             name          = "transmutation",
@@ -16,7 +17,7 @@ function class.Transmutation:New()
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_TRANSMUTATION),
         })
-    instance.pts = class.Pts:New()
+    instance.pts = rules.Pts:New()
     return instance
 end
 

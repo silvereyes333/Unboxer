@@ -9,7 +9,7 @@ local submenu = GetString(SI_UNBOXER_QUEST_REWARDS)
 
 class.Trial = class.LFGActivity:Subclass()
 function class.Trial:New()
-    return class.Rule.New(
+    return addon.classes.Rule.New(
         self, 
         {
             name          = "trial",
