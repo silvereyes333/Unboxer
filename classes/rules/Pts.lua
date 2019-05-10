@@ -1,5 +1,5 @@
 local addon = Unboxer
-local class = addon.classes
+local class = addon:Namespace("rules")
 local debug = false
 local knownIds
 

@@ -2,7 +2,7 @@
 -- Transmutation Geodes
 
 local addon = Unboxer
-local class = addon.classes
+local class = addon:Namespace("rules.currency")
 local debug = false
 local submenu = GetString(SI_INVENTORY_MODE_CURRENCY)
 

@@ -110,21 +110,6 @@ function class.BoxOpener:CreateLootClosedHandler()
         self:OnOpened()
     end
 end
-local function GetInventorySlotsNeeded()
-    local inventorySlotsNeeded = GetNumLootItems()
-    if HasCraftBagAccess() then
-        for lootIndex = 1, GetNumLootItems() do
-            local lootId = GetLootItemInfo(lootIndex)
-            if GetLootItemType(lootId) == LOOT_TYPE_ITEM and CanItemLinkBeVirtual(GetLootItemLink(lootId)) do
-                inventorySlotsNeeded = inventorySlotsNeeded - 1
-            end
-        end
-    end
-    if addon.settings.reservedSlots and type(addon.settings.reservedSlots) == "number" then
-        inventorySlotsNeeded = inventorySlotsNeeded + addon.settings.reservedSlots
-    end
-    return inventorySlotsNeeded
-end
 
 function class.BoxOpener:RegisterLootAllItemsTimeout()
     EVENT_MANAGER:RegisterForUpdate(self.name .. "_Timeout", 1000, self:CreateLootUpdatedHandler())
@@ -132,7 +117,7 @@ end
 function class.BoxOpener:CreateLootUpdatedHandler()
     return function(eventCode)  
         EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_LOOT_UPDATED)
-        local inventorySlotsNeeded = GetInventorySlotsNeeded()
+        local inventorySlotsNeeded = addon.unboxAll:GetInventorySlotsNeeded()
         if not CheckInventorySpaceAndWarn(inventorySlotsNeeded) then
             self:OnFailed("Not enough space")
             self:Reset()

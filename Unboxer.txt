@@ -21,30 +21,31 @@ localization\$(language).lua
 localization\CreateStrings.lua
 
 Unboxer.lua
-classes/Settings.lua
-classes/Rule.lua
+classes\Settings.lua
+classes\Rule.lua
+classes\UnboxAll.lua
 
 ; Rules engines for different categories
-classes/rules/collectibles/Runeboxes.lua
-classes/rules/collectibles/StylePages.lua
-classes/rules/crafting/CraftingRewards.lua
-classes/rules/crafting/Materials.lua
-classes/rules/currency/Transmutation.lua
-classes/rules/currency/TelVar.lua
-classes/rules/general/Festival.lua
-classes/rules/general/Fishing.lua
-classes/rules/general/Legerdemain.lua
-classes/rules/general/TreasureMaps.lua
-classes/rules/general/Vendor.lua
-classes/rules/rewards/LFGActivity.lua
-classes/rules/rewards/Dungeon.lua
-classes/rules/rewards/Solo.lua
-classes/rules/rewards/SoloRepeatable.lua
-classes/rules/rewards/Trial.lua
-classes/rules/vendor/Furnisher.lua
-classes/rules/vendor/LoreLibraryReprints.lua
-classes/rules/vendor/VendorGear.lua
-classes/rules/Pts.lua
+classes\rules\collectibles\Runeboxes.lua
+classes\rules\collectibles\StylePages.lua
+classes\rules\crafting\CraftingRewards.lua
+classes\rules\crafting\Materials.lua
+classes\rules\currency\Transmutation.lua
+classes\rules\currency\TelVar.lua
+classes\rules\general\Festival.lua
+classes\rules\general\Fishing.lua
+classes\rules\general\Legerdemain.lua
+classes\rules\general\TreasureMaps.lua
+classes\rules\general\Vendor.lua
+classes\rules\rewards\LFGActivity.lua
+classes\rules\rewards\Dungeon.lua
+classes\rules\rewards\Solo.lua
+classes\rules\rewards\SoloRepeatable.lua
+classes\rules\rewards\Trial.lua
+classes\rules\vendor\Furnisher.lua
+classes\rules\vendor\LoreLibraryReprints.lua
+classes\rules\vendor\VendorGear.lua
+classes\rules\Pts.lua
 
 
 Bindings.xml

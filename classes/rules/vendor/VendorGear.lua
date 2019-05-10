@@ -2,7 +2,7 @@
 -- Vendor Equipment Boxes
 
 local addon = Unboxer
-local class = addon.classes
+local class = addon:Namespace("rules.vendor")
 local knownIds
 local debug = false
 local submenu = GetString(SI_GAMEPAD_VENDOR_CATEGORY_HEADER)

@@ -2,7 +2,7 @@
 -- Repeatable activites (e.g. dailies, Rewards for the Worthy, etc.)
 
 local addon = Unboxer
-local class = addon.classes
+local class = addon:Namespace("rules.rewards")
 local debug = false
 local staticDlcs
 local knownIds

@@ -2,7 +2,7 @@
 -- Fishing
 
 local addon = Unboxer
-local class = addon.classes
+local class = addon:Namespace("rules.general")
 local debug = false
 local knownIds
 local submenu = GetString(SI_GAMEPLAY_OPTIONS_GENERAL)

@@ -2,7 +2,7 @@
 -- Runeboxes
 
 local addon = Unboxer
-local class = addon.classes
+local class = addon:Namespace("rules.collectibles")
 local debug = false
 
 -- Collectibles submenu

@@ -2,7 +2,7 @@
 -- Trials
 
 local addon = Unboxer
-local class = addon.classes
+local class = addon:Namespace("rules.rewards")
 local debug = false
 local knownIds
 local submenu = GetString(SI_UNBOXER_QUEST_REWARDS)

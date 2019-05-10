@@ -2,7 +2,7 @@
 -- Crafting Quest Rewards
 
 local addon = Unboxer
-local class = addon.classes
+local class = addon:Namespace("rules.crafting")
 local knownIds
 local debug = false
 local submenu = GetString("SI_QUESTTYPE", QUEST_TYPE_CRAFTING)

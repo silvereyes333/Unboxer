@@ -2,7 +2,7 @@
 -- Solo activites (e.g. non-repeatable solo quests, level-up rewards, etc.)
 
 local addon = Unboxer
-local class = addon.classes
+local class = addon:Namespace("rules.rewards")
 local debug = false
 local staticDlcs
 local knownIds
