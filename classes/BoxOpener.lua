@@ -42,6 +42,9 @@ function class.BoxOpener:Reset()
         addon.Debug("new loot window update: "..tostring(lootWindow.UpdateLootWindow), debug)
         self.originalUpdateLootWindow = nil
     end
+    if IsLooting() then
+        EndLooting()
+    end
 end
 function class.BoxOpener:Open()
   
@@ -53,6 +56,13 @@ function class.BoxOpener:Open()
     
     if IsLooting() then
         addon.Debug("Loot window is already open.  Wait 1 second and try looting " ..self.itemLink.." ("..tostring(self.slotIndex)..") again.", debug)
+        self:DelayOpen(1000)
+        return true
+    end
+    
+    local interactionType = GetInteractionType()
+    if interactionType ~= 0 then
+        addon.Debug("Interacting with interaction type "..tostring(interactionType)..".  Wait 1 second and try looting " ..self.itemLink.." ("..tostring(self.slotIndex)..") again.", debug)
         self:DelayOpen(1000)
         return true
     end

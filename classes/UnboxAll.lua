@@ -26,6 +26,10 @@ local function ChatterBegin(eventCode, optionCount)
 end
 local function ChatterEnd(eventCode)
     addon.Debug("ChatterEnd("..tostring(eventCode)..")", debug)
+end
+local function HousingEditorModeChanged(eventCode, oldMode, newMode)
+    addon.Debug("HousingEditorModeChanged("..tostring(eventCode)..", "..tostring(oldMode)..", "..tostring(newMode)..")", debug)
+    addon.Debug("active? "..tostring(GetHousingEditorMode() ~= HOUSING_EDITOR_MODE_DISABLED), debug)
 end]]
 function class.UnboxAll:Initialize(name)
     self.name = name or addon.name .. "_UnboxAll"
@@ -34,7 +38,7 @@ function class.UnboxAll:Initialize(name)
     self.callbackHandlers = {}
     for name, config in pairs(defaultStates) do
         if config.events then
-            self:RegisterPauseEvents(name, config.events.pause, config.events.unpause, config.stateParameter, config.active, config.interactionTypes, config.combatEventFilters)
+            self:RegisterPauseEvents(name, config.events.pause, config.events.unpause, config.active, config.interactionTypes, config.combatEventFilters)
         end
         if config.callbacks then
             self:RegisterPauseCallbacks(name, config.callbacks.pause, config.callbacks.unpause, config.active)
@@ -44,12 +48,14 @@ function class.UnboxAll:Initialize(name)
     EVENT_MANAGER:RegisterForEvent(self.name.."CHB", EVENT_CHATTER_BEGIN, ChatterBegin)
     EVENT_MANAGER:RegisterForEvent(self.name.."CHE", EVENT_CHATTER_END, ChatterEnd)
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_CLIENT_INTERACT_RESULT, ClientInteractResult)]]
+    --EVENT_MANAGER:RegisterForEvent(self.name .. "HEM", EVENT_HOUSING_EDITOR_MODE_CHANGED, HousingEditorModeChanged)
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, self:CreateSlotUpdateCallback())
     EVENT_MANAGER:AddFilterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_BAG_ID, BAG_BACKPACK)
     EVENT_MANAGER:AddFilterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_INVENTORY_UPDATE_REASON, INVENTORY_UPDATE_REASON_DEFAULT)
     EVENT_MANAGER:AddFilterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_IS_NEW_ITEM, true)
     self:Reset()
-    self:ListenForPause()
+    -- TODO: Remove this before going live
+    if debug then self:ListenForPause() end
 end
 function class.UnboxAll:CreateFailedCallback()
     return function(slotIndex, itemLink, reason)
@@ -64,7 +70,7 @@ function class.UnboxAll:CreateInteractionTypesCheck(interactionTypes)
         if ZO_IsElementInNumericallyIndexedTable(interactionTypes, interactionType) then
             return true
         end
-        addon.Debug("Interaction type check failed. Current interaction type: "..tostring(GetInteractionType()), debug)
+        --addon.Debug("Interaction type check failed. Current interaction type: "..tostring(GetInteractionType()), debug)
     end
 end
 function class.UnboxAll:CreateInteractSceneHiddenCallback(scene, name)
@@ -115,14 +121,17 @@ function class.UnboxAll:CreateSlotUpdateCallback()
         end
     end
 end
-function class.UnboxAll:DelayStart(item)
+function class.UnboxAll:DelayStart(item, milliseconds)
     if item then
         table.insert(self.queue, item)
     end
     self.state = "delayed_start"
-    addon.Debug("Delay starting unbox for "..tostring(self:GetDelayMilliseconds()).." ms", debug)
+    if not milliseconds then
+        milliseconds = self:GetDelayMilliseconds()
+    end
+    addon.Debug("Delay starting unbox for "..tostring(milliseconds).." ms", debug)
     self:FireCallbacks("DelayStart", item)
-    EVENT_MANAGER:RegisterForUpdate(self.name .. "_Start", self:GetDelayMilliseconds(), function() self:Start() end)
+    EVENT_MANAGER:RegisterForUpdate(self.name .. "_Start", milliseconds, function() self:Start() end)
 end
 function class.UnboxAll:GetAutoQueue(value)
     return addon.settings.autoloot or self.autoQueue
@@ -180,22 +189,27 @@ function class.UnboxAll:HasUnboxableSlots()
 
     return false
 end
+function class.UnboxAll:CreateMountFailureHandler()
+    -- If a mount failure occurs while unboxing, delay for the configured time
+    return function() self:DelayStart(nil, math.max(self:GetDelayMilliseconds(), 2000)) end
+end
 function class.UnboxAll:ListenForPause()
     for name, handlers in pairs(self.eventHandlers) do
         local pause = handlers.pause
         if pause then
             local events = type(pause.events) == "table" and pause.events or { pause.events }
             for _, event in ipairs(events) do
-                EVENT_MANAGER:RegisterForEvent(self.name .. "_" .. name, event, pause.handler)
+                local scope = self.name .. "_" .. name .. "_pause"
+                EVENT_MANAGER:RegisterForEvent(scope, event, pause.handler)
                 if pause.combatEventFilters then
                     if event == EVENT_COMBAT_EVENT then
                         for filterType, filterParameter in pairs(pause.combatEventFilters) do
                             addon.Debug("Adding combat event filter " .. tostring(filterType) .. " " .. tostring(filterParameter) 
-                                        .. " for event " .. self.name .. "_" .. name, debug)
-                            EVENT_MANAGER:AddFilterForEvent(self.name .. "_" .. name,  event, filterType, filterParameter)
+                                        .. " for event " .. scope, debug)
+                            EVENT_MANAGER:AddFilterForEvent(scope,  event, filterType, filterParameter)
                         end
                     else
-                        addon.Debug("Event " .. self.name .. "_" .. name .. " does not match "
+                        addon.Debug("Event " .. scope .. " does not match "
                                      ..tostring(EVENT_COMBAT_EVENT).. ". it is "..tostring(event), debug)
                     end
                 end
@@ -205,20 +219,25 @@ function class.UnboxAll:ListenForPause()
     for name, callbackHandler in pairs(self.callbackHandlers) do
         if callbackHandler.pause then
             for _, pause in ipairs(callbackHandler.pause) do
-                pause.target:RegisterCallback(pause.name,  pause.callback)
+                local scope = pause.name .. "_pause"
+                pause.target:RegisterCallback(scope,  pause.callback)
             end
         end
     end
+    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MOUNT_FAILURE, self:CreateMountFailureHandler())
 end
 function class.UnboxAll:OnPausedEvent(name, combatEventFilters)
     local unpause, events
     local handlers = self.eventHandlers[self.state]
-    if self.state ~= name and handlers then
+    if self.state == name then
+        return
+    elseif handlers then
         unpause = handlers.unpause
         events = type(unpause.events) == "table" and unpause.events or { unpause.events }
         addon.Debug("Unregistering unpause event(s) for " .. self.state, debug)
         for _, event in ipairs(events) do
-            EVENT_MANAGER:UnregisterForEvent(self.name .. "_" .. self.state, event)
+            local scope = self.name .. "_" .. self.state .. "_unpause"
+            EVENT_MANAGER:UnregisterForEvent(scope, event)
         end
     end
     handlers = self.eventHandlers[name]
@@ -229,10 +248,11 @@ function class.UnboxAll:OnPausedEvent(name, combatEventFilters)
     if unpause then
         events = type(unpause.events) == "table" and unpause.events or { unpause.events }
         for _, event in ipairs(events) do
-            EVENT_MANAGER:RegisterForEvent(self.name .. "_" .. name,  event, unpause.handler)
+            local scope = self.name .. "_" .. name .. "_unpause"
+            EVENT_MANAGER:RegisterForEvent(scope,  event, unpause.handler)
             if event == COMBAT_EVENT_COMBAT and unpause.combatEventFilters then
                 for filterType, filterParameter in pairs(unpause.combatEventFilters) do
-                    EVENT_MANAGER:AddFilterForEvent(self.name .. "_" .. name,  event, filterType, filterParameter)
+                    EVENT_MANAGER:AddFilterForEvent(scope,  event, filterType, filterParameter)
                 end
             end
         end
@@ -256,9 +276,10 @@ function class.UnboxAll:OnUnpausedEvent(name)
     end
     local unpause = self.eventHandlers[name].unpause
     if unpause then
+        local scope = self.name .. "_" .. name .. "_unpause"
         local events = type(unpause.events) == "table" and unpause.events or { unpause.events }
         for _, event in ipairs(events) do
-            EVENT_MANAGER:UnregisterForEvent(self.name .. "_" .. name, event)
+            EVENT_MANAGER:UnregisterForEvent(scope, event)
         end
     end
     -- Fix for retrait station having no close event
@@ -278,13 +299,14 @@ function class.UnboxAll:OnUnpausedEvent(name)
     end
 end
 function class.UnboxAll:OnPausedCallback(name)
-    if not self.callbackHandlers[name] then
+    if not self.callbackHandlers[name] or self.state == name then
         return
     end
     local handlers = self.callbackHandlers[name].unpause
     if handlers then
         for _, unpause in ipairs(handlers) do
-            unpause.target:RegisterCallback(unpause.name,  unpause.callback)
+            local scope = unpause.name .. "_unpause"
+            unpause.target:RegisterCallback(scope,  unpause.callback)
         end
     end
     self.state = name
@@ -299,7 +321,8 @@ function class.UnboxAll:OnUnpausedCallback(name)
     local handlers = self.callbackHandlers[name].unpause
     if handlers then
         for _, unpause in ipairs(handlers) do
-            unpause.target:UnregisterCallback(unpause.name,  unpause.callback)
+            local scope = unpause.name .. "_unpause"
+            unpause.target:UnregisterCallback(unpause,  unpause.callback)
         end
     end
     if self.state ~= name then
@@ -349,25 +372,27 @@ function class.UnboxAll:Reset()
         if unpause then
             local events = type(unpause.events) == "table" and unpause.events or { unpause.events }
             for _, event in ipairs(events) do
-                EVENT_MANAGER:UnregisterForEvent(self.name .. "_" .. name,  event)
+                local scope = self.name .. "_" .. name .. "_unpause"
+                EVENT_MANAGER:UnregisterForEvent(scope, event)
             end
         end
     end
     for _, handlers in pairs(self.callbackHandlers) do
         if handlers.unpause then
             for _, unpause in ipairs(handlers.unpause) do
-                unpause.target:UnregisterCallback(unpause.name, unpause.callback)
+                local scope = unpause.name .. "_unpause"
+                unpause.target:UnregisterCallback(scope, unpause.callback)
             end
         end
     end
+    EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_MOUNT_FAILURE)
 end
-function class.UnboxAll:RegisterPauseEvents(name, pauseEvents, unpauseEvents, stateParameter, activeFunc, interactionTypes, combatEventFilters)
+function class.UnboxAll:RegisterPauseEvents(name, pauseEvents, unpauseEvents, activeFunc, interactionTypes, combatEventFilters)
     if not activeFunc and interactionTypes then
         activeFunc = self:CreateInteractionTypesCheck(interactionTypes)
     end
     self.states[name] = {
         events = { pause = pauseEvents, unpause = unpauseEvents },
-        stateParameter = stateParameter,
         active = activeFunc,
         combatEventFilters = combatEventFilters,
     }
@@ -376,17 +401,7 @@ function class.UnboxAll:RegisterPauseEvents(name, pauseEvents, unpauseEvents, st
         handlers.pause   = {
             events  = pauseEvents,
             handler = function(...)
-                          if not activeFunc() then
-                              return
-                          end
-                          if stateParameter then
-                              local params = {...}
-                              local value = params[stateParameter.index]
-                              if value == stateParameter.pauseValue then
-                                  self:OnPausedEvent(name)
-                              end
-                              return
-                          end
+                          if not activeFunc() then return end
                           self:OnPausedEvent(name)
                       end,
             combatEventFilters = combatEventFilters and combatEventFilters.pause or nil,
@@ -396,50 +411,13 @@ function class.UnboxAll:RegisterPauseEvents(name, pauseEvents, unpauseEvents, st
         handlers.unpause = {
             events  = unpauseEvents,
             handler = function(...)
-                          if stateParameter then
-                              local params = {...}
-                              local value = params[stateParameter.index]
-                              if value == stateParameter.unpauseValue then
-                                  self:OnUnpausedEvent(name, combatEventFilters and combatEventFilters.unpause)
-                              end
-                              return
-                          end
+                          if activeFunc() then return end
                           self:OnUnpausedEvent(name, combatEventFilters and combatEventFilters.unpause)
                       end,
             combatEventFilters = combatEventFilters and combatEventFilters.unpause or nil,
         }
     end
     self.eventHandlers[name] = handlers
-end
-function class.UnboxAll:GeneratePauseCallback(callback, name)
-    return function(...)
-        local activeFunc = self.states[name].active
-        if not activeFunc() then
-            return
-        end
-        if callback.stateParameter then
-            local params = {...}
-            local value = params[callback.stateParameter.index]
-            if value == callback.stateParameter.pauseValue then
-                self:OnPausedCallback(name)
-            end
-            return
-        end
-        self:OnPausedCallback(name)
-    end
-end
-function class.UnboxAll:GenerateUnpauseCallback(callback, name)
-    return function(...)
-        if callback.stateParameter then
-            local params = {...}
-            local value = params[callback.stateParameter.index]
-            if value == callback.stateParameter.pauseValue then
-                self:OnUnpausedCallback(name)
-            end
-            return
-        end
-        self:OnUnpausedCallback(name)
-    end
 end
 function class.UnboxAll:RegisterPauseCallbacks(name, pauseCallbacks, unpauseCallbacks, activeFunc)
     self.states[name] = {
@@ -457,9 +435,12 @@ function class.UnboxAll:RegisterPauseCallbacks(name, pauseCallbacks, unpauseCall
         for _, callback in ipairs(pauseCallbacks) do
             table.insert(self.callbackHandlers[name].pause,
                 {
-                    target = callback.target,
-                    name = callback.name,
-                    callback = self:GeneratePauseCallback(callback, name),
+                    target    = callback.target,
+                    name      = callback.name,
+                    callback  = function(...)
+                                    if not activeFunc() then return end
+                                    self:OnUnpausedCallback(name)
+                                end
                 }
             )
         end
@@ -468,9 +449,12 @@ function class.UnboxAll:RegisterPauseCallbacks(name, pauseCallbacks, unpauseCall
         for _, callback in ipairs(unpauseCallbacks) do
             table.insert(self.callbackHandlers[name].unpause,
                 {
-                    target = callback.target,
-                    name = callback.name,
-                    callback = self:GenerateUnpauseCallback(callback, name),
+                    target    = callback.target,
+                    name      = callback.name,
+                    callback  = function(...)
+                                    if activeFunc() then return end
+                                    self:OnUnpausedCallback(name)
+                                end
                 }
             )
         end
@@ -547,11 +531,6 @@ end ]]--
 defaultStates = {
   inCombat = {
       events = { pause = EVENT_PLAYER_COMBAT_STATE, unpause = EVENT_PLAYER_COMBAT_STATE },
-      stateParameter = {
-          index = 2,
-          pauseValue = true,
-          unpauseValue = false,
-      },
       active = function() return IsUnitInCombat("player") end,
   },
   swimming = {
@@ -622,6 +601,10 @@ defaultStates = {
       events = { pause =  EVENT_BEGIN_SIEGE_CONTROL, unpause = EVENT_END_SIEGE_CONTROL },
       interactionTypes = { INTERACTION_SIEGE },
   },
+  housing = {
+      events = { pause = EVENT_HOUSING_EDITOR_MODE_CHANGED, unpause = EVENT_HOUSING_EDITOR_MODE_CHANGED },
+      active = function() return GetHousingEditorMode() ~= HOUSING_EDITOR_MODE_DISABLED end,
+  },
   hideyHole = {
       events = { pause =  EVENT_CLIENT_INTERACT_RESULT, unpause = EVENT_CHATTER_END },
       active = function() return GetGameCameraInteractableActionInfo() == GetString(SI_GAMECAMERAACTIONTYPE24) end,
@@ -634,6 +617,18 @@ defaultStates = {
       },]]
   },
   
+  --[[ Still to add/test
+  
+       * pause and cancel keybinds
+       * Fence
+       * Repair
+       * Harvest
+       * Animations before chatter (e.g. respec shrine)
+       * Siege repair
+       * Structure repair
+       * Quick slot
+  ]]--
+  
   --[[ Other scenes/actions that do not interrupt or get interrupted by opening containers:
   
        * Champion Point assignment
@@ -645,6 +640,10 @@ defaultStates = {
        * Guild management
        * Group finder
        * Friends list
+       * Attribute respec scroll
+       * Skill respec scroll
+       * Cutscene / kill cam / blade of woe
+       * 
   ]]--
   --[[interacting = {
       callbacks = {
@@ -653,7 +652,7 @@ defaultStates = {
           },
           unpause = {
               { target = INTERACT_WINDOW, name = "Hidden" },
-              { target = HUD_SCENE, name = "Shown", stateParameter = { index = 2, value = SCENE_SHOWN } },
+              { target = HUD_SCENE, name = "Shown" },
           }
       },
       active = function() return INTERACT_WINDOW:IsInteracting() end,
