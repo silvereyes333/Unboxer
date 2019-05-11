@@ -73,8 +73,8 @@ function class.Pts:MatchAbsoluteIndicators(data)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FULL_SUITE3_LOWER)
        or string.find(data.flavorText, " pts ")
        or string.find(data.flavorText, "^pts ")
-       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_INFINITE_LOWER)
-       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_TESTER_LOWER)
+       or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_INFINITE_LOWER)
+       or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_TESTER_LOWER)
     then
         return self:IsUnboxableMatch()
     end
