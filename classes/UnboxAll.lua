@@ -15,7 +15,18 @@ function class.UnboxAll:New(...)
     instance:Initialize(...)
     return instance
 end
-
+--[[local function ClientInteractResult(eventCode, result, interactTargetName)
+    addon.Debug("ClientInteractResult("..tostring(eventCode)..", "..tostring(result)..", '"..tostring(interactTargetName).."')", debug)
+end
+local function ConfirmInteract(eventCode, dialogTitle, dialogBody, acceptText, cancelText)
+    addon.Debug("ConfirmInteract("..tostring(eventCode)..", '"..tostring(dialogTitle).."', '"..tostring(dialogBody).."', '"..tostring(acceptText).."', '"..tostring(cancelText).."')", debug)
+end
+local function ChatterBegin(eventCode, optionCount)
+    addon.Debug("ChatterBegin("..tostring(eventCode)..", "..tostring(optionCount)..")", debug)
+end
+local function ChatterEnd(eventCode)
+    addon.Debug("ChatterEnd("..tostring(eventCode)..")", debug)
+end]]
 function class.UnboxAll:Initialize(name)
     self.name = name or addon.name .. "_UnboxAll"
     self.states = {}
@@ -23,12 +34,16 @@ function class.UnboxAll:Initialize(name)
     self.callbackHandlers = {}
     for name, config in pairs(defaultStates) do
         if config.events then
-            self:RegisterPauseEvents(name, config.events.pause, config.events.unpause, config.stateParameter, config.active)
+            self:RegisterPauseEvents(name, config.events.pause, config.events.unpause, config.stateParameter, config.active, config.interactionTypes, config.combatEventFilters)
         end
         if config.callbacks then
             self:RegisterPauseCallbacks(name, config.callbacks.pause, config.callbacks.unpause, config.active)
         end
     end
+    --[[EVENT_MANAGER:RegisterForEvent(self.name, EVENT_CONFIRM_INTERACT, ConfirmInteract)
+    EVENT_MANAGER:RegisterForEvent(self.name.."CHB", EVENT_CHATTER_BEGIN, ChatterBegin)
+    EVENT_MANAGER:RegisterForEvent(self.name.."CHE", EVENT_CHATTER_END, ChatterEnd)
+    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_CLIENT_INTERACT_RESULT, ClientInteractResult)]]
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, self:CreateSlotUpdateCallback())
     EVENT_MANAGER:AddFilterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_BAG_ID, BAG_BACKPACK)
     EVENT_MANAGER:AddFilterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_INVENTORY_UPDATE_REASON, INVENTORY_UPDATE_REASON_DEFAULT)
@@ -41,6 +56,23 @@ function class.UnboxAll:CreateFailedCallback()
         addon.Debug("Failed "..tostring(itemLink).." ("..tostring(slotIndex)..") "..tostring(reason), debug)
         self:FireCallbacks("Failed", slotIndex, itemLink, reason)
         EVENT_MANAGER:RegisterForUpdate(self.name .. "_Start", 40, function() self:Start() end)
+    end
+end
+function class.UnboxAll:CreateInteractionTypesCheck(interactionTypes)
+    return function()
+        local interactionType = GetInteractionType()
+        if ZO_IsElementInNumericallyIndexedTable(interactionTypes, interactionType) then
+            return true
+        end
+        addon.Debug("Interaction type check failed. Current interaction type: "..tostring(GetInteractionType()), debug)
+    end
+end
+function class.UnboxAll:CreateInteractSceneHiddenCallback(scene, name)
+    return function(oldState, newState)
+        if newState ~= SCENE_HIDDEN then
+            return
+        end
+        self:OnUnpausedEvent(name)
     end
 end
 function class.UnboxAll:CreateOpenedCallback()
@@ -149,32 +181,91 @@ function class.UnboxAll:HasUnboxableSlots()
     return false
 end
 function class.UnboxAll:ListenForPause()
-    for _, events in pairs(self.eventHandlers) do
-        EVENT_MANAGER:RegisterForEvent(self.name, events.pause.event, events.pause.handler)
+    for name, handlers in pairs(self.eventHandlers) do
+        local pause = handlers.pause
+        if pause then
+            local events = type(pause.events) == "table" and pause.events or { pause.events }
+            for _, event in ipairs(events) do
+                EVENT_MANAGER:RegisterForEvent(self.name .. "_" .. name, event, pause.handler)
+                if pause.combatEventFilters then
+                    if event == EVENT_COMBAT_EVENT then
+                        for filterType, filterParameter in pairs(pause.combatEventFilters) do
+                            addon.Debug("Adding combat event filter " .. tostring(filterType) .. " " .. tostring(filterParameter) 
+                                        .. " for event " .. self.name .. "_" .. name, debug)
+                            EVENT_MANAGER:AddFilterForEvent(self.name .. "_" .. name,  event, filterType, filterParameter)
+                        end
+                    else
+                        addon.Debug("Event " .. self.name .. "_" .. name .. " does not match "
+                                     ..tostring(EVENT_COMBAT_EVENT).. ". it is "..tostring(event), debug)
+                    end
+                end
+            end
+        end
     end
     for name, callbackHandler in pairs(self.callbackHandlers) do
-        for _, pause in ipairs(callbackHandler.pause) do
-            pause.target:RegisterCallback(pause.name,  pause.callback)
+        if callbackHandler.pause then
+            for _, pause in ipairs(callbackHandler.pause) do
+                pause.target:RegisterCallback(pause.name,  pause.callback)
+            end
         end
     end
 end
-function class.UnboxAll:OnPausedEvent(name)
-    local unpause
-    if self.state ~= name and self.eventHandlers[self.state] then
-        unpause = self.eventHandlers[self.state].unpause
-        addon.Debug("Unregistering unpause event for " .. self.state, debug)
-        EVENT_MANAGER:UnregisterForEvent(self.name .. "_" .. self.state, unpause.event)
+function class.UnboxAll:OnPausedEvent(name, combatEventFilters)
+    local unpause, events
+    local handlers = self.eventHandlers[self.state]
+    if self.state ~= name and handlers then
+        unpause = handlers.unpause
+        events = type(unpause.events) == "table" and unpause.events or { unpause.events }
+        addon.Debug("Unregistering unpause event(s) for " .. self.state, debug)
+        for _, event in ipairs(events) do
+            EVENT_MANAGER:UnregisterForEvent(self.name .. "_" .. self.state, event)
+        end
     end
-    unpause = self.eventHandlers[name].unpause
-    EVENT_MANAGER:RegisterForEvent(self.name .. "_" .. name,  unpause.event, unpause.handler)
+    handlers = self.eventHandlers[name]
+    if not handlers then
+        return
+    end
+    unpause = handlers.unpause
+    if unpause then
+        events = type(unpause.events) == "table" and unpause.events or { unpause.events }
+        for _, event in ipairs(events) do
+            EVENT_MANAGER:RegisterForEvent(self.name .. "_" .. name,  event, unpause.handler)
+            if event == COMBAT_EVENT_COMBAT and unpause.combatEventFilters then
+                for filterType, filterParameter in pairs(unpause.combatEventFilters) do
+                    EVENT_MANAGER:AddFilterForEvent(self.name .. "_" .. name,  event, filterType, filterParameter)
+                end
+            end
+        end
+    
+    -- Fix for retrait station having no close event
+    elseif SCENE_MANAGER.currentScene and getmetatable(SCENE_MANAGER.currentScene) == ZO_InteractScene then
+        self.sceneStateChange = {
+            scene = SCENE_MANAGER.currentScene,
+            callback = self:CreateInteractSceneHiddenCallback(SCENE_MANAGER.currentScene, name)
+        }
+        self.sceneStateChange.scene:RegisterCallback("StateChange", self.sceneStateChange.callback)
+    end
     self.state = name
     addon.Debug("Paused ("..tostring(name)..")", debug)
     self:FireCallbacks("Paused", name)
     EVENT_MANAGER:UnregisterForUpdate(self.name .. "_Start")
 end
 function class.UnboxAll:OnUnpausedEvent(name)
+    if not self.eventHandlers[name] then
+        return
+    end
     local unpause = self.eventHandlers[name].unpause
-    EVENT_MANAGER:UnregisterForEvent(self.name .. "_" .. name,  unpause.event)
+    if unpause then
+        local events = type(unpause.events) == "table" and unpause.events or { unpause.events }
+        for _, event in ipairs(events) do
+            EVENT_MANAGER:UnregisterForEvent(self.name .. "_" .. name, event)
+        end
+    end
+    -- Fix for retrait station having no close event
+    if self.sceneStateChange then
+        self.sceneStateChange.scene:UnregisterCallback("StateChange", self.sceneStateChange.callback)
+        self.sceneStateChange = nil
+    end
     if self.state ~= name then
         addon.Debug("Not unpausing ("..tostring(name)..") because current state is " .. self.state, debug)
         return
@@ -187,8 +278,14 @@ function class.UnboxAll:OnUnpausedEvent(name)
     end
 end
 function class.UnboxAll:OnPausedCallback(name)
-    for _, unpause in ipairs(self.callbackHandlers[name].unpause) do
-        unpause.target:RegisterCallback(unpause.name,  unpause.callback)
+    if not self.callbackHandlers[name] then
+        return
+    end
+    local handlers = self.callbackHandlers[name].unpause
+    if handlers then
+        for _, unpause in ipairs(handlers) do
+            unpause.target:RegisterCallback(unpause.name,  unpause.callback)
+        end
     end
     self.state = name
     addon.Debug("Paused ("..tostring(name)..")", debug)
@@ -196,8 +293,14 @@ function class.UnboxAll:OnPausedCallback(name)
     EVENT_MANAGER:UnregisterForUpdate(self.name .. "_Start")
 end
 function class.UnboxAll:OnUnpausedCallback(name)
-    for _, unpause in ipairs(self.callbackHandlers[name].unpause) do
-        unpause.target:UnregisterCallback(unpause.name,  unpause.callback)
+    if not self.callbackHandlers[name] then
+        return
+    end
+    local handlers = self.callbackHandlers[name].unpause
+    if handlers then
+        for _, unpause in ipairs(handlers) do
+            unpause.target:UnregisterCallback(unpause.name,  unpause.callback)
+        end
     end
     if self.state ~= name then
         addon.Debug("Not unpausing ("..tostring(name)..") because current state is " .. self.state, debug)
@@ -241,25 +344,37 @@ function class.UnboxAll:Reset()
     self.queue = {}
     self.autoQueue = nil
     EVENT_MANAGER:UnregisterForUpdate(self.name .. "_Start")
-    for eventName, events in pairs(self.eventHandlers) do
-        local unpause = events.unpause
-        EVENT_MANAGER:UnregisterForEvent(self.name .. "_" .. eventName,  unpause.event)
+    for name, handlers in pairs(self.eventHandlers) do
+        local unpause = handlers.unpause
+        if unpause then
+            local events = type(unpause.events) == "table" and unpause.events or { unpause.events }
+            for _, event in ipairs(events) do
+                EVENT_MANAGER:UnregisterForEvent(self.name .. "_" .. name,  event)
+            end
+        end
     end
     for _, handlers in pairs(self.callbackHandlers) do
-        for _, unpause in ipairs(handlers.unpause) do
-            unpause.target:UnregisterCallback(unpause.name, unpause.callback)
+        if handlers.unpause then
+            for _, unpause in ipairs(handlers.unpause) do
+                unpause.target:UnregisterCallback(unpause.name, unpause.callback)
+            end
         end
     end
 end
-function class.UnboxAll:RegisterPauseEvents(name, pauseEvent, unpauseEvent, stateParameter, activeFunc)
+function class.UnboxAll:RegisterPauseEvents(name, pauseEvents, unpauseEvents, stateParameter, activeFunc, interactionTypes, combatEventFilters)
+    if not activeFunc and interactionTypes then
+        activeFunc = self:CreateInteractionTypesCheck(interactionTypes)
+    end
     self.states[name] = {
-        events = { pause = pauseEvent, unpause = unpauseEvent },
+        events = { pause = pauseEvents, unpause = unpauseEvents },
         stateParameter = stateParameter,
         active = activeFunc,
+        combatEventFilters = combatEventFilters,
     }
-    self.eventHandlers[name] = {
-        pause   = {
-            event   = pauseEvent,
+    local handlers = { }
+    if pauseEvents then
+        handlers.pause   = {
+            events  = pauseEvents,
             handler = function(...)
                           if not activeFunc() then
                               return
@@ -274,22 +389,27 @@ function class.UnboxAll:RegisterPauseEvents(name, pauseEvent, unpauseEvent, stat
                           end
                           self:OnPausedEvent(name)
                       end,
-        },
-        unpause = {
-            event   = unpauseEvent,
+            combatEventFilters = combatEventFilters and combatEventFilters.pause or nil,
+        }
+    end
+    if unpauseEvents then
+        handlers.unpause = {
+            events  = unpauseEvents,
             handler = function(...)
                           if stateParameter then
                               local params = {...}
                               local value = params[stateParameter.index]
                               if value == stateParameter.unpauseValue then
-                                  self:OnUnpausedEvent(name)
+                                  self:OnUnpausedEvent(name, combatEventFilters and combatEventFilters.unpause)
                               end
                               return
                           end
-                          self:OnUnpausedEvent(name)
-                      end
-        },
-    }
+                          self:OnUnpausedEvent(name, combatEventFilters and combatEventFilters.unpause)
+                      end,
+            combatEventFilters = combatEventFilters and combatEventFilters.unpause or nil,
+        }
+    end
+    self.eventHandlers[name] = handlers
 end
 function class.UnboxAll:GeneratePauseCallback(callback, name)
     return function(...)
@@ -333,23 +453,27 @@ function class.UnboxAll:RegisterPauseCallbacks(name, pauseCallbacks, unpauseCall
         pause   = {},
         unpause = {},
     }
-    for _, callback in ipairs(pauseCallbacks) do
-        table.insert(self.callbackHandlers[name].pause,
-            {
-                target = callback.target,
-                name = callback.name,
-                callback = self:GeneratePauseCallback(callback, name),
-            }
-        )
+    if pauseCallbacks then
+        for _, callback in ipairs(pauseCallbacks) do
+            table.insert(self.callbackHandlers[name].pause,
+                {
+                    target = callback.target,
+                    name = callback.name,
+                    callback = self:GeneratePauseCallback(callback, name),
+                }
+            )
+        end
     end
-    for _, callback in ipairs(unpauseCallbacks) do
-        table.insert(self.callbackHandlers[name].unpause,
-            {
-                target = callback.target,
-                name = callback.name,
-                callback = self:GenerateUnpauseCallback(callback, name),
-            }
-        )
+    if unpauseCallbacks then
+        for _, callback in ipairs(unpauseCallbacks) do
+            table.insert(self.callbackHandlers[name].unpause,
+                {
+                    target = callback.target,
+                    name = callback.name,
+                    callback = self:GenerateUnpauseCallback(callback, name),
+                }
+            )
+        end
     end
 end
 function class.UnboxAll:SetAutoQueue(value)
@@ -422,7 +546,7 @@ end ]]--
 
 defaultStates = {
   inCombat = {
-      events = { pause = EVENT_PLAYER_COMBAT_STATE, unpause = EVENT_PLAYER_COMBAT_STATE, },
+      events = { pause = EVENT_PLAYER_COMBAT_STATE, unpause = EVENT_PLAYER_COMBAT_STATE },
       stateParameter = {
           index = 2,
           pauseValue = true,
@@ -431,49 +555,97 @@ defaultStates = {
       active = function() return IsUnitInCombat("player") end,
   },
   swimming = {
-      events = { pause = EVENT_PLAYER_SWIMMING, unpause = EVENT_PLAYER_NOT_SWIMMING, },
+      events = { pause = EVENT_PLAYER_SWIMMING, unpause = EVENT_PLAYER_NOT_SWIMMING },
       active = function() return IsUnitSwimming("player") end,
   },
   dead = {
-      events = { pause = EVENT_PLAYER_DEAD, unpause = EVENT_PLAYER_ALIVE, },
+      events = { pause = EVENT_PLAYER_DEAD, unpause = EVENT_PLAYER_ALIVE },
       active = function() return IsUnitDeadOrReincarnating("player") end,
   },
   mail = {
-      events = { pause = EVENT_MAIL_OPEN_MAILBOX, unpause = EVENT_MAIL_CLOSE_MAILBOX, },
-      active = function() return GetInteractionType() == INTERACTION_MAIL end,
+      events = { pause = EVENT_MAIL_OPEN_MAILBOX, unpause = EVENT_MAIL_CLOSE_MAILBOX },
+      interactionTypes = { INTERACTION_MAIL },
   },
   crafting = {
-      events = { pause = EVENT_CRAFTING_STATION_INTERACT, unpause = EVENT_END_CRAFTING_STATION_INTERACT, },
-      active = function() return GetInteractionType() == INTERACTION_CRAFT end,
+      events = { pause = EVENT_CRAFTING_STATION_INTERACT, unpause = EVENT_END_CRAFTING_STATION_INTERACT },
+      interactionTypes = { INTERACTION_CRAFT },
+  },
+  retrait = {
+      events = { pause = EVENT_RETRAIT_STATION_INTERACT_START  },
+      interactionTypes = { INTERACTION_RETRAIT },
   },
   dyeing = {
-      events = { pause = EVENT_DYEING_STATION_INTERACT_START, unpause = EVENT_DYEING_STATION_INTERACT_END, },
-      active = function() return GetInteractionType() == INTERACTION_DYE_STATION end,
+      events = { pause = EVENT_DYEING_STATION_INTERACT_START, unpause = EVENT_DYEING_STATION_INTERACT_END },
+      interactionTypes = { INTERACTION_DYE_STATION },
   },
   reading = {
-      events = { pause = EVENT_SHOW_BOOK, unpause = EVENT_HIDE_BOOK, },
-      active = function() return GetInteractionType() == INTERACTION_BOOK end,
+      events = { pause = EVENT_SHOW_BOOK, unpause = EVENT_HIDE_BOOK },
+      interactionTypes = { INTERACTION_BOOK },
   },
   bank = {
-      events = { pause = EVENT_OPEN_BANK, unpause = EVENT_CLOSE_BANK, },
-      active = function() return GetInteractionType() == INTERACTION_BANK end,
+      events = { pause = EVENT_OPEN_BANK, unpause = EVENT_CLOSE_BANK },
+      interactionTypes = { INTERACTION_BANK },
   },
   guildBank = {
-      events = { pause = EVENT_OPEN_GUILD_BANK, unpause = EVENT_CLOSE_GUILD_BANK, },
-      active = function() return GetInteractionType() == INTERACTION_GUILDBANK end,
+      events = { pause = EVENT_OPEN_GUILD_BANK, unpause = EVENT_CLOSE_GUILD_BANK },
+      interactionTypes = { INTERACTION_GUILDBANK },
   },
   tradingHouse = {
-      events = { pause = EVENT_OPEN_TRADING_HOUSE, unpause = EVENT_CLOSE_TRADING_HOUSE, },
-      active = function() return GetInteractionType() == INTERACTION_TRADINGHOUSE end,
+      events = { pause = EVENT_OPEN_TRADING_HOUSE, unpause = EVENT_CLOSE_TRADING_HOUSE },
+      interactionTypes = { INTERACTION_TRADINGHOUSE },
   },
-  interacting = {
-      events = { pause = EVENT_CHATTER_BEGIN, unpause = EVENT_CHATTER_END, },
-      active = function() return GetInteractionType() == INTERACTION_CONVERSATION end,
+  conversation = {
+      events = { pause = EVENT_CHATTER_BEGIN, unpause = EVENT_CHATTER_END },
+      interactionTypes = { INTERACTION_CONVERSATION, INTERACTION_GUILDKIOSK_BID, INTERACTION_BUY_BAG_SPACE, INTERACTION_HIDEYHOLE },
   },
   vendor = {
-      events = { pause = EVENT_OPEN_STORE, unpause = EVENT_CLOSE_STORE, },
-      active = function() return GetInteractionType() == INTERACTION_VENDOR end,
+      events = { pause = EVENT_OPEN_STORE, unpause = EVENT_CLOSE_STORE },
+      interactionTypes = { INTERACTION_VENDOR },
   },
+  wayshrine = {
+      events = { pause = EVENT_START_FAST_TRAVEL_INTERACTION, unpause = EVENT_END_FAST_TRAVEL_INTERACTION },
+      interactionTypes = { INTERACTION_FAST_TRAVEL },
+  },
+  fastTravelKeep = {
+      events = { pause = EVENT_START_FAST_TRAVEL_KEEP_INTERACTION , unpause = EVENT_END_FAST_TRAVEL_KEEP_INTERACTION },
+      interactionTypes = { INTERACTION_FAST_TRAVEL_KEEP },
+  },
+  lockpick = {
+      events = { pause =  EVENT_BEGIN_LOCKPICK, unpause = { EVENT_LOCKPICK_FAILED, EVENT_LOCKPICK_SUCCESS } },
+      interactionTypes = { INTERACTION_LOCKPICK },
+  },
+  stable = {
+      events = { pause =  EVENT_STABLE_INTERACT_START, unpause = EVENT_STABLE_INTERACT_END },
+      interactionTypes = { INTERACTION_STABLE },
+  },
+  siege = {
+      events = { pause =  EVENT_BEGIN_SIEGE_CONTROL, unpause = EVENT_END_SIEGE_CONTROL },
+      interactionTypes = { INTERACTION_SIEGE },
+  },
+  hideyHole = {
+      events = { pause =  EVENT_CLIENT_INTERACT_RESULT, unpause = EVENT_CHATTER_END },
+      active = function() return GetGameCameraInteractableActionInfo() == GetString(SI_GAMECAMERAACTIONTYPE24) end,
+      --[[events = { pause =  EVENT_COMBAT_EVENT, unpause = EVENT_CHATTER_END },
+      interactionTypes = { INTERACTION_HIDEYHOLE },
+      combatEventFilters = {
+          pause = {
+              [REGISTER_FILTER_COMBAT_RESULT] = ACTION_RESULT_IN_HIDEYHOLE,
+          }
+      },]]
+  },
+  
+  --[[ Other scenes/actions that do not interrupt or get interrupted by opening containers:
+  
+       * Champion Point assignment
+       * Quest journal
+       * Crown store
+       * Map
+       * Port to friend/guildie
+       * Port to wayshrine from map
+       * Guild management
+       * Group finder
+       * Friends list
+  ]]--
   --[[interacting = {
       callbacks = {
           pause = {
