@@ -33,6 +33,7 @@ function class.SoloRepeatable:Match(data)
   
     if string.find(data.name, ":") 
        or data.quality == ITEM_QUALITY_LEGENDARY
+       or string.find(data.icon, "justice_stolen_case_001") -- strong boxes
     then
         return
     end
@@ -52,12 +53,6 @@ function class.SoloRepeatable:Match(data)
         -- Daily reward containers
         if self:MatchDailyQuestText(data.name)
            or self:MatchDailyQuestText(data.flavorText)
-        then
-            return self:IsUnboxableMatch()
-        
-        -- Light tel var sachels
-        elseif data.quality < ITEM_QUALITY_ARTIFACT
-               and addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_TEL_VAR_LOWER) -- tel var in name
         then
             return self:IsUnboxableMatch()
         end
@@ -118,9 +113,7 @@ function class.SoloRepeatable:MatchDailyQuestText(text)
     return addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_REWARD_LOWER)
            or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_DAILY_LOWER)
            or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_DAILY2_LOWER)
-           or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_JOB_LOWER)
-           or addon:StringContainsStringIdOrDefault(dext, SI_UNBOXER_CONTRACT_LOWER)
-    
+           or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_JOB_LOWER)    
 end
 
 knownIds = {
