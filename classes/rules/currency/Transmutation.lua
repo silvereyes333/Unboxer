@@ -25,7 +25,7 @@ function class.Transmutation:Match(data)
     if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_TRANSMUTATION_LOWER)
        and not self.pts:MatchAbsoluteIndicators(data)
        and data.flavorText ~= ""
-       and not string.find(data.name, ":")
+       and not addon:StringContainsPunctuationColon(data.name)
     then
         return self:IsUnboxableMatch()
     end

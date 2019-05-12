@@ -32,7 +32,7 @@ function class.Solo:Match(data)
         return self:IsUnboxableMatch()
     end
     
-    if string.find(data.name, ":") -- Exclude items with a colon in the name
+    if addon:StringContainsPunctuationColon(data.name) -- Exclude items with a colon in the name
        or data.quality == ITEM_QUALITY_LEGENDARY -- Exclude all other legendary containers
     then
         return
@@ -100,9 +100,15 @@ function class.Solo:GetDlcs()
         dlcCollectibles[collectibleId] = name
     end
     local zoneIndex = 1
+    local misses = 0 -- keep track of how many empty zone names are found
     while true do
         local zoneName = GetZoneNameByIndex(zoneIndex)
-        if(zoneName == "") then break end
+        if(zoneName == "") then -- if more than 10 zone names come up empty, assume we are done. allows for a few to go missing due to not being translated.
+            misses = misses + 1
+            if misses > 10 then
+                break
+            end
+        end
         local zoneId = GetZoneId(zoneIndex)
         local parentZoneId = GetParentZoneId(zoneId)
         local collectibleId = GetCollectibleIdForZone(zoneIndex)

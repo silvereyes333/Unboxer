@@ -56,6 +56,17 @@ function addon:StringContainsStringIdOrDefault(searchIn, stringId, ...)
         return string.find(searchIn, searchFor)
     end
 end
+local localeUsesDifferentPunctuationColon = GetString(SI_UNBOXER_PUNCTUATION_COLON) ~= ":"
+function addon:StringContainsPunctuationColon(searchIn)
+    if string.find(searchIn, ":") then
+        return true
+    end
+    if localeUsesDifferentPunctuationColon 
+       and string.find(searchIn, GetString(SI_UNBOXER_PUNCTUATION_COLON))
+    then
+        return true
+    end
+end
 function addon:StringContainsNotAtStart(searchIn, stringId, ...)
     local startIndex, endIndex = self:StringContainsStringIdOrDefault(searchIn, stringId, ...)
     if not startIndex or startIndex == 1 then return end

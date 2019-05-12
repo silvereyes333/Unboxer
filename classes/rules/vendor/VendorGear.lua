@@ -31,7 +31,7 @@ function class.VendorGear:Match(data)
         return self:IsUnboxableMatch()
     end
     
-    if string.find(data.name, ":") 
+    if addon:StringContainsPunctuationColon(data.name)
        or self.pts:MatchAbsoluteIndicators(data)
        or self.soloRepeatable:MatchDailyQuestText(data.name)
        or self.soloRepeatable:MatchDailyQuestText(data.flavorText)

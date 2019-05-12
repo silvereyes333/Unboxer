@@ -38,7 +38,6 @@ classes\rules\general\Fishing.lua
 classes\rules\general\Legerdemain.lua
 classes\rules\general\TreasureMaps.lua
 classes\rules\general\Vendor.lua
-classes\rules\rewards\LFGActivity.lua
 classes\rules\rewards\Dungeon.lua
 classes\rules\rewards\Solo.lua
 classes\rules\rewards\SoloRepeatable.lua

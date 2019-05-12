@@ -42,7 +42,7 @@ end
 
 function class.Pts:MatchExceptIcon(data)
     if class.Pts:MatchExceptColonAndIcon(data)
-       or string.find(data.name, ":") -- if name still contains colon after processing mage guild reprints and collectibles, assume PTS box
+       or addon:StringContainsPunctuationColon(data.name) -- if name still contains colon after processing mage guild reprints and collectibles, assume PTS box
     then
         return self:IsUnboxableMatch()
     end

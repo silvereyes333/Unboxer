@@ -2,6 +2,7 @@ UNBOXER_DEFAULT_STRINGS = {
     ["SI_UNBOXER"] =                         "Unboxer",
     ["SI_BINDING_NAME_UNBOX_ALL"] =          "Unbox All",
     ["SI_UNBOXER_UNBOXED"] =                 "opened <<1>>",
+    ["SI_UNBOXER_PUNCTUATION_COLON"] =       ":",
     ["SI_UNBOXER_TOOLTIP_EXAMPLE"] =         "Example: |H0:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL"] =         "Enable Auto loot",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL_TOOLTIP"] = "Disable this option to turn off all automatic container opening.",

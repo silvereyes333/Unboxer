@@ -21,7 +21,10 @@ end
 function class.TelVar:Match(data)
   
     -- Exclude PTS containers
-    if data.flavorText == "" or string.find(data.name, ":") or data.bindType ~= BIND_TYPE_ON_PICKUP then
+    if data.flavorText == "" 
+       or addon:StringContainsPunctuationColon(data.name) 
+       or data.bindType ~= BIND_TYPE_ON_PICKUP
+    then
         return
     end
     

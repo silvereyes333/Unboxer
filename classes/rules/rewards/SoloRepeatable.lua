@@ -31,7 +31,7 @@ function class.SoloRepeatable:Match(data)
         return self:IsUnboxableMatch()
     end
   
-    if string.find(data.name, ":") 
+    if addon:StringContainsPunctuationColon(data.name)
        or data.quality == ITEM_QUALITY_LEGENDARY
        or string.find(data.icon, "justice_stolen_case_001") -- strong boxes
     then

@@ -7,7 +7,7 @@ local debug = false
 local knownIds
 local submenu = GetString(SI_UNBOXER_QUEST_REWARDS)
 
-class.Trial = class.LFGActivity:Subclass()
+class.Trial = addon.classes.Rule:Subclass()
 function class.Trial:New()
     return addon.classes.Rule.New(
         self, 
@@ -23,11 +23,8 @@ end
 function class.Trial:Match(data)
   
     if knownIds[data.itemId] -- Match preloaded ids
-       or (  addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_UNDAUNTED_LOWER)
-          and addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_WEEKLY_LOWER)
-       )
-       or (not string.find(data.name, ":") 
-           and self:MatchActivityByNameAndFlavorText(data) == LFG_ACTIVITY_TRIAL)
+       or (addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_UNDAUNTED_LOWER)
+           and addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_WEEKLY_LOWER))
     then
         return self:IsUnboxableMatch()
     end
