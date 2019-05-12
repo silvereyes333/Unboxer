@@ -26,6 +26,11 @@ end
 
 function class.VendorGear:Match(data)
     
+    -- Match preloaded ids
+    if knownIds[data.itemId] then
+        return self:IsUnboxableMatch()
+    end
+    
     if string.find(data.name, ":") 
        or self.pts:MatchAbsoluteIndicators(data)
        or self.soloRepeatable:MatchDailyQuestText(data.name)
@@ -35,8 +40,7 @@ function class.VendorGear:Match(data)
     end
     
     -- Match various known vendors
-    if knownIds[data.itemId]
-       or string.find(data.icon, 'zonebag')                                                          -- Regional Equipment Vendor
+    if string.find(data.icon, 'zonebag')                                                          -- Regional Equipment Vendor
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_RENOWNED_LOWER)          -- Regional Equipment Vendor (backup in case icon changes)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_BATTLEGROUND_LOWER)            -- Battlegrounds Equipment Vendor
        or (addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_JEWELRY_BOX_LOWER) 

@@ -22,12 +22,16 @@ end
 
 function class.Materials:Match(data)
     
+    -- Match preloaded ids
+    if knownIds[data.itemId] then
+        return self:IsUnboxableMatch()
+    end
+    
     if data.bindType ~= BIND_TYPE_ON_PICKUP or data.quality > ITEM_QUALITY_ARCANE then
         return
     end
     
-    if knownIds[data.itemId] 
-       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_RAW_MATERIAL_LOWER)
+    if addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_RAW_MATERIAL_LOWER)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FOR_CRAFTING_LOWER)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_WAXED_LOWER)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_WAXED2_LOWER)

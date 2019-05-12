@@ -21,7 +21,7 @@ function class.CraftingRewards:New()
 end
 
 function class.CraftingRewards:Match(data)
-    if knownIds[data.itemId]
+    if knownIds[data.itemId] -- Match preloaded ids
        or (addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_CRAFTED_LOWER)
            and addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_REWARD_LOWER))
     then

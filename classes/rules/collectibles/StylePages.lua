@@ -25,15 +25,17 @@ function class.StylePages:New()
 end
 
 function class.StylePages:Match(data)
+    
+    -- Match preloaded ids
+    if knownIds[data.itemId] then
+        return self:IsUnboxableMatch()
+    end
+    
     if data.collectibleCategoryType 
        and data.collectibleCategoryType == COLLECTIBLE_CATEGORY_TYPE_OUTFIT_STYLE
     then
         return true,                     -- isMatch
                data.collectibleUnlocked  -- canUnbox
-    end
-    
-    if knownIds[data.itemId] then
-        return self:IsUnboxableMatch()
     end
 end
 

@@ -22,12 +22,12 @@ end
 
 function class.Trial:Match(data)
   
-    if (  addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_UNDAUNTED_LOWER)
+    if knownIds[data.itemId] -- Match preloaded ids
+       or (  addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_UNDAUNTED_LOWER)
           and addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_WEEKLY_LOWER)
        )
        or (not string.find(data.name, ":") 
            and self:MatchActivityByNameAndFlavorText(data) == LFG_ACTIVITY_TRIAL)
-       or knownIds[data.itemId]
     then
         return self:IsUnboxableMatch()
     end

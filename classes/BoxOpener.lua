@@ -4,7 +4,7 @@
 
 local addon = Unboxer
 local class = addon.classes
-local debug = true
+local debug = false
 local suppressLootWindow = function() end
 local HandleEventLootClosed, HandleEventLootReceived, HandleEventLootUpdated, HandleEventNewCollectible
 

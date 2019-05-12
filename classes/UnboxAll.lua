@@ -4,7 +4,7 @@
 
 local addon = Unboxer
 local class = addon.classes
-local debug = true
+local debug = false
 local defaultStates = {}
 local LLS = LibStub("LibLootSummary")
 
@@ -55,7 +55,7 @@ function class.UnboxAll:Initialize(name)
     EVENT_MANAGER:AddFilterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_IS_NEW_ITEM, true)
     self:Reset()
     -- TODO: Remove this before going live
-    if debug then self:ListenForPause() end
+    -- if debug then self:ListenForPause() end
 end
 function class.UnboxAll:CreateFailedCallback()
     return function(slotIndex, itemLink, reason)

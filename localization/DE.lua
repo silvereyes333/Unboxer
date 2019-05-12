@@ -1,6 +1,6 @@
 UNBOXER_STRINGS = {
-    ["SI_UNBOXER"] =                         "|c00AAFFUn|cAADDFFboxer|r",
     ["SI_BINDING_NAME_UNBOX_ALL"] =          "Alles auspacken",
+    ["SI_UNBOXER_UNBOXED"] =                 "ausgepackt <<1>>",
     ["SI_UNBOXER_TOOLTIP_EXAMPLE"] =         "Beispiel: |H0:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL"] =         "Automatisches Auspacken aktivieren",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL_TOOLTIP"] = "Deaktivieren Sie diese Option, um Container niemals automatisch auszupacken.",

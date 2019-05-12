@@ -1,6 +1,6 @@
 UNBOXER_STRINGS = {
-    ["SI_UNBOXER"] =                         "|c00AAFFUn|cAADDFFboxer|r",
     ["SI_BINDING_NAME_UNBOX_ALL"] =          "すべてのアイテム箱を開く",
+    ["SI_UNBOXER_UNBOXED"] =                 "<<1>>は開梱されました",
     ["SI_UNBOXER_TOOLTIP_EXAMPLE"] =         "例:|H0:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL"] =         "アイテム箱ンテナを自動的に開く",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL_TOOLTIP"] = "アイテム箱ックスを自動的に開梱しないようにするには、このオプションを無効にします。",

@@ -1,6 +1,6 @@
 UNBOXER_STRINGS = {
-    ["SI_UNBOXER"] =                         "|c00AAFFUn|cAADDFFboxer|r",
     ["SI_BINDING_NAME_UNBOX_ALL"] =          "Открыть все контейнеры",
+    ["SI_UNBOXER_UNBOXED"] =                 "распаковал  <<1>>",
     ["SI_UNBOXER_TOOLTIP_EXAMPLE"] =         "Пример: |H0:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL"] =         "Автоматически распаковывать контейнеры",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL_TOOLTIP"] = "Отключите эту опцию, чтобы отключить все автоматическое открытие контейнеры.",
@@ -58,6 +58,7 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_RAW_MATERIAL_LOWER"] =      "raw material",
     ["SI_UNBOXER_FURNISHING_LOWER"] =        "запечатанный.* предмета обстановки",
     ["SI_UNBOXER_JOB_LOWER"] =               "контракта",
+    ["SI_UNBOXER_JOB2_LOWER"] =              "поручений",
     ["SI_UNBOXER_STOLEN_LOWER"] =            "краденых",
     ["SI_UNBOXER_LAUNDERED_LOWER"] =         "отмытых",
     ["SI_UNBOXER_ALL_LOWER"] =               " все ",

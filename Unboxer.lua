@@ -1,7 +1,7 @@
 Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
-    author = "|c99CCEFsilvereyes|r",
+    author = "silvereyes",
     version = "3.0.0",
     itemSlotStack = {},
     defaultLanguage = "en",
@@ -184,7 +184,7 @@ function addon:AddKeyBind()
     self.unboxAllKeybindButtonGroup = {
         alignment = KEYBIND_STRIP_ALIGN_LEFT,
         {
-            name = "Unbox All",
+            name = GetString(SI_BINDING_NAME_UNBOX_ALL),
             keybind = "UNBOX_ALL",
             enabled = function() return self.unboxAll.state == "stopped" and self.unboxAll:HasEnoughSlots()  end,
             visible = function() return self.unboxAll:HasUnboxableSlots() end,

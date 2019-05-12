@@ -62,7 +62,7 @@ function class.Pts:MatchExceptColonAndIcon(data)
 end
 
 function class.Pts:MatchAbsoluteIndicators(data)
-    if knownIds[data.itemId]
+    if knownIds[data.itemId] -- Match preloaded ids
        or GetItemLinkOnUseAbilityInfo(data.itemLink) -- only PTS boxes grant abilities
        or self:MatchItemSetsText(data.name)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_ALL_LOWER) -- Contains the word " all " surrounded by spaces (if supported by locale)

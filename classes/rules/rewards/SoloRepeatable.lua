@@ -26,6 +26,7 @@ end
 
 function class.SoloRepeatable:Match(data)
   
+    -- Match preloaded ids
     if knownIds[data.itemId] then
         return self:IsUnboxableMatch()
     end
@@ -91,7 +92,8 @@ function class.SoloRepeatable:MatchDailyQuestText(text)
     return addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_REWARD_LOWER)
            or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_DAILY_LOWER)
            or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_DAILY2_LOWER)
-           or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_JOB_LOWER)    
+           or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_JOB_LOWER)
+           or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_JOB2_LOWER)
 end
 
 knownIds = {

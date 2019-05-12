@@ -1,7 +1,7 @@
 UNBOXER_DEFAULT_STRINGS = {
-    ["SI_UNBOXER"] =                         "|c00AAFFUn|cAADDFFboxer|r",
+    ["SI_UNBOXER"] =                         "Unboxer",
     ["SI_BINDING_NAME_UNBOX_ALL"] =          "Unbox All",
-    ["SI_UNBOXER_UNBOXED"] =                 "Unboxed <<1>>",
+    ["SI_UNBOXER_UNBOXED"] =                 "opened <<1>>",
     ["SI_UNBOXER_TOOLTIP_EXAMPLE"] =         "Example: |H0:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL"] =         "Enable Auto loot",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL_TOOLTIP"] = "Disable this option to turn off all automatic container opening.",
@@ -77,6 +77,7 @@ UNBOXER_DEFAULT_STRINGS = {
     ["SI_UNBOXER_RAW_MATERIAL_LOWER"] =      "raw material",
     ["SI_UNBOXER_FURNISHING_LOWER"] =        "furnishing",
     ["SI_UNBOXER_JOB_LOWER"] =               "job",
+    ["SI_UNBOXER_JOB2_LOWER"] =              "contract",
     ["SI_UNBOXER_STOLEN_LOWER"] =            "stolen",
     ["SI_UNBOXER_LAUNDERED_LOWER"] =         "laundered",
     ["SI_UNBOXER_ALL_LOWER"] =               " all ",

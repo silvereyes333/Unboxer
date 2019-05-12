@@ -1,5 +1,5 @@
 ## Title: Unboxer
-## Author: |c99CCEFsilvereyes|r
+## Author: silvereyes
 ## Description: Adds an Unbox All command that loots all containers of a configured type in the player inventory.
 ## Version: 3.0.0
 ## APIVersion: 100026 100027

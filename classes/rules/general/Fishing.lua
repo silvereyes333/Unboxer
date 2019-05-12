@@ -21,7 +21,7 @@ function class.Fishing:New()
 end
 
 function class.Fishing:Match(data)
-    if knownIds[data.itemId] 
+    if knownIds[data.itemId] -- Match preloaded ids
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FISHING_LOWER)
     then
         return self:IsUnboxableMatch()
