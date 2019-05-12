@@ -19,7 +19,8 @@ function class.VendorGear:New()
             submenu       = submenu,
             knownIds      = knownIds,
         })
-    instance.pts = rules.Pts:New()
+    instance.pts            = rules.Pts:New()
+    instance.soloRepeatable = rules.rewards.SoloRepeatable:New()
     return instance
 end
 
@@ -27,6 +28,8 @@ function class.VendorGear:Match(data)
     
     if string.find(data.name, ":") 
        or self.pts:MatchAbsoluteIndicators(data)
+       or self.soloRepeatable:MatchDailyQuestText(data.name)
+       or self.soloRepeatable:MatchDailyQuestText(data.flavorText)
     then
         return
     end
@@ -36,7 +39,8 @@ function class.VendorGear:Match(data)
        or string.find(data.icon, 'zonebag')                                                          -- Regional Equipment Vendor
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_RENOWNED_LOWER)          -- Regional Equipment Vendor (backup in case icon changes)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_BATTLEGROUND_LOWER)            -- Battlegrounds Equipment Vendor
-       or addon:StringContainsNotAtStart(data.name, SI_UNBOXER_JEWELRY_BOX_LOWER)                    -- Tel-Var Jewelry Merchant (legacy)
+       or (addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_JEWELRY_BOX_LOWER) 
+           and data.bindType == BIND_TYPE_ON_PICKUP)                                                 -- Tel-Var Jewelry Merchant (legacy)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_EQUIPMENT_BOX_LOWER)           -- Tel-Var Equipment Vendor (current)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_EQUIPMENT_BOX2_LOWER)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_ARMOR_BOX_LOWER)
@@ -52,13 +56,6 @@ function class.VendorGear:Match(data)
     if data.flavorText == "" and string.find(data.icon, "quest_container_001") 
        and data.quality < ITEM_QUALITY_ARTIFACT
        and self:MatchGenericEquipmentText(data.name)
-    then
-        return self:IsUnboxableMatch()
-    end
-    
-    -- Match non-legendary enchantment boxes (legacy)
-    if data.quality < ITEM_QUALITY_LEGENDARY
-       and addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_ENCHANTMENT_LOWER)
     then
         return self:IsUnboxableMatch()
     end

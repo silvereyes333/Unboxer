@@ -61,6 +61,7 @@ function class.Solo:Match(data)
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_UNKNOWN_ITEM_LOWER)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_STRONG_BOX_LOWER) -- "strongbox" items
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_STRONG_BOX2_LOWER)
+       or data.flavorText == GetString(SI_UNBOXER_LEGACY_QUEST_FLAVOR) -- "This large box has some unknown item inside."
     then
         return self:IsUnboxableMatch()
     end
@@ -95,7 +96,7 @@ function class.Solo:GetDlcs()
     staticDlcs = {}
     for index=1,GetTotalCollectiblesByCategoryType(dlcType) do
         local collectibleId = GetCollectibleIdFromType(dlcType, index)
-        local name = LocaleAwareToLower(GetCollectibleName(collectibleId))
+        local name = LocaleAwareToLower(zo_strformat("<<1>>", GetCollectibleName(collectibleId)))
         dlcCollectibles[collectibleId] = name
     end
     local zoneIndex = 1
@@ -106,7 +107,7 @@ function class.Solo:GetDlcs()
         local parentZoneId = GetParentZoneId(zoneId)
         local collectibleId = GetCollectibleIdForZone(zoneIndex)
         if collectibleId and dlcCollectibles[collectibleId] and zoneId == parentZoneId then
-            zoneName = LocaleAwareToLower(zoneName)
+            zoneName = LocaleAwareToLower(zo_strformat("<<1>>", zoneName))
             local collectibleName = dlcCollectibles[collectibleId]
             table.insert(staticDlcs, {
                     ["collectibleId"] = collectibleId,

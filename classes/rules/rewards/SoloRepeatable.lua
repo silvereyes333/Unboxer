@@ -5,8 +5,7 @@ local addon = Unboxer
 local class = addon:Namespace("rules.rewards")
 local rules = addon.classes.rules
 local debug = false
-local staticDlcs
-local knownIds
+local staticDlcs, skillLineNameStrings, knownIds
 local submenu = GetString(SI_UNBOXER_QUEST_REWARDS)
 
 class.SoloRepeatable = addon.classes.Rule:Subclass()
@@ -80,35 +79,14 @@ function class.SoloRepeatable:Match(data)
     end
 end
 
-
-
-local defaultGuildSkillLineNames = {
-    "mages guild",
-    "fighters guild",
-    "thieves guild",
-    "dark brotherhood",
-    "undaunted",
-    "psijic order",
-}
 function class.SoloRepeatable:MatchGuildSkillLineName(text)
-  
-    local skillType = SKILL_TYPE_GUILD
-    for skillLineIndex=1, GetNumSkillLines(skillType) do
-        local skillLineName = LocaleAwareToLower(GetSkillLineName(skillType, skillLineIndex))
-        if string.find(text, skillLineName) then
-            return true
-        end
-    end
-    if addon:IsDefaultLanguageSelected() then
-        return
-    end
-    -- Fallback to default language when running on an incomplete translation, like ruESO
-    for _, skillLineName in ipairs(defaultGuildSkillLineNames) do
-        if string.find(text, skillLineName) then
+    for _, stringId in ipairs(skillLineNameStrings) do
+        if addon:StringContainsStringIdOrDefault(text, stringId) then
             return true
         end
     end
 end
+
 function class.SoloRepeatable:MatchDailyQuestText(text)
     return addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_REWARD_LOWER)
            or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_DAILY_LOWER)
@@ -120,4 +98,11 @@ knownIds = {
   [151936] = true, -- Wax-Sealed Heavy Sack, dropped from Elsweyr dragon attacks?
 }
 
-  
+skillLineNameStrings = {
+    SI_UNBOXER_UNDAUNTED_LOWER,
+    SI_UNBOXER_DARK_BROTHERHOOD_LOWER,
+    SI_UNBOXER_THIEVES_GUILD_LOWER,
+    SI_UNBOXER_MAGES_GUILD_LOWER,
+    SI_UNBOXER_FIGHTERS_GUILD_LOWER,
+    SI_UNBOXER_PSIJIC_ORDER_LOWER,
+}
