@@ -56,13 +56,14 @@ function class.SoloRepeatable:Match(data)
         then
             return self:IsUnboxableMatch()
         end
-    end
     
-    if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_COFFER_LOWER) -- "coffer"
-       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_GIFT_FROM_LOWER) -- "gift from" boxes
-       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_GIFT_FROM2_LOWER)
-    then
-        return self:IsUnboxableMatch()
+        if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_COFFER_LOWER) -- "coffer"
+           or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_COFFER2_LOWER)
+           or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_GIFT_FROM_LOWER) -- "gift from" boxes
+           or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_GIFT_FROM2_LOWER)
+        then
+            return self:IsUnboxableMatch()
+        end
     end
     
     
@@ -97,6 +98,7 @@ function class.SoloRepeatable:MatchDailyQuestText(text)
 end
 
 knownIds = {
+  [133560] = true, -- Slag Town Coffer. "Coffer" isn't used for this item in ruESO, unfortunately.
   [151936] = true, -- Wax-Sealed Heavy Sack, dropped from Elsweyr dragon attacks?
 }
 

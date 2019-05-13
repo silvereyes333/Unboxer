@@ -26,6 +26,7 @@ function class.Transmutation:Match(data)
        and not self.pts:MatchAbsoluteIndicators(data)
        and data.flavorText ~= ""
        and not addon:StringContainsPunctuationColon(data.name)
+       and not string.find(data.name, "[0-9]") -- no numbers in name
     then
         return self:IsUnboxableMatch()
     end

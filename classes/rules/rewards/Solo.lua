@@ -77,6 +77,11 @@ function class.Solo:Match(data)
     if self:MatchDlcNameText(data.name) or self:MatchDlcNameText(data.flavorText) then
         return self:IsUnboxableMatch()
     end
+    
+    -- Fix for untranslated text not matching
+    if string.find(data.icon, "quest_container_") and not string.find(data.icon, "quest_container_[0-9]") then
+        return self:IsUnboxableMatch()
+    end
 end
 
 function class.Solo:MatchDlcNameText(text)

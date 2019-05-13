@@ -36,7 +36,7 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_THIEVES_GUILD_LOWER"] =     "diebesgilde",
     ["SI_UNBOXER_MAGES_GUILD_LOWER"] =       "magiergilde",
     ["SI_UNBOXER_FIGHTERS_GUILD_LOWER"] =    "kriegergilde",
-    ["SI_UNBOXER_PSIJIC_ORDER_LOWER"] =      "psijik-orde",
+    ["SI_UNBOXER_PSIJIC_ORDER_LOWER"] =      "psijik%-orde",
     -- The German Trials text doesn't use the word "weekly", but it does always say "a bold act".
     ["SI_UNBOXER_WEEKLY_LOWER"] =            "kühne tat", 
     ["SI_UNBOXER_DAILY_LOWER"] =             "tages",
