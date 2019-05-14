@@ -4,8 +4,9 @@
 local addon = Unboxer
 local class = addon:Namespace("rules.rewards")
 local rules = addon.classes.rules
+local knownIds
 local debug = false
-local staticDlcs, skillLineNameStrings, knownIds
+local staticDlcs, skillLineNameStrings
 local submenu = GetString(SI_UNBOXER_QUEST_REWARDS)
 
 class.SoloRepeatable = addon.classes.Rule:Subclass()
@@ -18,7 +19,7 @@ function class.SoloRepeatable:New()
             dependencies  = { "crafting", "festival", "furnisher", "materials", "legerdemain", "trial", "vendorgear", "telvar" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_REPEATABLE),
-            -- knownIds      = knownIds
+            knownIds      = knownIds
         })
     instance.pts = rules.Pts:New()
     return instance
@@ -97,11 +98,6 @@ function class.SoloRepeatable:MatchDailyQuestText(text)
            or addon:StringContainsStringIdOrDefault(text, SI_UNBOXER_JOB2_LOWER)
 end
 
-knownIds = {
-  [133560] = true, -- Slag Town Coffer. "Coffer" isn't used for this item in ruESO, unfortunately.
-  [151936] = true, -- Wax-Sealed Heavy Sack, dropped from Elsweyr dragon attacks?
-}
-
 skillLineNameStrings = {
     SI_UNBOXER_UNDAUNTED_LOWER,
     SI_UNBOXER_DARK_BROTHERHOOD_LOWER,
@@ -109,4 +105,16 @@ skillLineNameStrings = {
     SI_UNBOXER_MAGES_GUILD_LOWER,
     SI_UNBOXER_FIGHTERS_GUILD_LOWER,
     SI_UNBOXER_PSIJIC_ORDER_LOWER,
+}
+
+knownIds = {
+  [133560] = true, -- Slag Town Coffer. "Coffer" isn't used for this item in ruESO, unfortunately.
+  [151936] = true, -- Wax-Sealed Heavy Sack, dropped from Elsweyr dragon attacks?
+  [55452]=1,[56865]=1,[71312]=1,[74679]=1,[74680]=1,[77526]=1,[77556]=1,[79674]=1,[81561]=1,
+  [81601]=1,[94087]=1,[94088]=1,[94121]=1,[94122]=1,[95826]=1,[95827]=1,[96385]=1,[96386]=1,
+  [96387]=1,[119550]=1,[119551]=1,[119552]=1,[119553]=1,[119554]=1,[121220]=1,[126030]=1,
+  [126031]=1,[126032]=1,[126033]=1,[133225]=1,[133559]=1,[134619]=1,[135004]=1,[135006]=1,
+  [135023]=1,[135136]=1,[138800]=1,[138812]=1,[140252]=1,[140425]=1,[140426]=1,[141741]=1,
+  [145577]=1,[147287]=1,[147649]=1,[147650]=1,[150700]=1,[150721]=1,[151620]=1,[151623]=1,
+  [151941]=1
 }

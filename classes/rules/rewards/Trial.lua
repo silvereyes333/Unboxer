@@ -3,8 +3,8 @@
 
 local addon = Unboxer
 local class = addon:Namespace("rules.rewards")
-local debug = false
 local knownIds
+local debug = false
 local submenu = GetString(SI_UNBOXER_QUEST_REWARDS)
 
 class.Trial = addon.classes.Rule:Subclass()
@@ -15,8 +15,8 @@ function class.Trial:New()
             name          = "trial",
             exampleItemId = 139668, -- [Mage's Knowledgeable Coffer]
             submenu       = submenu,
-            title         = GetString("SI_RAIDCATEGORY", RAID_CATEGORY_TRIAL)
-            -- knownIds      = knownIds
+            title         = GetString("SI_RAIDCATEGORY", RAID_CATEGORY_TRIAL),
+            knownIds      = knownIds,
         })
 end
 
@@ -31,5 +31,10 @@ function class.Trial:Match(data)
 end
 
 knownIds = {
-  [87704] = true -- Serpent's Celestial Recompense
+  [87704] = true, -- Serpent's Celestial Recompense
+  [54993]=1,[55773]=1,[56931]=1,[57850]=1,[81187]=1,[81188]=1,[87702]=1,[87703]=1,[87705]=1,
+  [87706]=1,[87707]=1,[87708]=1,[94089]=1,[94090]=1,[126130]=1,[126131]=1,[134585]=1,[134586]=1,
+  [138711]=1,[138712]=1,[139664]=1,[139665]=1,[139666]=1,[139667]=1,[139668]=1,[139669]=1,
+  [139670]=1,[139671]=1,[139672]=1,[139673]=1,[139674]=1,[139675]=1,[141738]=1,[141739]=1,
+  [151970]=1,[151971]=1
 }

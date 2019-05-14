@@ -3,6 +3,7 @@
 
 local addon = Unboxer
 local class = addon:Namespace("rules.rewards")
+local knownIds
 local debug = false
 local staticDlcDungeons
 local submenu = GetString(SI_UNBOXER_QUEST_REWARDS)
@@ -15,7 +16,8 @@ function class.Dungeon:New()
             name          = "dungeon",
             exampleItemId = 84519, -- [Unidentified Mazzatun Armaments]
             submenu       = submenu,
-            title         = GetString(SI_UNBOXER_DUNGEONS)
+            title         = GetString(SI_UNBOXER_DUNGEONS),
+            knownIds      = knownIds,
         })
     EVENT_MANAGER:RegisterForEvent(instance.name, EVENT_PLAYER_ACTIVATED, function() instance:GetDlcDungeons() end)
     return instance
@@ -42,6 +44,12 @@ function class.Dungeon:GetDlcDungeons()
 end
 
 function class.Dungeon:Match(data)
+  
+    -- Match preloaded ids
+    if knownIds[data.itemId] then 
+        return self:IsUnboxableMatch()
+    end
+    
     if not addon:StringContainsPunctuationColon(data.name)
        and data.quality < ITEM_QUALITY_LEGENDARY
        and self:MatchDlcDungeonByNameAndFlavorText(data)
@@ -72,3 +80,8 @@ function class.Dungeon:MatchDlcDungeonByText(text)
         end
     end
 end
+
+knownIds = {
+  [84519]=1,[84520]=1,[128356]=1,[128357]=1,[134620]=1,[134621]=1,[141734]=1,
+  [141735]=1,[147283]=1,[147284]=1
+}

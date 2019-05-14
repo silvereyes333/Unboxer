@@ -3,6 +3,7 @@
 
 local addon = Unboxer
 local class = addon:Namespace("rules.general")
+local knownIds
 local debug = false
 local submenu = GetString(SI_GAMEPLAY_OPTIONS_GENERAL)
 
@@ -19,7 +20,14 @@ function class.TreasureMaps:New()
 end
 
 function class.TreasureMaps:Match(data)
-    if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_TREASURE_MAP_LOWER) then
+    
+    if knownIds[data.itemId] -- Match preloaded ids
+       or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_TREASURE_MAP_LOWER)
+    then
         return self:IsUnboxableMatch()
     end
 end
+
+knownIds = {
+  [45879]=1,[45880]=1,[45881]=1,[45882]=1
+}

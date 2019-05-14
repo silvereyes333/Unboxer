@@ -16,11 +16,12 @@ function class.CraftingRewards:New()
             exampleItemId = 138810, -- [Enchanter's Coffer X]
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_CRAFTING_REWARDS),
-            -- knownIds      = knownIds
+            knownIds      = knownIds,
         })
 end
 
 function class.CraftingRewards:Match(data)
+    
     if knownIds[data.itemId] -- Match preloaded ids
        or (addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_CRAFTED_LOWER)
            and addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_REWARD_LOWER))
@@ -58,10 +59,18 @@ function class.CraftingRewards:OnAutolootSet(value)
 end
 
 knownIds = {
-  [30333] = true, -- Provisioner Kit
-  [30335] = true, -- Blacksmith's Chest
-  [30337] = true, -- Enchanter's Chest
-  [30338] = true, -- Clothier's Chest
-  [30339] = true, -- Woodworker's Chest
-  [55827] = true, -- Cooking Supplies
+  [30333] = 1, -- Provisioner Kit
+  [30335] = 1, -- Blacksmith's Chest
+  [30337] = 1, -- Enchanter's Chest
+  [30338] = 1, -- Clothier's Chest
+  [30339] = 1, -- Woodworker's Chest
+  [55827] = 1, -- Cooking Supplies
+  [57851]=1,[58131]=1,[58503]=1,[58504]=1,[58505]=1,[58506]=1,[58507]=1,[58508]=1,[58509]=1,[58510]=1,[58511]=1,
+  [58512]=1,[58513]=1,[58514]=1,[58515]=1,[58516]=1,[58517]=1,[58518]=1,[58519]=1,[58520]=1,[58521]=1,[58522]=1,
+  [58523]=1,[58524]=1,[58525]=1,[58526]=1,[58527]=1,[58528]=1,[58529]=1,[58530]=1,[58531]=1,[58532]=1,[58533]=1,
+  [58534]=1,[59705]=1,[59706]=1,[59707]=1,[59708]=1,[59709]=1,[59710]=1,[59714]=1,[59715]=1,[59716]=1,[59717]=1,
+  [59718]=1,[59719]=1,[59720]=1,[59721]=1,[59723]=1,[59724]=1,[59725]=1,[59735]=1,[59736]=1,[71233]=1,[71234]=1,
+  [71235]=1,[71236]=1,[71237]=1,[71238]=1,[121297]=1,[121298]=1,[121299]=1,[121300]=1,[121301]=1,[121302]=1,
+  [138801]=1,[138802]=1,[138803]=1,[138804]=1,[138805]=1,[138806]=1,[138807]=1,[138808]=1,[138809]=1,[138810]=1,
+  [147607]=1,[147608]=1,[147609]=1,[147610]=1,[147611]=1,[147612]=1,[147613]=1,[147614]=1,[147615]=1,[147616]=1
 }
