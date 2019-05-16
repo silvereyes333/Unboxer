@@ -1,6 +1,7 @@
 UNBOXER_STRINGS = {
     ["SI_UNBOXER"] =                         "Unboxer",
-    ["SI_BINDING_NAME_UNBOX_ALL"] =          "Ouvrir TOUT",
+    ["SI_UNBOXER_UNBOX_ALL"] =               "Ouvrir TOUT",
+    ["SI_UNBOXER_CANCEL"] =                  "Annuler le déballage",
     ["SI_UNBOXER_UNBOXED"] =                 "déballé <<1>>",
     ["SI_UNBOXER_TOOLTIP_EXAMPLE"] =         "Exemple: |H0:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL"] =         "Activer déballer automatiquement",

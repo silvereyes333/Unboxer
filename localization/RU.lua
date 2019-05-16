@@ -1,5 +1,6 @@
 UNBOXER_STRINGS = {
-    ["SI_BINDING_NAME_UNBOX_ALL"] =          "Открыть все контейнеры",
+    ["SI_UNBOXER_UNBOX_ALL"] =               "Открыть все контейнеры",
+    ["SI_UNBOXER_CANCEL"] =                  "Отмена открытия контейнера",
     ["SI_UNBOXER_UNBOXED"] =                 "распаковал  <<1>>",
     ["SI_UNBOXER_TOOLTIP_EXAMPLE"] =         "Пример: |H0:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL"] =         "Автоматически распаковывать контейнеры",

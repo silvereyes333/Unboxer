@@ -81,6 +81,10 @@ function class.UnboxAll:CreateInteractSceneHiddenCallback(scene, name)
         self:OnUnpausedEvent(name)
     end
 end
+function class.UnboxAll:CreateMountFailureHandler()
+    -- If a mount failure occurs while unboxing, delay for the configured time
+    return function() self:DelayStart(math.max(self:GetDelayMilliseconds(), 2000)) end
+end
 function class.UnboxAll:CreateOpenedCallback()
     return function(itemLink, lootReceived, rule)
         addon.PrintUnboxedLink(itemLink)
@@ -101,7 +105,15 @@ function class.UnboxAll:CreateOpenedCallback()
         addon.Debug("Opened " .. tostring(itemLink) .. " containing " .. tostring(#lootReceived) .. " items. Matched rule "
                     .. (rule and rule.name or ""), debug)
         self:FireCallbacks("Opened", itemLink, lootReceived, rule)
-        EVENT_MANAGER:RegisterForUpdate(self.name .. "_Start", 40, function() self:Start() end)
+        local milliseconds = 40
+        if #self.queue > 0 then
+            local slotIndex = self.queue[1].slotIndex
+            local remaining, duration = GetItemCooldownInfo(BAG_BACKPACK, slotIndex)
+            if remaining > 0 and duration > 0 then
+                milliseconds = milliseconds + remaining
+            end
+        end
+        self:DelayStart(milliseconds)
     end
 end
 
@@ -115,22 +127,24 @@ function class.UnboxAll:CreateSlotUpdateCallback()
         end
         if self:GetAutoQueue() then
             self:Queue({ slotIndex = slotIndex, itemLink = GetItemLink(bagId, slotIndex) })
-            if self.state == "stopped" then
-                self:DelayStart()
+            if self.state == "stopped" and #self.queue < 2 then
+                local remaining, duration = GetItemCooldownInfo(BAG_BACKPACK, self.slotIndex)
+                if remaining > 0 and duration > 0 then
+                    self:DelayStart(40 + remaining)
+                else
+                    self:DelayStart(40)
+                end
             end
         end
     end
 end
-function class.UnboxAll:DelayStart(item, milliseconds)
-    if item then
-        table.insert(self.queue, item)
-    end
+function class.UnboxAll:DelayStart(milliseconds)
     self.state = "delayed_start"
     if not milliseconds then
         milliseconds = self:GetDelayMilliseconds()
     end
     addon.Debug("Delay starting unbox for "..tostring(milliseconds).." ms", debug)
-    self:FireCallbacks("DelayStart", item)
+    self:FireCallbacks("DelayStart")
     EVENT_MANAGER:RegisterForUpdate(self.name .. "_Start", milliseconds, function() self:Start() end)
 end
 function class.UnboxAll:GetAutoQueue(value)
@@ -189,11 +203,11 @@ function class.UnboxAll:HasUnboxableSlots()
 
     return false
 end
-function class.UnboxAll:CreateMountFailureHandler()
-    -- If a mount failure occurs while unboxing, delay for the configured time
-    return function() self:DelayStart(nil, math.max(self:GetDelayMilliseconds(), 2000)) end
-end
 function class.UnboxAll:ListenForPause()
+    if self.listeningForPause then
+        return
+    end
+    self.listeningForPause = true
     for name, handlers in pairs(self.eventHandlers) do
         local pause = handlers.pause
         if pause then
@@ -201,6 +215,7 @@ function class.UnboxAll:ListenForPause()
             for _, event in ipairs(events) do
                 local scope = self.name .. "_" .. name .. "_pause"
                 EVENT_MANAGER:RegisterForEvent(scope, event, pause.handler)
+                addon.Debug("Listening for event " .. tostring(event) .. " " .. scope, debug)
                 if pause.combatEventFilters then
                     if event == EVENT_COMBAT_EVENT then
                         for filterType, filterParameter in pairs(pause.combatEventFilters) do
@@ -225,6 +240,9 @@ function class.UnboxAll:ListenForPause()
         end
     end
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MOUNT_FAILURE, self:CreateMountFailureHandler())
+end
+function class.UnboxAll:IsActive()
+    return #self.queue > 0 or self.state ~= "stopped"
 end
 function class.UnboxAll:OnPausedEvent(name, combatEventFilters)
     local unpause, events
@@ -463,17 +481,11 @@ end
 function class.UnboxAll:SetAutoQueue(value)
     self.autoQueue = value
 end
-function class.UnboxAll:Start(item)
+function class.UnboxAll:Start()
     EVENT_MANAGER:UnregisterForUpdate(self.name .. "_Start")
-    if item then
-        table.insert(self.queue, item)
-    end
-    if item then
-        addon.Debug("Start " .. tostring(item.itemLink) .. " (" .. tostring(item.slotIndex) .. ")", debug)
-    else
-        addon.Debug("Start", debug)
-    end
-    self:FireCallbacks("Start", item)
+    addon.Debug("Start", debug)
+    
+    self:FireCallbacks("Start")
     
     if #self.queue == 0 then
         self:Reset()
@@ -491,13 +503,14 @@ function class.UnboxAll:Start(item)
         return
     end
     
-    local itemToUnbox = table.remove(self.queue, 1)
+    local item = table.remove(self.queue, 1)
     
     self:ListenForPause()
-    addon.Debug("BeforeOpen " .. tostring(itemToUnbox.itemLink) .. " (" .. tostring(itemToUnbox.slotIndex) .. ")", debug)
-    self:FireCallbacks("BeforeOpen", itemToUnbox)
     
-    local opener = class.BoxOpener:New(itemToUnbox.slotIndex)
+    addon.Debug("BeforeOpen " .. tostring(item.itemLink) .. " (" .. tostring(item.slotIndex) .. ")", debug)
+    self:FireCallbacks("BeforeOpen", item)
+    
+    local opener = class.BoxOpener:New(item.slotIndex)
     local failedCallback = self:CreateFailedCallback()
     opener:RegisterCallback("Failed", failedCallback)
     opener:RegisterCallback("Opened", self:CreateOpenedCallback())
@@ -513,6 +526,32 @@ function class.UnboxAll:Start(item)
         reason = "Unknown container type"
     end
     failedCallback(item.slotIndex, item.itemLink, reason)
+end
+function class.UnboxAll:StopListeningForPause()
+    if not self.listeningForPause then
+        return
+    end
+    self.listeningForPause = nil
+    for name, handlers in pairs(self.eventHandlers) do
+        local pause = handlers.pause
+        if pause then
+            local events = type(pause.events) == "table" and pause.events or { pause.events }
+            for _, event in ipairs(events) do
+                local scope = self.name .. "_" .. name .. "_pause"
+                EVENT_MANAGER:UnregisterForEvent(scope, event)
+                addon.Debug("Stop listening for event " .. tostring(event) .. " " .. scope, debug)
+            end
+        end
+    end
+    for name, callbackHandler in pairs(self.callbackHandlers) do
+        if callbackHandler.pause then
+            for _, pause in ipairs(callbackHandler.pause) do
+                local scope = pause.name .. "_pause"
+                pause.target:UnregisterCallback(scope,  pause.callback)
+            end
+        end
+    end
+    EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_MOUNT_FAILURE, self:CreateMountFailureHandler())
 end
     
 --[[ TODO: figure out a way to deal with loot scene changes.  Pause and resume, but without delay?

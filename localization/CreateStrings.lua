@@ -17,5 +17,7 @@ for stringId, defaultValue in pairs(UNBOXER_DEFAULT_STRINGS) do
     ZO_CreateStringId(stringId, value)
     ZO_CreateStringId(stringId .. "_DEFAULT", defaultValue)
 end
+ZO_CreateStringId("SI_BINDING_NAME_UNBOX_ALL", GetString(SI_UNBOXER_UNBOX_ALL) .. "/" .. GetString(SI_UNBOXER_CANCEL))
+
 UNBOXER_STRINGS = nil
 UNBOXER_DEFAULT_STRINGS = nil

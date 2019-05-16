@@ -1,6 +1,7 @@
 UNBOXER_DEFAULT_STRINGS = {
     ["SI_UNBOXER"] =                         "Unboxer",
-    ["SI_BINDING_NAME_UNBOX_ALL"] =          "Unbox All",
+    ["SI_UNBOXER_UNBOX_ALL"] =               "Unbox All",
+    ["SI_UNBOXER_CANCEL"] =                  "Cancel Unbox All",
     ["SI_UNBOXER_UNBOXED"] =                 "opened <<1>>",
     ["SI_UNBOXER_PUNCTUATION_COLON"] =       ":",
     ["SI_UNBOXER_TOOLTIP_EXAMPLE"] =         "Example: |H0:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",

@@ -1,5 +1,6 @@
 UNBOXER_STRINGS = {
-    ["SI_BINDING_NAME_UNBOX_ALL"] =          "すべてのアイテム箱を開く",
+    ["SI_UNBOXER_UNBOX_ALL"] =               "すべてのアイテム箱を開く",
+    ["SI_UNBOXER_CANCEL"] =                  GetString(SI_DIALOG_CANCEL),
     ["SI_UNBOXER_UNBOXED"] =                 "<<1>>は開梱されました",
     ["SI_UNBOXER_TOOLTIP_EXAMPLE"] =         "例：|H0:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
     ["SI_UNBOXER_PUNCTUATION_COLON"] =       "：",

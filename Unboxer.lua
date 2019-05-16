@@ -14,7 +14,7 @@ Unboxer = {
 }
 
 local addon = Unboxer
-addon.prefix = zo_strformat("<<1>>|cFFFFFF: ", addon.title)
+addon.prefix = zo_strformat("<<1>>: ", addon.title)
 local LLS = LibStub("LibLootSummary")
 
 -- Output formatted message to chat window, if configured
@@ -22,7 +22,7 @@ function addon.Print(input, force)
     if not force and not (addon.settings and addon.settings.verbose) then
         return
     end
-    local output = zo_strformat(addon.prefix .. "<<1>>|r", input)
+    local output = zo_strformat(addon.prefix .. "<<1>>", input)
     d(output)
 end
 function addon.Debug(input, force)
@@ -171,40 +171,63 @@ local function InventoryStateChange(oldState, newState)
         KEYBIND_STRIP:UpdateKeybindButtonGroup(addon.unboxAllKeybindButtonGroup)
     end
 end
-local function RefreshUpdateAllKeybind()
+function addon:GetKeybindName()
+    if self.unboxAll:IsActive() then
+        return GetString(SI_UNBOXER_CANCEL)
+    else
+        return GetString(SI_UNBOXER_UNBOX_ALL)
+    end
+end
+local function RefreshUnboxAllKeybind()
     local self = addon
+    self.unboxAllKeybindButton.name = self:GetKeybindName()
     KEYBIND_STRIP:UpdateKeybindButtonGroup(self.unboxAllKeybindButtonGroup)
 end
-local function UnboxAllStopped()
+function addon.CancelUnboxAll()
     local self = addon
-    self.unboxAll:SetAutoQueue(false)
-    RefreshUpdateAllKeybind()
+    self.unboxAll:Reset()
+    self.unboxAll:ListenForPause()
+    RefreshUnboxAllKeybind()
+    return true
 end
 function addon.UnboxAll()
     local self = addon
     
+    if self.unboxAll:IsActive() then
+        return self.CancelUnboxAll()
+    end
+    
     self.unboxAll:QueueAllInBackpack()
+    
+    if #self.unboxAll.queue == 0 then
+        return false
+    end
+    
     self.unboxAll:SetAutoQueue(true)
-    self.unboxAll:RegisterCallback("Stopped", UnboxAllStopped)
-    self.unboxAll:RegisterCallback("BeforeOpen", RefreshUpdateAllKeybind)
+    self.unboxAll:RegisterCallback("Stopped", self.CancelUnboxAll)
+    self.unboxAll:RegisterCallback("Opened", RefreshUnboxAllKeybind)
+    self.unboxAll:RegisterCallback("BeforeOpen", RefreshUnboxAllKeybind)
+    --self.unboxAll:StopListeningForPause()
     self.unboxAll:Start()
+    return true
     
 end
 
 function addon:AddKeyBind()
+    self.unboxAllKeybindButton = {
+        keybind = "UNBOX_ALL",
+        enabled = true,
+        visible = function() return self.unboxAll:HasUnboxableSlots() end,
+        order = 100,
+        callback = self.UnboxAll,
+    }
     self.unboxAllKeybindButtonGroup = {
         alignment = KEYBIND_STRIP_ALIGN_LEFT,
-        {
-            name = GetString(SI_BINDING_NAME_UNBOX_ALL),
-            keybind = "UNBOX_ALL",
-            enabled = function() return self.unboxAll.state == "stopped" and self.unboxAll:HasEnoughSlots()  end,
-            visible = function() return self.unboxAll:HasUnboxableSlots() end,
-            order = 100,
-            callback = self.UnboxAll,
-        },
+        self.unboxAllKeybindButton
     }
     BACKPACK_MENU_BAR_LAYOUT_FRAGMENT:RegisterCallback("StateChange", function(oldState, newState)
         if newState == SCENE_SHOWN then
+            self.unboxAllKeybindButton.name = self:GetKeybindName()
             KEYBIND_STRIP:AddKeybindButtonGroup(addon.unboxAllKeybindButtonGroup)
         elseif newState == SCENE_HIDING then
             KEYBIND_STRIP:RemoveKeybindButtonGroup(addon.unboxAllKeybindButtonGroup)
