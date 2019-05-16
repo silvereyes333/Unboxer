@@ -14,22 +14,19 @@ Unboxer = {
 }
 
 local addon = Unboxer
-addon.prefix = zo_strformat("<<1>>: ", addon.title)
 local LLS = LibStub("LibLootSummary")
 
 -- Output formatted message to chat window, if configured
-function addon.Print(input, force)
-    if not force and not (addon.settings and addon.settings.verbose) then
-        return
-    end
-    local output = zo_strformat(addon.prefix .. "<<1>>", input)
+function addon.Print(input)
+    local self = addon
+    local output = self.prefix .. input .. self.suffix
     d(output)
 end
 function addon.Debug(input, force)
     if not force and not addon.debugMode then
         return
     end
-    addon.Print(input, force)
+    addon.Print(input)
 end
 function addon:StringContainsStringIdOrDefault(searchIn, stringId, ...)
     if not stringId then
@@ -163,8 +160,14 @@ function addon:GetItemLinkData(itemLink, language)
     return data
 end
 function addon.PrintUnboxedLink(itemLink)
-    if not itemLink then return end
-    addon.Print(zo_strformat(SI_UNBOXER_UNBOXED, itemLink))
+    local self = addon
+    if not itemLink 
+       or not self.settings 
+       or not self.settings.chatContainerOpen
+    then
+        return
+    end
+    self.Print(zo_strformat(SI_UNBOXER_UNBOXED, itemLink))
 end
 local function InventoryStateChange(oldState, newState)
     if newState == SCENE_SHOWING then
@@ -183,11 +186,38 @@ local function RefreshUnboxAllKeybind()
     self.unboxAllKeybindButton.name = self:GetKeybindName()
     KEYBIND_STRIP:UpdateKeybindButtonGroup(self.unboxAllKeybindButtonGroup)
 end
+local function OnContainerOpened(itemLink, lootReceived, rule)
+    local self = addon
+    self.PrintUnboxedLink(itemLink)
+    if not rule then
+        self.Debug("No match rule passed to 'Opened' callback")
+    elseif not addon.settings.chatContentsSummary then
+        self.Debug("All chat summaries are disabled.")
+    elseif not rule:IsSummaryEnabled() then
+        self.Debug("Rule "..rule.name.." is not configured to output summaries.")
+    else
+        if #lootReceived == 0 then
+            self.Debug("'Opened' callback parameter 'lootReceived' contains no items.")
+        end
+        for _, loot in ipairs(lootReceived) do
+            if loot.lootedBySelf and loot.lootType == LOOT_TYPE_ITEM then
+                LLS:AddItemLink(loot.itemLink, loot.quantity)
+            end
+        end
+    end
+    addon.Debug("Opened " .. tostring(itemLink) .. " containing " .. tostring(#lootReceived) .. " items. Matched rule "
+                .. (rule and rule.name or ""))
+    RefreshUnboxAllKeybind()
+end
 function addon.CancelUnboxAll()
     local self = addon
     self.unboxAll:Reset()
     self.unboxAll:ListenForPause()
     RefreshUnboxAllKeybind()
+    -- Print summary
+    LLS:SetPrefix(self.prefix)
+    LLS:SetSuffix(self.suffix)
+    LLS:Print()
     return true
 end
 function addon.UnboxAll()
@@ -205,7 +235,7 @@ function addon.UnboxAll()
     
     self.unboxAll:SetAutoQueue(true)
     self.unboxAll:RegisterCallback("Stopped", self.CancelUnboxAll)
-    self.unboxAll:RegisterCallback("Opened", RefreshUnboxAllKeybind)
+    self.unboxAll:RegisterCallback("Opened", OnContainerOpened)
     self.unboxAll:RegisterCallback("BeforeOpen", RefreshUnboxAllKeybind)
     --self.unboxAll:StopListeningForPause()
     self.unboxAll:Start()

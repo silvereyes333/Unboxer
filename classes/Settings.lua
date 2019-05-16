@@ -8,7 +8,7 @@ local setAutolootDefaults
 -- Local variables
 local debug = false
 local exampleFormat = GetString(SI_UNBOXER_TOOLTIP_EXAMPLE)
-local renamedSettings, removedSettings
+local renamedSettings, removedSettings, refreshPrefix
 
 ----------------- Settings -----------------------
 function addon:SetupSettings()
@@ -20,7 +20,11 @@ function addon:SetupSettings()
         autoloot = tonumber(GetSetting(SETTING_TYPE_LOOT,LOOT_SETTING_AUTO_LOOT)) ~= 0,
         autolootDelay = 2,
         reservedSlots = 0,
-        verbose = true,
+        chatColor = { 1, 1, 1, 1 },
+        shortPrefix = true,
+        chatUseSystemColor = true,
+        chatContainerOpen = true,
+        chatContentsSummary = true,
     }
     
     for _, rule in ipairs(self.rules) do
@@ -36,6 +40,9 @@ function addon:SetupSettings()
                   :AddCharacterSettingsToggle(self.name .. "_Character")
                   :RenameSettings(4, renamedSettings)
                   :RemoveSettings(4, removedSettings)
+                  
+    self.chatColor = ZO_ColorDef:New(unpack(self.settings.chatColor))
+    refreshPrefix()
     
     local panelData = {
         type = "panel",
@@ -53,15 +60,84 @@ function addon:SetupSettings()
         -- Account-wide settings
         self.settings:GetLibAddonMenuAccountCheckbox(),
         
-        -- Verbose
         {
-            type    = "checkbox",
-            name    = GetString(SI_UNBOXER_VERBOSE),
-            tooltip = GetString(SI_UNBOXER_VERBOSE_TOOLTIP),
-            getFunc = function() return self.settings.verbose end,
-            setFunc = function(value) self.settings.verbose = value end,
-            default = self.defaults.verbose,
+            type     = "submenu",
+            name     = GetString(SI_UNBOXER_CHAT_MESSAGES),
+            controls = {
+          
+                -- Short prefix
+                {
+                    type = "checkbox",
+                    name = GetString(SI_UNBOXER_SHORT_PREFIX),
+                    tooltip = GetString(SI_UNBOXER_SHORT_PREFIX_TOOLTIP),
+                    getFunc = function() return self.settings.shortPrefix end,
+                    setFunc = function(value)
+                                  self.settings.shortPrefix = value
+                                  refreshPrefix()
+                              end,
+                    default = self.defaults.shortPrefix,
+                },
+                -- Use default system color
+                {
+                    type = "checkbox",
+                    name = GetString(SI_UNBOXER_CHAT_USE_SYSTEM_COLOR),
+                    getFunc = function() return self.settings.chatUseSystemColor end,
+                    setFunc = function(value)
+                                  self.settings.chatUseSystemColor = value
+                                  refreshPrefix()
+                              end,
+                    default = self.defaults.chatUseSystemColor,
+                },
+                -- Message color
+                {
+                    type = "colorpicker",
+                    name = GetString(SI_UNBOXER_CHAT_COLOR),
+                    getFunc = function() return unpack(self.settings.chatColor) end,
+                    setFunc = function(r, g, b, a)
+                                  self.settings.chatColor = { r, g, b, a }
+                                  self.chatColor = ZO_ColorDef:New(r, g, b, a)
+                                  refreshPrefix()
+                              end,
+                    default = self.defaults.chatColor,
+                    disabled = function() return self.settings.chatUseSystemColor end,
+                },
+                -- Old Prefix Colors
+                {
+                    type = "checkbox",
+                    name = GetString(SI_UNBOXER_COLORED_PREFIX),
+                    tooltip = GetString(SI_UNBOXER_COLORED_PREFIX_TOOLTIP),
+                    getFunc = function() return self.settings.coloredPrefix end,
+                    setFunc = function(value)
+                                  self.settings.coloredPrefix = value
+                                  refreshPrefix()
+                              end,
+                    default = self.defaults.coloredPrefix,
+                },
+                -- Display Messages For:
+                {
+                    type = "header",
+                    name = GetString(SI_UNBOXER_CHAT_MESSAGES_HEADER),
+                },
+                -- Log container open to chat
+                {
+                    type = "checkbox",
+                    name = GetString(SI_UNBOXER_CHAT_CONTAINERS),
+                    getFunc = function() return self.settings.chatContainerOpen end,
+                    setFunc = function(value) self.settings.chatContainerOpen = value end,
+                    default = self.defaults.chatContainerOpen,
+                },
+                -- Log container contents to chat
+                {
+                    type = "checkbox",
+                    name = GetString(SI_UNBOXER_CHAT_CONTENTS),
+                    tooltip = GetString(SI_UNBOXER_CHAT_CONTENTS_TOOLTIP),
+                    getFunc = function() return self.settings.chatContentsSummary end,
+                    setFunc = function(value) self.settings.chatContentsSummary = value end,
+                    default = self.defaults.chatContentsSummary,
+                },
+            },
         },
+        
         -- Autoloot
         {
             type    = "checkbox",
@@ -112,6 +188,20 @@ end
 -- 
 ----------------------------------------------------------------------------
 
+function refreshPrefix()
+    local self = addon
+    local stringId
+    local startColor = self.settings.chatUseSystemColor and "" or "|c" .. self.chatColor:ToHex()
+    if self.settings.coloredPrefix then
+        self.prefix = GetString(self.settings.shortPrefix and SI_UNBOXER_COLORED_SHORT or SI_UNBOXER_COLORED)
+            .. startColor .. " "
+    else
+        self.prefix = startColor
+            .. GetString(self.settings.shortPrefix and SI_UNBOXER_SHORT or SI_UNBOXER_PREFIX)
+            .. " "
+    end
+    self.suffix = self.settings.chatUseSystemColor and "" or "|r"
+end
 
 function setAutolootDefaults(sv)
     for _, settingName in pairs(renamedSettings) do
@@ -138,6 +228,7 @@ renamedSettings = {
     ["mageGuildReprintsAutoloot"]  = "reprintsAutoloot",
     ["thiefAutoloot"]              = "legerdemainAutoloot",
     ["treasuremapsAutoloot"]       = "treasuremapsAutoloot",
+    ["verbose"]                    = "chatContainerOpen",
 }
 
 removedSettings = {

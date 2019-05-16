@@ -57,7 +57,7 @@ function class.Rule:CreateLAM2Options()
             tooltip  = tooltip,
             getFunc  = function() return self:IsEnabled() end,
             setFunc  = function(value) self:SetEnabled(value) end,
-            default  = addon.defaults[self.name],
+            default  = false,
         })
     table.insert(optionsTable,
         {
@@ -82,7 +82,7 @@ function class.Rule:CreateLAM2Options()
             getFunc  = function() return self:IsSummaryEnabled() end,
             setFunc  = function(value) self:SetSummaryEnabled(value) end,
             default  = self:IsSummaryDefault(),
-            disabled = function() return not self:IsEnabled() end,
+            disabled = function() return not self:IsEnabled() or not addon.settings.chatContentsSummary end,
         })
     
     self:OnAutolootSet(self:IsAutolootEnabled())
@@ -125,7 +125,7 @@ function class.Rule:IsEnabled()
 end
 
 function class.Rule:IsSummaryDefault()
-    return addon.defaults[self.summarySettingName]
+    return true
 end
 
 function class.Rule:IsSummaryEnabled()

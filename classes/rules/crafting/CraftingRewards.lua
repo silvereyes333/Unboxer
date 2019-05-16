@@ -54,7 +54,7 @@ function class.CraftingRewards:OnAutolootSet(value)
     local displayLazyWarningAccountWide = self:DisableWritCreaterAutoloot(
         WritCreater.savedVarsAccountWide and WritCreater.savedVarsAccountWide.accountWideProfile)
     if displayLazyWarning or displayLazyWarningAccountWide then
-        addon.Print("Disabled autoloot settings for |r"..tostring(WritCreater.settings["panel"].displayName))
+        addon.Print("Disabled autoloot settings for " .. addon.suffix .. tostring(WritCreater.settings["panel"].displayName))
     end
 end
 

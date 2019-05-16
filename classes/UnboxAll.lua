@@ -87,23 +87,6 @@ function class.UnboxAll:CreateMountFailureHandler()
 end
 function class.UnboxAll:CreateOpenedCallback()
     return function(itemLink, lootReceived, rule)
-        addon.PrintUnboxedLink(itemLink)
-        if rule and rule:IsSummaryEnabled() then
-            if #lootReceived == 0 then
-                addon.Debug("'Opened' callback parameter 'lootReceived' contains no items.", debug)
-            end
-            for _, loot in ipairs(lootReceived) do
-                if loot.lootedBySelf and loot.lootType == LOOT_TYPE_ITEM then
-                    LLS:AddItemLink(loot.itemLink, loot.quantity)
-                end
-            end
-        elseif not rule then
-            addon.Debug("No match rule passed to 'Opened' callback", debug)
-        else
-            addon.Debug("Rule "..rule.name.." is not configured to output summaries.", debug)
-        end
-        addon.Debug("Opened " .. tostring(itemLink) .. " containing " .. tostring(#lootReceived) .. " items. Matched rule "
-                    .. (rule and rule.name or ""), debug)
         self:FireCallbacks("Opened", itemLink, lootReceived, rule)
         local milliseconds = 40
         if #self.queue > 0 then
@@ -491,9 +474,6 @@ function class.UnboxAll:Start()
         self:Reset()
         addon.Debug("Stopped. Queue is empty.", debug)
         self:FireCallbacks("Stopped")
-        -- Print summary
-        LLS:SetPrefix(addon.prefix)
-        LLS:Print()
         return
     end
     
