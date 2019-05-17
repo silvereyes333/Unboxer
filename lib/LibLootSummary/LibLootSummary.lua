@@ -3,13 +3,14 @@
 ------------------------------------------------------------------
 
 --Register LTO with LibStub
-local MAJOR, MINOR = "LibLootSummary", 1
+local MAJOR, MINOR = "LibLootSummary", 2
 local lls, minorVersion = LibStub:NewLibrary(MAJOR, MINOR)
 if not lls then return end --the same or newer version of this lib is already loaded into memory
 
 local lootList = {}
 local currencyList = {}
 local prefix = ""
+local suffix = ""
 local delimiter = " "
 local linkStyle = LINK_STYLE_DEFAULT
 local linkFormat = "|H%s:item:%s:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h"
@@ -52,7 +53,7 @@ local function appendText(text, currentText, maxLength, lines)
     local newLine
     if string.len(currentText) + string.len(delimiter) + string.len(text) > maxLength then
         table.insert(lines, currentText)
-        currentText = prefix
+        currentText = ""
     elseif string.len(currentText) > string.len(prefix) then
         currentText = currentText .. delimiter
     end
@@ -63,8 +64,8 @@ end
 --[[ Outputs a verbose summary of all loot and currency ]]
 function lls:Print()
 
-    local summary = prefix
-    local maxLength = MAX_TEXT_CHAT_INPUT_CHARACTERS - string.len(prefix)
+    local summary = ""
+    local maxLength = MAX_TEXT_CHAT_INPUT_CHARACTERS - string.len(prefix) - string.len(suffix)
     
     -- Add items summary
     local lines = {}
@@ -93,7 +94,7 @@ function lls:Print()
     
     -- Print to chat
     for _, line in ipairs(lines) do
-        d(line)
+        d(prefix .. line .. suffix)
     end
     
     self:Reset()
@@ -106,6 +107,7 @@ function lls:Reset()
     
     -- Reset options
     prefix = ""
+    suffix = ""
     delimiter = " "
     linkStyle = LINK_STYLE_DEFAULT
     combineDuplicates = true
@@ -125,4 +127,8 @@ end
 
 function lls:SetPrefix(newPrefix)
     prefix = newPrefix
+end
+
+function lls:SetSuffix(newSuffix)
+    suffix = newSuffix
 end

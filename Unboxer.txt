@@ -1,13 +1,13 @@
 ## Title: Unboxer
-## Author: |c99CCEFsilvereyes|r
+## Author: silvereyes
 ## Description: Adds an Unbox All command that loots all containers of a configured type in the player inventory.
-## Version: 2.9.1
-## APIVersion: 100026
-## DependsOn: LibStub LibSavedVars LibAddonMenu-2.0 LibCustomMenu
-## OptionalDependsOn: DolgubonsLazyWritCreator
+## Version: 3.0.0
+## APIVersion: 100026 100027
+## AddOnVersion: 30000
+## DependsOn: LibSavedVars LibAddonMenu-2.0
+## OptionalDependsOn: DolgubonsLazyWritCreator LibStub
 ## SavedVariables: Unboxer_Account
 ## SavedVariables: Unboxer_Character
-## SavedVariables: Unboxer_Data
 
 ## This Add-On is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates. 
 ## The Elder Scrolls® and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the 
@@ -16,17 +16,36 @@
 ; Libraries
 lib\LibLootSummary\LibLootSummary.lua
 
-localization\EN.lua
+localization\Default.lua
 localization\$(language).lua
 localization\CreateStrings.lua
 
 Unboxer.lua
-Settings.lua
-filters/CollectibleFilters.lua
-filters/CraftingFilters.lua
-filters/GearFilters.lua
-filters/HousingFilters.lua
-filters/LootFilters.lua
-filters/PtsFilters.lua
+classes\Settings.lua
+classes\Rule.lua
+classes\BoxOpener.lua
+classes\UnboxAll.lua
+
+; Rules engines for different categories
+classes\rules\collectibles\Runeboxes.lua
+classes\rules\collectibles\StylePages.lua
+classes\rules\crafting\CraftingRewards.lua
+classes\rules\crafting\Materials.lua
+classes\rules\currency\Transmutation.lua
+classes\rules\currency\TelVar.lua
+classes\rules\general\Festival.lua
+classes\rules\general\Fishing.lua
+classes\rules\general\Legerdemain.lua
+classes\rules\general\TreasureMaps.lua
+classes\rules\general\Vendor.lua
+classes\rules\rewards\Dungeon.lua
+classes\rules\rewards\Solo.lua
+classes\rules\rewards\SoloRepeatable.lua
+classes\rules\rewards\Trial.lua
+classes\rules\vendor\Furnisher.lua
+classes\rules\vendor\LoreLibraryReprints.lua
+classes\rules\vendor\VendorGear.lua
+classes\rules\Pts.lua
+
 
 Bindings.xml
