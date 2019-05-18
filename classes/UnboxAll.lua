@@ -6,7 +6,6 @@ local addon = Unboxer
 local class = addon.classes
 local debug = false
 local defaultStates = {}
-local LLS = LibStub("LibLootSummary")
 
 class.UnboxAll = ZO_CallbackObject:Subclass()
 

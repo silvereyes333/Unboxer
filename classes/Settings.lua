@@ -1,5 +1,5 @@
 local addon = Unboxer
-local LibSavedVars = LibStub("LibSavedVars")
+local LSV  = LibSavedVars or LibStub("LibSavedVars")
 local LAM2 = LibAddonMenu2 or LibStub("LibAddonMenu-2.0")
 
 -- Local functions
@@ -36,10 +36,10 @@ function addon:SetupSettings()
     end
 
     self.settings =
-      LibSavedVars:NewAccountWide(self.name .. "_Account", self.defaults)
-                  :AddCharacterSettingsToggle(self.name .. "_Character")
-                  :RenameSettings(4, renamedSettings)
-                  :RemoveSettings(4, removedSettings)
+      LSV:NewAccountWide(self.name .. "_Account", self.defaults)
+         :AddCharacterSettingsToggle(self.name .. "_Character")
+         :RenameSettings(4, renamedSettings)
+         :RemoveSettings(4, removedSettings)
                   
     self.chatColor = ZO_ColorDef:New(unpack(self.settings.chatColor))
     refreshPrefix()

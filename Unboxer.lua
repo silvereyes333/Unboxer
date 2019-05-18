@@ -2,7 +2,7 @@ Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "silvereyes",
-    version = "3.0.0",
+    version = "3.0.1",
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
@@ -14,7 +14,6 @@ Unboxer = {
 }
 
 local addon = Unboxer
-local LLS = LibStub("LibLootSummary")
 
 -- Output formatted message to chat window, if configured
 function addon.Print(input)
@@ -201,7 +200,7 @@ local function OnContainerOpened(itemLink, lootReceived, rule)
         end
         for _, loot in ipairs(lootReceived) do
             if loot.lootedBySelf and loot.lootType == LOOT_TYPE_ITEM then
-                LLS:AddItemLink(loot.itemLink, loot.quantity)
+                LibLootSummary:AddItemLink(loot.itemLink, loot.quantity)
             end
         end
     end
@@ -214,9 +213,9 @@ function addon.CancelUnboxAll()
     self.unboxAll:Reset()
     RefreshUnboxAllKeybind()
     -- Print summary
-    LLS:SetPrefix(self.prefix)
-    LLS:SetSuffix(self.suffix)
-    LLS:Print()
+    LibLootSummary:SetPrefix(self.prefix)
+    LibLootSummary:SetSuffix(self.suffix)
+    LibLootSummary:Print()
     return true
 end
 function addon.UnboxAll()
