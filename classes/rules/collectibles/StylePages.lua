@@ -16,6 +16,7 @@ function class.StylePages:New()
         {
             name          = "outfitstyles",
             exampleItemId = 140309, --	[Style Page: Molag Kena's Shoulder]
+            dependencies  = { "excluded" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_OUTFITSTYLES),
             tooltip       = GetString(SI_UNBOXER_OUTFITSTYLES_TOOLTIP),

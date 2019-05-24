@@ -15,6 +15,7 @@ function class.LoreLibraryReprints:New()
         {
             name          = "reprints",
             exampleItemId = 120384, -- [Guild Reprint: Daedric Princes]
+            dependencies  = { "excluded" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_REPRINTS),
             knownIds      = knownIds,

@@ -14,6 +14,7 @@ function class.Trial:New()
         {
             name          = "trial",
             exampleItemId = 139668, -- [Mage's Knowledgeable Coffer]
+            dependencies  = { "excluded" },
             submenu       = submenu,
             title         = GetString("SI_RAIDCATEGORY", RAID_CATEGORY_TRIAL),
             knownIds      = knownIds,

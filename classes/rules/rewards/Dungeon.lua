@@ -15,6 +15,7 @@ function class.Dungeon:New()
         {
             name          = "dungeon",
             exampleItemId = 84519, -- [Unidentified Mazzatun Armaments]
+            dependencies  = { "excluded" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_DUNGEONS),
             knownIds      = knownIds,

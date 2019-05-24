@@ -40,6 +40,7 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_FURNISHER"] =               "家具商人の文書",
     ["SI_UNBOXER_VENDOR_GEAR"] =             "商人が販売する機器ボックス",
     ["SI_UNBOXER_REPRINTS"] =                "伝承の蔵書庫の再版",
+    ["SI_UNBOXER_SHADOWY_SUPPLIER"] =        "闇の一党：影の配達人",
     ["SI_UNBOXER_LEGACY_QUEST_FLAVOR"] =     "この大きな箱の中には未知のアイテムがいくつか入っている。",
     ["SI_UNBOXER_BATTLEGROUND_LOWER"] =      "バトルグラウンド",
     ["SI_UNBOXER_UNDAUNTED_LOWER"] =         "アンドーンテッド",

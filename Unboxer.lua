@@ -2,7 +2,7 @@ Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "silvereyes",
-    version = "3.0.1",
+    version = "3.1.0",
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
@@ -11,6 +11,10 @@ Unboxer = {
     },
     rules = {},
     submenuOptions = {},
+    containerItemTypes = {
+        [ITEMTYPE_CONTAINER]          = true,
+        [ITEMTYPE_CONTAINER_CURRENCY] = true,
+    }
 }
 
 local addon = Unboxer
@@ -69,18 +73,16 @@ function addon:StringContainsNotAtStart(searchIn, stringId, ...)
     return startIndex, endIndex
 end
 
-function addon:IsItemLinkUnboxable(itemLink)
+function addon:IsItemLinkUnboxable(itemLink, slotData)
   
     if not itemLink then return false end
     
     local itemType = GetItemLinkItemType(itemLink)
-    if itemType ~= ITEMTYPE_CONTAINER 
-       and (not ITEMTYPE_CONTAINER_CURRENCY or itemType ~= ITEMTYPE_CONTAINER_CURRENCY)
-    then 
+    if not self.containerItemTypes[itemType] then 
         return false
     end
     
-    local data = self:GetItemLinkData(itemLink)
+    local data = self:GetItemLinkData(itemLink, nil, slotData)
     
     -- not sure why there's no item id, but return false to be safe
     if not data.itemId then return false end
@@ -91,8 +93,26 @@ function addon:IsItemLinkUnboxable(itemLink)
     end
     
     local isUnboxable = data.isUnboxable and data.rule:IsEnabled()
-    if isUnboxable and self.autolooting then
-        isUnboxable = data.rule:IsAutolootEnabled()
+    if isUnboxable then
+        if self.autolooting then
+            isUnboxable = data.rule:IsAutolootEnabled()
+    
+        -- Check inventory for any known unique items that the container contains
+        elseif addon.settings.containerUniqueItemIds[data.itemId] then
+            local slotUniqueItemIds = {}
+            
+            for bagId, itemIds in pairs(self.unboxAll.uniqueItemSlotIndexes) do
+                for _, slotUniqueItemId in pairs(itemIds) do
+                    slotUniqueItemIds[slotUniqueItemId] = true
+                end
+            end
+            for uniqueItemId, _ in pairs(addon.settings.containerUniqueItemIds[data.itemId]) do
+                if slotUniqueItemIds[uniqueItemId] then
+                    isUnboxable = false
+                    break
+                end
+            end
+        end
     end
     
     return isUnboxable, data.rule
@@ -102,8 +122,9 @@ function addon:IsItemUnboxable(bagId, slotIndex)
     if bagId ~= BAG_BACKPACK then return false end
     
     local itemLink = GetItemLink(bagId, slotIndex)
+    local slotData = SHARED_INVENTORY:GenerateSingleSlotData(bagId, slotIndex)
 
-    local unboxable, matchedRule = self:IsItemLinkUnboxable(itemLink)    
+    local unboxable, matchedRule = self:IsItemLinkUnboxable(itemLink, slotData)    
     local usable, onlyFromActionSlot = IsItemUsable(bagId, slotIndex)
     self.Debug(tostring(itemLink)..", unboxable: "..tostring(unboxable)..", usable: "..tostring(usable)..", onlyFromActionSlot: "..tostring(onlyFromActionSlot)..", matchedRule: "..(matchedRule and matchedRule.name or ""))
     return unboxable and usable and not onlyFromActionSlot, matchedRule
@@ -112,39 +133,48 @@ function addon:IsDefaultLanguageSelected()
     return GetCVar("language.2") == self.defaultLanguage
 end
 
-function addon:GetItemLinkData(itemLink, language)
-
-    local itemType, specializedItemType = GetItemLinkItemType(itemLink)
+function addon:GetItemLinkData(itemLink, language, slotData)
+    
     local itemId = GetItemLinkItemId(itemLink)
-    local icon = LocaleAwareToLower(GetItemLinkIcon(itemLink))
-    local name = LocaleAwareToLower(GetItemLinkTradingHouseItemSearchName(itemLink))
-    local flavorText = LocaleAwareToLower(GetItemLinkFlavorText(itemLink))
-    local setInfo = { GetItemLinkSetInfo(itemLink) }
-    local hasSet, setName, _, _, _, setId = GetItemLinkSetInfo(itemLink)
-    if setName == "" then setName = nil end
-    local requiredChampionPoints = GetItemLinkRequiredChampionPoints(itemLink)
-    local requiredLevel = GetItemLinkRequiredLevel(itemLink)
-    local quality = GetItemLinkQuality(itemLink)
-    local bindType = GetItemLinkBindType(itemLink)
-    local data = {
-        ["itemId"]                 = itemId,
-        ["itemLink"]               = itemLink,
-        ["bindType"]               = bindType,
-        ["name"]                   = LocaleAwareToLower(GetItemLinkTradingHouseItemSearchName(itemLink)),
-        ["flavorText"]             = LocaleAwareToLower(GetItemLinkFlavorText(itemLink)),
-        ["quality"]                = GetItemLinkQuality(itemLink),
-        ["icon"]                   = LocaleAwareToLower(GetItemLinkIcon(itemLink)),
-        ["hasSet"]                 = hasSet,
-        ["setName"]                = setName,
-        ["setId"]                  = setId,
-        ["requiredLevel"]          = GetItemLinkRequiredLevel(itemLink),
-        ["requiredChampionPoints"] = GetItemLinkRequiredChampionPoints(itemLink),
-        ["collectibleId"]          = GetItemLinkContainerCollectibleId(itemLink),
-    }
-    if type(data.collectibleId) == "number" and data.collectibleId > 0 then
-        data["collectibleCategoryType"] = GetCollectibleCategoryType(data.collectibleId)
-        data["collectibleUnlocked"]     = IsCollectibleUnlocked(data.collectibleId)
+    local itemType, specializedItemType
+    if slotData then
+        itemType = slotData.itemType
+        specializedItemType = slotData.specializedItemType
+        if not slotData.bindType then
+            slotData.bindType = GetItemLinkBindType(itemLink)
+        end
+        if not slotData.flavorText then
+            slotData.flavorText = GetItemLinkFlavorText(itemLink)
+        end
+        if not slotData.collectibleId then
+            slotData.collectibleId = GetItemLinkContainerCollectibleId(itemLink)
+        end
+    else
+        slotData = {}
+        itemType, specializedItemType = GetItemLinkItemType(itemLink)
     end
+    local icon = LocaleAwareToLower(slotData.iconFile or GetItemLinkIcon(itemLink))
+    local name = LocaleAwareToLower(slotData.name or GetItemLinkTradingHouseItemSearchName(itemLink))
+    local quality = slotData.quality or GetItemLinkQuality(itemLink)
+    local flavorText = LocaleAwareToLower(slotData.flavorText or GetItemLinkFlavorText(itemLink))
+    local bindType = slotData.bindType or GetItemLinkBindType(itemLink)
+    local collectibleId = slotData.collectibleId or GetItemLinkContainerCollectibleId(itemLink)
+    if type(collectibleId) == "number" and collectibleId > 0 and not slotData.collectibleCategoryType then
+        slotData["collectibleCategoryType"] = GetCollectibleCategoryType(collectibleId)
+        slotData["collectibleUnlocked"]     = IsCollectibleUnlocked(collectibleId)
+    end
+    local data = {
+        ["itemId"]                  = itemId,
+        ["itemLink"]                = itemLink,
+        ["bindType"]                = bindType,
+        ["name"]                    = name,
+        ["flavorText"]              = flavorText,
+        ["quality"]                 = quality,
+        ["icon"]                    = icon,
+        ["collectibleId"]           = collectibleId,
+        ["collectibleCategoryType"] = slotData["collectibleCategoryType"],
+        ["collectibleUnlocked"]     = slotData["collectibleUnlocked"]
+    }
   
     data["containerType"] = "unknown"
     for ruleIndex, rule in ipairs(self.rules) do
@@ -362,6 +392,7 @@ function addon:RegisterCategoryRule(class)
     -- Insert the new sub-menu option config into its sub-menu's "controls" table.
     tableMultiInsertSorted(self.submenuOptions[rule.submenu], ruleSubmenuOption, "name", 1, #self.submenuOptions[rule.submenu], compareIndexOffset)
 end
+
 local function OnAddonLoaded(event, name)
   
     if name ~= addon.name then return end
@@ -372,6 +403,7 @@ local function OnAddonLoaded(event, name)
     self:SetupSettings()
     
     local rules = self.classes.rules
+    self:RegisterCategoryRule(rules.Excluded)
     self:RegisterCategoryRule(rules.Pts)
     self:RegisterCategoryRule(rules.collectibles.Runeboxes)
     self:RegisterCategoryRule(rules.collectibles.StylePages)
@@ -382,6 +414,7 @@ local function OnAddonLoaded(event, name)
     self:RegisterCategoryRule(rules.general.Festival)
     self:RegisterCategoryRule(rules.general.Fishing)
     self:RegisterCategoryRule(rules.general.Legerdemain)
+    self:RegisterCategoryRule(rules.general.ShadowySupplier)
     self:RegisterCategoryRule(rules.general.TreasureMaps)
     self:RegisterCategoryRule(rules.rewards.Dungeon)
     self:RegisterCategoryRule(rules.rewards.Solo)

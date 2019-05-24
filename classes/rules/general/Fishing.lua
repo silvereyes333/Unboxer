@@ -14,6 +14,7 @@ function class.Fishing:New()
         {
             name          = "fishing",
             exampleItemId = 43757, -- [Wet Gunny Sack]
+            dependencies  = { "excluded" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_FISHING),
             knownIds      = knownIds,

@@ -111,6 +111,10 @@ end
 function class.BoxOpener:OnOpened()
     self:FireCallbacks("Opened", self.itemLink, self.lootReceived, self.matchedRule)
 end
+function class.BoxOpener:OnUniqueLootFound(lootInfo)
+    addon.Debug("UniqueLootFound(), "..tostring(lootInfo.itemLink)..". Raising callback.", debug)
+    self:FireCallbacks("UniqueLootFound", self, lootInfo)
+end
 
 function class.BoxOpener:CreateLootReceivedHandler()
     return function(eventCode, receivedBy, itemLink, quantity, itemSound, lootType, lootedBySelf, isPickpocketLoot, questItemIcon, itemId)
@@ -123,6 +127,7 @@ function class.BoxOpener:CreateLootReceivedHandler()
         addon.Debug("LootReceived("..tostring(eventCode)..", "..zo_strformat("<<1>>", receivedBy)..", "..tostring(itemLink)..", "..tostring(quantity)..", "..tostring(itemSound)..", "..tostring(lootType)..", "..tostring(lootedBySelf)..", "..tostring(isPickpocketLoot)..", "..tostring(questItemIcon)..", "..tostring(itemId)..")", debug)
     end
 end
+
 function class.BoxOpener:CreateLootClosedHandler()
     return function (eventCode)
         addon.Debug("LootClosed("..tostring(eventCode)..")", debug)
@@ -146,11 +151,32 @@ end
 function class.BoxOpener:RegisterLootAllItemsTimeout()
     EVENT_MANAGER:RegisterForUpdate(self.name .. "_Timeout", 1000, self:CreateLootUpdatedHandler())
 end
+
 function class.BoxOpener:CreateLootUpdatedHandler()
     return function(eventCode)  
         EVENT_MANAGER:UnregisterForUpdate(self.name .. "_Timeout")
         EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_LOOT_UPDATED)
-        local inventorySlotsNeeded = addon.unboxAll:GetInventorySlotsNeeded()
+        
+        local inventorySlotsNeeded = 0
+        for lootIndex = 1, GetNumLootItems() do
+            local lootId = GetLootItemInfo(lootIndex)
+            local lootInfo = {
+                lootId       = lootId,
+                lootItemType = GetLootItemType(lootId),
+                itemLink     = GetLootItemLink(lootId)
+            }
+            if lootInfo.lootItemType == LOOT_TYPE_ITEM 
+               and not (CanItemLinkBeVirtual(lootInfo.itemLink) and HasCraftBagAccess())
+            then
+                inventorySlotsNeeded = inventorySlotsNeeded + 1
+            end
+            if IsItemLinkUnique(lootInfo.itemLink) then
+                self:OnUniqueLootFound(lootInfo)
+                if not IsLooting() then
+                    return
+                end
+            end
+        end
         if not CheckInventorySpaceAndWarn(inventorySlotsNeeded) then
             self:OnFailed("Not enough space")
             self:Reset()

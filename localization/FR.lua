@@ -40,6 +40,7 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_FURNISHER"] =               "Documents du fournisseur",
     ["SI_UNBOXER_REPRINTS"] =                "Rééditions de livres de bibliothèque",
     ["SI_UNBOXER_VENDOR_GEAR"] =             "Boîtes à équipement en vente chez les marchands",
+    ["SI_UNBOXER_SHADOWY_SUPPLIER"] =        "Confrérie noire: Fournisseur des ombres",
     ["SI_UNBOXER_LEGACY_QUEST_FLAVOR"] =     "Cette grosse boîte contient un objet inconnu.",
     ["SI_UNBOXER_BATTLEGROUND_LOWER"] =      "champ de bataille",
     ["SI_UNBOXER_UNDAUNTED_LOWER"] =         "indomptables",

@@ -14,6 +14,7 @@ function class.Festival:New()
         {
             name          = "festival",
             exampleItemId = 141774, -- [Dremora Plunder Skull, Dungeon]
+            dependencies  = { "excluded" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_FESTIVAL),
             knownIds      = knownIds,

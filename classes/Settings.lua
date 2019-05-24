@@ -25,6 +25,7 @@ function addon:SetupSettings()
         chatUseSystemColor = true,
         chatContainerOpen = true,
         chatContentsSummary = true,
+        containerUniqueItemIds = {},
     }
     
     for _, rule in ipairs(self.rules) do
@@ -194,7 +195,7 @@ function refreshPrefix()
     local startColor = self.settings.chatUseSystemColor and "" or "|c" .. self.chatColor:ToHex()
     if self.settings.coloredPrefix then
         self.prefix = GetString(self.settings.shortPrefix and SI_UNBOXER_COLORED_SHORT or SI_UNBOXER_COLORED)
-            .. startColor .. " "
+            .. (self.settings.chatUseSystemColor and "|r" or "") .. startColor .. " "
     else
         self.prefix = startColor
             .. GetString(self.settings.shortPrefix and SI_UNBOXER_SHORT or SI_UNBOXER_PREFIX)

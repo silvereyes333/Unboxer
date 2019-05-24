@@ -17,7 +17,7 @@ function class.Runeboxes:New()
         {
             name          = "runeboxes",
             exampleItemId = 96951, -- [Runebox: Nordic Bather's Towel]
-            dependencies  = { "outfitstyles" },
+            dependencies  = { "excluded", "outfitstyles" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_RUNEBOXES),
             tooltip       = GetString(SI_UNBOXER_RUNEBOXES_TOOLTIP),

@@ -16,7 +16,7 @@ function class.SoloRepeatable:New()
         {
             name          = "solorepeatable",
             exampleItemId = 134619, -- Rewards for the Worthy
-            dependencies  = { "crafting", "festival", "furnisher", "materials", "legerdemain", "trial", "vendorgear", "telvar" },
+            dependencies  = { "crafting", "excluded", "festival", "furnisher", "materials", "legerdemain", "trial", "vendorgear", "telvar" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_REPEATABLE),
             knownIds      = knownIds

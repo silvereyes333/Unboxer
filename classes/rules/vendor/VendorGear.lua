@@ -15,11 +15,11 @@ function class.VendorGear:New()
         {
             name          = "vendorgear",
             exampleItemId = 117643, -- [Black Rose Equipment Box]
+            dependencies  = { "excluded" },
             title         = GetString(SI_UNBOXER_VENDOR_GEAR),
             submenu       = submenu,
             knownIds      = knownIds,
         })
-    instance.pts            = rules.Pts:New()
     instance.soloRepeatable = rules.rewards.SoloRepeatable:New()
     return instance
 end
@@ -32,7 +32,6 @@ function class.VendorGear:Match(data)
     end
     
     if addon:StringContainsPunctuationColon(data.name)
-       or self.pts:MatchAbsoluteIndicators(data)
        or self.soloRepeatable:MatchDailyQuestText(data.name)
        or self.soloRepeatable:MatchDailyQuestText(data.flavorText)
     then

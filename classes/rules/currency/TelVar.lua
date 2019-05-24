@@ -14,6 +14,7 @@ function class.TelVar:New()
         {
             name          = "telvar",
             exampleItemId = 69413, -- Light Tel Var Satchel
+            dependencies  = { "excluded" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_TEL_VAR_STONES),
             knownIds      = knownIds,

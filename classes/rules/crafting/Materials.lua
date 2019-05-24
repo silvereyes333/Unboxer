@@ -14,6 +14,7 @@ function class.Materials:New()
         {
             name          = "materials",
             exampleItemId = 142173, -- [Shipment of Ounces IV]
+            dependencies  = { "excluded" },
             submenu       = submenu,
             title         = GetString("SI_SMITHINGFILTERTYPE", SMITHING_FILTER_TYPE_RAW_MATERIALS),
             knownIds      = knownIds,

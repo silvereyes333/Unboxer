@@ -1,9 +1,9 @@
 ## Title: Unboxer
 ## Author: silvereyes
 ## Description: Adds an Unbox All command that loots all containers of a configured type in the player inventory.
-## Version: 3.0.1
-## APIVersion: 100026 100027
-## AddOnVersion: 30010
+## Version: 3.1.0
+## APIVersion: 100027 100028
+## AddOnVersion: 30100
 ## DependsOn: LibSavedVars LibAddonMenu-2.0 LibLootSummary
 ## OptionalDependsOn: DolgubonsLazyWritCreator LibStub
 ## SavedVariables: Unboxer_Account
@@ -36,6 +36,7 @@ classes\rules\currency\TelVar.lua
 classes\rules\general\Festival.lua
 classes\rules\general\Fishing.lua
 classes\rules\general\Legerdemain.lua
+classes\rules\general\ShadowySupplier.lua
 classes\rules\general\TreasureMaps.lua
 classes\rules\general\Vendor.lua
 classes\rules\rewards\Dungeon.lua
@@ -45,6 +46,7 @@ classes\rules\rewards\Trial.lua
 classes\rules\vendor\Furnisher.lua
 classes\rules\vendor\LoreLibraryReprints.lua
 classes\rules\vendor\VendorGear.lua
+classes\rules\Excluded.lua
 classes\rules\Pts.lua
 
 

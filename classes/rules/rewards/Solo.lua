@@ -16,7 +16,7 @@ function class.Solo:New()
         {
             name          = "solo",
             exampleItemId = 140296, -- [Unidentified Summerset Chest Armor]
-            dependencies  = { "crafting", "festival", "furnisher", "materials", "legerdemain", "trial", "vendorgear", "solorepeatable", "telvar" },
+            dependencies  = { "crafting", "excluded", "festival", "furnisher", "materials", "legerdemain", "trial", "vendorgear", "shadowysupplier", "solorepeatable", "telvar" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_SOLO),
             knownIds      = knownIds
@@ -136,8 +136,6 @@ knownIds = {
   [54986]  = true, -- Sealed Urn
   [79502]  = true, -- Bloody Bag
   [79503]  = true, -- Sealed Crate
-  [79504]  = true, -- Unmarked Sack, dropped from DB shadowy supplier
-  [79677]  = true, -- Assassin's Potion Kit, dropped from DB shadowy supplier
   [134969] = true, -- Item Set: Health Rings, level up bonus
   [45003]=1,[45004]=1,[55263]=1,[55358]=1,[55947]=1,[55948]=1,[73757]=1,[73758]=1,[73759]=1,
   [73760]=1,[73761]=1,[73762]=1,[73763]=1,[73764]=1,[73765]=1,[73766]=1,[73767]=1,[73768]=1,

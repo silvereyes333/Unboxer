@@ -14,8 +14,10 @@ function class.Legerdemain:New()
         {
             name          = "legerdemain",
             exampleItemId = 119561, -- Professional Thief's Satchel of Laundered Goods
+            dependencies  = { "excluded" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_LEGERDEMAIN),
+            knownIds      = knownIds,
         })
 end
 

@@ -14,27 +14,16 @@ function class.UnboxAll:New(...)
     instance:Initialize(...)
     return instance
 end
---[[local function ClientInteractResult(eventCode, result, interactTargetName)
-    addon.Debug("ClientInteractResult("..tostring(eventCode)..", "..tostring(result)..", '"..tostring(interactTargetName).."')", debug)
-end
-local function ConfirmInteract(eventCode, dialogTitle, dialogBody, acceptText, cancelText)
-    addon.Debug("ConfirmInteract("..tostring(eventCode)..", '"..tostring(dialogTitle).."', '"..tostring(dialogBody).."', '"..tostring(acceptText).."', '"..tostring(cancelText).."')", debug)
-end
-local function ChatterBegin(eventCode, optionCount)
-    addon.Debug("ChatterBegin("..tostring(eventCode)..", "..tostring(optionCount)..")", debug)
-end
-local function ChatterEnd(eventCode)
-    addon.Debug("ChatterEnd("..tostring(eventCode)..")", debug)
-end
-local function HousingEditorModeChanged(eventCode, oldMode, newMode)
-    addon.Debug("HousingEditorModeChanged("..tostring(eventCode)..", "..tostring(oldMode)..", "..tostring(newMode)..")", debug)
-    addon.Debug("active? "..tostring(GetHousingEditorMode() ~= HOUSING_EDITOR_MODE_DISABLED), debug)
-end]]
 function class.UnboxAll:Initialize(name)
     self.name = name or addon.name .. "_UnboxAll"
     self.states = {}
     self.eventHandlers = {}
     self.callbackHandlers = {}
+    self.containerSlotIndexes = {}
+    self.uniqueItemSlotIndexes = {
+        [BAG_WORN]     = {},
+        [BAG_BACKPACK] = {},
+    }
     for name, config in pairs(defaultStates) do
         if config.events then
             self:RegisterPauseEvents(name, config.events.pause, config.events.unpause, config.active, config.interactionTypes, config.combatEventFilters)
@@ -43,15 +32,11 @@ function class.UnboxAll:Initialize(name)
             self:RegisterPauseCallbacks(name, config.callbacks.pause, config.callbacks.unpause, config.active)
         end
     end
-    --[[EVENT_MANAGER:RegisterForEvent(self.name, EVENT_CONFIRM_INTERACT, ConfirmInteract)
-    EVENT_MANAGER:RegisterForEvent(self.name.."CHB", EVENT_CHATTER_BEGIN, ChatterBegin)
-    EVENT_MANAGER:RegisterForEvent(self.name.."CHE", EVENT_CHATTER_END, ChatterEnd)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_CLIENT_INTERACT_RESULT, ClientInteractResult)]]
-    --EVENT_MANAGER:RegisterForEvent(self.name .. "HEM", EVENT_HOUSING_EDITOR_MODE_CHANGED, HousingEditorModeChanged)
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, self:CreateSlotUpdateCallback())
     EVENT_MANAGER:AddFilterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_BAG_ID, BAG_BACKPACK)
     EVENT_MANAGER:AddFilterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_INVENTORY_UPDATE_REASON, INVENTORY_UPDATE_REASON_DEFAULT)
     EVENT_MANAGER:AddFilterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_IS_NEW_ITEM, true)
+    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_PLAYER_ACTIVATED, self:CreatePlayerActivatedHandler())
     self:Reset()
     self:ListenForPause()
 end
@@ -68,7 +53,6 @@ function class.UnboxAll:CreateInteractionTypesCheck(interactionTypes)
         if ZO_IsElementInNumericallyIndexedTable(interactionTypes, interactionType) then
             return true
         end
-        --addon.Debug("Interaction type check failed. Current interaction type: "..tostring(GetInteractionType()), debug)
     end
 end
 function class.UnboxAll:CreateInteractSceneHiddenCallback(scene, name)
@@ -98,12 +82,57 @@ function class.UnboxAll:CreateOpenedCallback()
     end
 end
 
+function class.UnboxAll:CreatePlayerActivatedHandler()
+    return function()
+        EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_PLAYER_ACTIVATED)
+        SHARED_INVENTORY:RegisterCallback("SlotAdded", self:CreateSharedSlotUpdatedCallback())
+        SHARED_INVENTORY:RegisterCallback("SlotUpdated", self:CreateSharedSlotUpdatedCallback())
+        SHARED_INVENTORY:RegisterCallback("SlotRemoved", self:CreateSharedSlotRemovedCallback())
+        local originalDebug = debug
+        debug = false
+        SHARED_INVENTORY:PerformFullUpdateOnBagCache(BAG_WORN)
+        SHARED_INVENTORY:PerformFullUpdateOnBagCache(BAG_BACKPACK)
+        debug = originalDebug
+    end
+end
+
+function class.UnboxAll:CreateSharedSlotRemovedCallback()
+    return function(bagId, slotIndex, existingSlotData)
+        if not self.uniqueItemSlotIndexes[bagId] then
+            return
+        end
+        self.containerSlotIndexes[slotIndex] = nil
+        self.uniqueItemSlotIndexes[bagId][slotIndex] = nil
+        addon.Debug("SharedSlotRemoved "..tostring(bagId).." "..tostring(slotIndex).." "..tostring(existingSlotData.itemLink), debug)
+    end
+end
+
+function class.UnboxAll:CreateSharedSlotUpdatedCallback()
+    return function(bagId, slotIndex, slotData)
+        if not self.uniqueItemSlotIndexes[bagId] then
+            return
+        end
+        if addon.containerItemTypes[slotData.itemType] then
+            self.containerSlotIndexes[slotIndex] = true
+        else
+            self.containerSlotIndexes[slotIndex] = nil
+        end
+        slotData.itemLink = GetItemLink(bagId, slotIndex)
+        slotData.itemId   = GetItemLinkItemId(slotData.itemLink)
+        slotData.isUnique = IsItemLinkUnique(slotData.itemLink)
+        slotData.bindType = nil
+        slotData.flavorText = nil
+        slotData.collectibleId = nil
+        slotData.collectibleCategoryType = nil
+        self.uniqueItemSlotIndexes[bagId][slotIndex] = slotData.isUnique and slotData.itemId or nil
+        addon.Debug("SharedSlotUpdate "..tostring(bagId).." "..tostring(slotIndex).." "..tostring(slotData.itemLink), debug)
+    end
+end
+
 function class.UnboxAll:CreateSlotUpdateCallback()
     return function(eventCode, bagId, slotIndex, isNewItem, itemSoundCategory, inventoryUpdateReason, stackCountChange)
         local itemType = GetItemType(bagId, slotIndex)
-        if itemType ~= ITEMTYPE_CONTAINER
-           and (not ITEMTYPE_CONTAINER_CURRENCY or itemType ~= ITEMTYPE_CONTAINER_CURRENCY)
-        then
+        if not addon.containerItemTypes[itemType] then
             return
         end
         if self:GetAutoQueue() then
@@ -119,6 +148,27 @@ function class.UnboxAll:CreateSlotUpdateCallback()
         end
     end
 end
+
+function class.UnboxAll:CreateUniqueLootFoundCallback()
+    return function(boxOpener, lootInfo)
+        local containerItemId = GetItemLinkItemId(boxOpener.itemLink)
+        local lootItemId = GetItemLinkItemId(lootInfo.itemLink)
+        if not addon.settings.containerUniqueItemIds[containerItemId] then
+            addon.settings.containerUniqueItemIds[containerItemId] = {}
+        end
+        addon.settings.containerUniqueItemIds[containerItemId][lootItemId] = 1
+        
+        for bagId, itemIds in pairs(self.uniqueItemSlotIndexes) do
+            for _, itemId in pairs(itemIds) do
+                if lootItemId == itemId then
+                    boxOpener:Reset()
+                    break
+                end
+            end
+        end
+    end
+end
+
 function class.UnboxAll:DelayStart(milliseconds)
     self.state = "delayed_start"
     if not milliseconds then
@@ -136,17 +186,6 @@ function class.UnboxAll:GetDelayMilliseconds()
     return delay
 end
 function class.UnboxAll:GetInventorySlotsNeeded(inventorySlotsNeeded)
-    if not inventorySlotsNeeded then
-        inventorySlotsNeeded = GetNumLootItems()
-        if HasCraftBagAccess() then
-            for lootIndex = 1, GetNumLootItems() do
-                local lootId = GetLootItemInfo(lootIndex)
-                if GetLootItemType(lootId) == LOOT_TYPE_ITEM and CanItemLinkBeVirtual(GetLootItemLink(lootId)) then
-                    inventorySlotsNeeded = inventorySlotsNeeded - 1
-                end
-            end
-        end
-    end
     if addon.settings.reservedSlots and type(addon.settings.reservedSlots) == "number" then
         inventorySlotsNeeded = inventorySlotsNeeded + addon.settings.reservedSlots
     end
@@ -172,8 +211,7 @@ function class.UnboxAll:HasUnboxableSlots()
     if #self.queue > 0 then return true end
     
     local bagId = BAG_BACKPACK
-    local bagSlots = GetBagSize(bagId) -1
-    for slotIndex = 0, bagSlots do
+    for slotIndex, _ in pairs(self.containerSlotIndexes) do
         if addon:IsItemUnboxable(bagId, slotIndex) 
            and CanInteractWithItem(bagId, slotIndex) 
            and select(4,GetItemInfo(bagId, slotIndex)) -- meets usage requirement
@@ -341,8 +379,7 @@ function class.UnboxAll:Queue(item)
 end
 function class.UnboxAll:QueueAllInBackpack()
     local bagId = BAG_BACKPACK
-    local bagSlots = GetBagSize(bagId) - 1
-    for slotIndex = 0, bagSlots do
+    for slotIndex, _ in pairs(self.containerSlotIndexes) do
         if addon:IsItemUnboxable(bagId, slotIndex) 
            and CanInteractWithItem(bagId, slotIndex) 
            and select(4,GetItemInfo(bagId, slotIndex)) -- meets usage requirement
@@ -490,6 +527,7 @@ function class.UnboxAll:Start()
     local failedCallback = self:CreateFailedCallback()
     opener:RegisterCallback("Failed", failedCallback)
     opener:RegisterCallback("Opened", self:CreateOpenedCallback())
+    opener:RegisterCallback("UniqueLootFound", self:CreateUniqueLootFoundCallback())
     self:RegisterCallback("Paused", function() opener:Reset() end)
     if opener:Open() then
         return

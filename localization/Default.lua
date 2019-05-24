@@ -48,6 +48,7 @@ UNBOXER_DEFAULT_STRINGS = {
     ["SI_UNBOXER_VENDOR_GEAR"] =             "Equipment Boxes Sold by Vendors",
     ["SI_UNBOXER_CURRENCY"] =                "Currency",
     ["SI_UNBOXER_TEL_VAR_STONES"] =          "Tel Var Stones",
+    ["SI_UNBOXER_SHADOWY_SUPPLIER"] =        "Dark Brotherhood Shadowy Supplier",
     ["SI_UNBOXER_LEGACY_QUEST_FLAVOR"] =     "This large box has some unknown item inside.",
     ["SI_UNBOXER_BATTLEGROUND_LOWER"] =      "battleground",
     ["SI_UNBOXER_UNDAUNTED_LOWER"] =         "undaunted",

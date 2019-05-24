@@ -39,6 +39,7 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_FURNISHER"] =               "Dokumente eines Einrichters",
     ["SI_UNBOXER_REPRINTS"] =                "Nachdrucke der Bibliothek",
     ["SI_UNBOXER_VENDOR_GEAR"] =             "Ausrüstungskisten Von Händlern verkauft",
+    ["SI_UNBOXER_SHADOWY_SUPPLIER"] =        "Dunkle Bruderschaft: Verhüllter Versorger",
     ["SI_UNBOXER_LEGACY_QUEST_FLAVOR"] =     "Diese große Kiste verbirgt einen unbekannten Gegenstand.",
     ["SI_UNBOXER_BATTLEGROUND_LOWER"] =      "schlachtfeld",
     ["SI_UNBOXER_UNDAUNTED_LOWER"] =         "unerschrockenen",

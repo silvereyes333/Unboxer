@@ -14,6 +14,7 @@ function class.CraftingRewards:New()
         {
             name          = "crafting",
             exampleItemId = 138810, -- [Enchanter's Coffer X]
+            dependencies  = { "excluded" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_CRAFTING_REWARDS),
             knownIds      = knownIds,
