@@ -2,7 +2,7 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_UNBOX_ALL"] =               "Открыть все контейнеры",
     ["SI_UNBOXER_CANCEL"] =                  "Отмена открытия контейнера",
     ["SI_UNBOXER_UNBOXED"] =                 "распаковал  <<1>>",
-    ["SI_UNBOXER_TOOLTIP_EXAMPLE"] =         "Пример: |H0:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h",
+    ["SI_UNBOXER_ETC"] =                     " и т. Д.",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL"] =         "Автоматически распаковывать контейнеры",
     ["SI_UNBOXER_AUTOLOOT_GLOBAL_TOOLTIP"] = "Отключите эту опцию, чтобы отключить все автоматическое открытие контейнеры.",
     ["SI_UNBOXER_AUTOLOOT_DELAY"] =          "Автоматическая задержка распаковки (секунды)",
@@ -39,6 +39,7 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_REPRINTS"] =                "Библиотека книга Перепечатки",
     ["SI_UNBOXER_VENDOR_GEAR"] =             "коробка со снаряжением, которые продаются торговцами",
     ["SI_UNBOXER_SHADOWY_SUPPLIER"] =        "Темное Братство: Завещатель",
+    ["SI_UNBOXER_DRAGONS"] =                 "Драконы",
     ["SI_UNBOXER_LEGACY_QUEST_FLAVOR"] =     "Внутри этого большого ящика находится какой%-то неизвестный предмет.",
      -- not translated, but try to put some future-proofing in
     ["SI_UNBOXER_BATTLEGROUND_LOWER"] =      LocaleAwareToLower(zo_strformat("<<1>>", GetString("SI_INSTANCEDISPLAYTYPE", INSTANCE_DISPLAY_TYPE_BATTLEGROUND))),
@@ -89,4 +90,7 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_INFINITE_LOWER"] =          "бесконечная",
     ["SI_UNBOXER_TESTER_LOWER"] =            "тестир",
     ["SI_UNBOXER_TEL_VAR_LOWER"] =           "тель%-вар",
+    ["SI_UNBOXER_CITIZENS_LOWER"] =          "от жителей города",
+    ["SI_UNBOXER_GLADIATOR_LOWER"] =         "гладиатора",
+    ["SI_UNBOXER_CHAMPION_LOWER"] =          "победителя",
 }

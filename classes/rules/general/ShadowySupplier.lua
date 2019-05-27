@@ -12,23 +12,25 @@ function class.ShadowySupplier:New()
     return addon.classes.Rule.New(
         self, 
         {
-            name          = "shadowysupplier",
-            exampleItemId = 79504,	-- [Unmarked Sack]
-            dependencies  = { "excluded" },
-            submenu       = submenu,
-            title         = GetString(SI_UNBOXER_SHADOWY_SUPPLIER),
-            knownIds      = knownIds,
+            name           = "shadowysupplier",
+            exampleItemIds = {
+                79677, -- [Assassin's Potion Kit]
+                79675, -- [Toxin Satchel]
+                79504, -- [Unmarked Sack]
+            },
+            dependencies   = { "excluded" },
+            submenu        = submenu,
+            title          = GetString(SI_UNBOXER_SHADOWY_SUPPLIER),
+            knownIds       = knownIds,
         })
 end
 
 function class.ShadowySupplier:Match(data)
-    
-    if knownIds[data.itemId] then -- Match preloaded ids
-        return self:IsUnboxableMatch()
-    end
+    -- Use :MatchKnownIds()
 end
 
 knownIds = {
-  [79504]  = true, -- [Unmarked Sack]
-  [79677]  = true, -- [Assassin's Potion Kit]
+  [79504] = 1, -- [Unmarked Sack]
+  [79675] = 1, -- [Toxin Satchel]
+  [79677] = 1, -- [Assassin's Potion Kit]
 }

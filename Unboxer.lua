@@ -2,7 +2,7 @@ Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "silvereyes",
-    version = "3.1.0",
+    version = "3.2.0",
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
@@ -14,10 +14,28 @@ Unboxer = {
     containerItemTypes = {
         [ITEMTYPE_CONTAINER]          = true,
         [ITEMTYPE_CONTAINER_CURRENCY] = true,
-    }
+    },
+    slotTypes = {
+        [SLOT_TYPE_ITEM]                       = true,
+        [SLOT_TYPE_EQUIPMENT]                  = true,
+        [SLOT_TYPE_BANK_ITEM]                  = true,
+        [SLOT_TYPE_GUILD_BANK_ITEM]            = true,
+        [SLOT_TYPE_MY_TRADE]                   = true,
+        [SLOT_TYPE_MAIL_QUEUED_ATTACHMENT]     = true,
+        [SLOT_TYPE_TRADING_HOUSE_POST_ITEM]    = true,
+        [SLOT_TYPE_REPAIR]                     = true,
+        [SLOT_TYPE_CRAFTING_COMPONENT]         = true,
+        [SLOT_TYPE_PENDING_CRAFTING_COMPONENT] = true,
+        [SLOT_TYPE_DYEABLE_EQUIPMENT]          = true,
+        [SLOT_TYPE_GUILD_SPECIFIC_ITEM]        = true,
+        [SLOT_TYPE_GAMEPAD_INVENTORY_ITEM]     = true,
+        [SLOT_TYPE_CRAFT_BAG_ITEM]             = true,
+        [SLOT_TYPE_PENDING_RETRAIT_ITEM]       = true,
+    },
 }
 
 local addon = Unboxer
+local LCM = LibCustomMenu or LibStub("LibCustomMenu")
 
 -- Output formatted message to chat window, if configured
 function addon.Print(input)
@@ -73,7 +91,7 @@ function addon:StringContainsNotAtStart(searchIn, stringId, ...)
     return startIndex, endIndex
 end
 
-function addon:IsItemLinkUnboxable(itemLink, slotData)
+function addon:IsItemLinkUnboxable(itemLink, slotData, autolooting)
   
     if not itemLink then return false end
     
@@ -94,11 +112,11 @@ function addon:IsItemLinkUnboxable(itemLink, slotData)
     
     local isUnboxable = data.isUnboxable and data.rule:IsEnabled()
     if isUnboxable then
-        if self.autolooting then
+        if autolooting then
             isUnboxable = data.rule:IsAutolootEnabled()
-    
+        end
         -- Check inventory for any known unique items that the container contains
-        elseif addon.settings.containerUniqueItemIds[data.itemId] then
+        if isUnboxable and self.settings.containerUniqueItemIds[data.itemId] then
             local slotUniqueItemIds = {}
             
             for bagId, itemIds in pairs(self.unboxAll.uniqueItemSlotIndexes) do
@@ -118,13 +136,13 @@ function addon:IsItemLinkUnboxable(itemLink, slotData)
     return isUnboxable, data.rule
 end
 
-function addon:IsItemUnboxable(bagId, slotIndex)
+function addon:IsItemUnboxable(bagId, slotIndex, autolooting)
     if bagId ~= BAG_BACKPACK then return false end
     
     local itemLink = GetItemLink(bagId, slotIndex)
     local slotData = SHARED_INVENTORY:GenerateSingleSlotData(bagId, slotIndex)
 
-    local unboxable, matchedRule = self:IsItemLinkUnboxable(itemLink, slotData)    
+    local unboxable, matchedRule = self:IsItemLinkUnboxable(itemLink, slotData, autolooting)    
     local usable, onlyFromActionSlot = IsItemUsable(bagId, slotIndex)
     self.Debug(tostring(itemLink)..", unboxable: "..tostring(unboxable)..", usable: "..tostring(usable)..", onlyFromActionSlot: "..tostring(onlyFromActionSlot)..", matchedRule: "..(matchedRule and matchedRule.name or ""))
     return unboxable and usable and not onlyFromActionSlot, matchedRule
@@ -177,13 +195,22 @@ function addon:GetItemLinkData(itemLink, language, slotData)
     }
   
     data["containerType"] = "unknown"
-    for ruleIndex, rule in ipairs(self.rules) do
-        local isMatch, isUnboxable = rule:Match(data)
-        if isMatch then
+    for _, rule in ipairs(self.rules) do
+        if rule:MatchKnownIds(data) then
             data["containerType"] = rule.name
-            data["isUnboxable"] = isUnboxable
+            data["isUnboxable"] = slotData["collectibleUnlocked"] == nil or slotData["collectibleUnlocked"]
             data.rule = rule
             break
+        end
+    end
+    if not data.rule then
+        for _, rule in ipairs(self.rules) do
+            if rule:Match(data) then
+                data["containerType"] = rule.name
+                data["isUnboxable"] = slotData["collectibleUnlocked"] == nil or slotData["collectibleUnlocked"]
+                data.rule = rule
+                break
+            end
         end
     end
     return data
@@ -393,6 +420,43 @@ function addon:RegisterCategoryRule(class)
     tableMultiInsertSorted(self.submenuOptions[rule.submenu], ruleSubmenuOption, "name", 1, #self.submenuOptions[rule.submenu], compareIndexOffset)
 end
 
+local function AddContextMenu(inventorySlot, slotActions)
+    local self = addon
+    if not self.slotTypes[ZO_InventorySlot_GetType(inventorySlot)] then
+        return
+    end
+    local bagId, slotIndex = ZO_Inventory_GetBagAndIndex(inventorySlot)
+    if not bagId or not slotIndex then
+        return
+    end
+    local slotData = SHARED_INVENTORY:GenerateSingleSlotData(bagId, slotIndex)
+    if not self.containerItemTypes[slotData.itemType] then
+        return
+    end
+    
+    local itemLink = GetItemLink(bagId, slotIndex)
+    
+    local data = addon:GetItemLinkData(itemLink, nil, slotData)
+    if not data.rule or data.rule.hidden then
+        return
+    end
+    
+    local toggleRule = function() 
+        self.settings[data.rule.name] = not self.settings[data.rule.name]
+        RefreshUnboxAllKeybind()
+    end
+    local subMenu = {
+        {
+            label = "  " .. data.rule.title,
+            callback = toggleRule,
+            checked = function() return self.settings[data.rule.name] end,
+            itemType = MENU_ADD_OPTION_CHECKBOX,
+        }
+    }
+    
+    AddCustomSubMenuItem(self.title, subMenu)
+end
+
 local function OnAddonLoaded(event, name)
   
     if name ~= addon.name then return end
@@ -403,8 +467,9 @@ local function OnAddonLoaded(event, name)
     self:SetupSettings()
     
     local rules = self.classes.rules
-    self:RegisterCategoryRule(rules.Excluded)
-    self:RegisterCategoryRule(rules.Pts)
+    self:RegisterCategoryRule(rules.hidden.Excluded)
+    self:RegisterCategoryRule(rules.hidden.Excluded2)
+    self:RegisterCategoryRule(rules.hidden.Pts)
     self:RegisterCategoryRule(rules.collectibles.Runeboxes)
     self:RegisterCategoryRule(rules.collectibles.StylePages)
     self:RegisterCategoryRule(rules.crafting.CraftingRewards)
@@ -416,7 +481,9 @@ local function OnAddonLoaded(event, name)
     self:RegisterCategoryRule(rules.general.Legerdemain)
     self:RegisterCategoryRule(rules.general.ShadowySupplier)
     self:RegisterCategoryRule(rules.general.TreasureMaps)
+    self:RegisterCategoryRule(rules.rewards.Dragons)
     self:RegisterCategoryRule(rules.rewards.Dungeon)
+    self:RegisterCategoryRule(rules.rewards.PvP)
     self:RegisterCategoryRule(rules.rewards.Solo)
     self:RegisterCategoryRule(rules.rewards.SoloRepeatable)
     self:RegisterCategoryRule(rules.rewards.Trial)
@@ -428,6 +495,9 @@ local function OnAddonLoaded(event, name)
     self.unboxAll:RegisterCallback("Stopped", self.CancelUnboxAll)
     self.unboxAll:RegisterCallback("Opened", OnContainerOpened)
     self.unboxAll:RegisterCallback("BeforeOpen", RefreshUnboxAllKeybind)
+    
+    
+    LCM:RegisterContextMenu(AddContextMenu, LCM.CATEGORY_LATE)
 end
 
 EVENT_MANAGER:RegisterForEvent(addon.name, EVENT_ADD_ON_LOADED, OnAddonLoaded)

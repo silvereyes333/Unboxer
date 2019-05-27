@@ -135,7 +135,7 @@ function class.UnboxAll:CreateSlotUpdateCallback()
         if not addon.containerItemTypes[itemType] then
             return
         end
-        if self:GetAutoQueue() then
+        if self:GetAutoQueue() and addon:IsItemUnboxable(bagId, slotIndex, true) then
             self:Queue({ slotIndex = slotIndex, itemLink = GetItemLink(bagId, slotIndex) })
             if self.state == "stopped" and #self.queue < 2 then
                 local remaining, duration = GetItemCooldownInfo(BAG_BACKPACK, self.slotIndex)
@@ -591,7 +591,7 @@ defaultStates = {
       active = function() return IsUnitSwimming("player") end,
   },
   dead = {
-      events = { pause = EVENT_PLAYER_DEAD, unpause = EVENT_PLAYER_ALIVE },
+      events = { pause = EVENT_PLAYER_DEAD, unpause = { EVENT_PLAYER_ALIVE, EVENT_PLAYER_REINCARNATED } },
       active = function() return IsUnitDeadOrReincarnating("player") end,
   },
   mail = {

@@ -13,31 +13,29 @@ function class.Transmutation:New()
     return addon.classes.Rule.New(
         self, 
         {
-            name          = "transmutation",
-            exampleItemId = 134623, -- [Uncracked Transmutation Geode]
-            dependencies  = { "excluded" },
-            submenu       = submenu,
-            title         = GetString(SI_UNBOXER_TRANSMUTATION),
-            knownIds      = knownIds,
+            name           = "transmutation",
+            exampleItemIds = {
+                134588, -- [Transmutation Geode]
+                134623, -- [Uncracked Transmutation Geode]
+            },
+            dependencies   = { "excluded" },
+            submenu        = submenu,
+            title          = GetString(SI_UNBOXER_TRANSMUTATION),
+            knownIds       = knownIds,
         })
 end
 
 function class.Transmutation:Match(data)
-  
-    -- Match preloaded ids
-    if knownIds[data.itemId] then 
-        return self:IsUnboxableMatch()
-    end
     
     if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_TRANSMUTATION_LOWER)
        and data.flavorText ~= ""
-       and not addon:StringContainsPunctuationColon(data.name)
        and not string.find(data.name, "[0-9]") -- no numbers in name
     then
-        return self:IsUnboxableMatch()
+        return true
     end
 end
 
 knownIds = {
-  [134583]=1,[134588]=1,[134589]=1,[134590]=1,[134591]=1,[134618]=1,[134622]=1,[134623]=1
+  [134583]=1,[134588]=1,[134589]=1,[134590]=1,[134591]=1,[134618]=1,
+  [134622]=1,[134623]=1
 }

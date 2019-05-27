@@ -13,7 +13,10 @@ function class.Legerdemain:New()
         self, 
         {
             name          = "legerdemain",
-            exampleItemId = 119561, -- Professional Thief's Satchel of Laundered Goods
+            exampleItemIds = {
+                78003,  -- [Large Laundered Shipment]
+                74651,  -- [Satchel of Laundered Goods]
+            },
             dependencies  = { "excluded" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_LEGERDEMAIN),
@@ -23,11 +26,10 @@ end
 
 function class.Legerdemain:Match(data)
     
-    if knownIds[data.itemId] -- Match preloaded ids
-       or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_STOLEN_LOWER)
+    if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_STOLEN_LOWER)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_LAUNDERED_LOWER)
     then
-        return self:IsUnboxableMatch()
+        return true
     end
 end
 

@@ -2,13 +2,9 @@ local addon = Unboxer
 local LSV  = LibSavedVars or LibStub("LibSavedVars")
 local LAM2 = LibAddonMenu2 or LibStub("LibAddonMenu-2.0")
 
--- Local functions
-local setAutolootDefaults
-
 -- Local variables
 local debug = false
-local exampleFormat = GetString(SI_UNBOXER_TOOLTIP_EXAMPLE)
-local renamedSettings, removedSettings, refreshPrefix
+local renamedSettings, removedSettings, refreshPrefix, version5
 
 ----------------- Settings -----------------------
 function addon:SetupSettings()
@@ -41,6 +37,7 @@ function addon:SetupSettings()
          :AddCharacterSettingsToggle(self.name .. "_Character")
          :RenameSettings(4, renamedSettings)
          :RemoveSettings(4, removedSettings)
+         :Version(5, version5)
                   
     self.chatColor = ZO_ColorDef:New(unpack(self.settings.chatColor))
     refreshPrefix()
@@ -188,7 +185,6 @@ end
 --       Local methods
 -- 
 ----------------------------------------------------------------------------
-
 function refreshPrefix()
     local self = addon
     local stringId
@@ -204,13 +200,13 @@ function refreshPrefix()
     self.suffix = self.settings.chatUseSystemColor and "" or "|r"
 end
 
-function setAutolootDefaults(sv)
-    for _, settingName in pairs(renamedSettings) do
-        if not find(settingName, "Summary") then
-            sv[settingName.."Autoloot"] = sv[settingName]
-        end
-    end
-    sv.otherAutoloot = sv.other
+function version5(sv)
+    sv.dragons = sv.solorepeatable
+    sv.pvp = sv.solorepeatable
+    sv.dragonsAutoloot = sv.solorepeatableAutoloot
+    sv.pvpAutoloot = sv.solorepeatableAutoloot
+    sv.dragonsSummary = sv.solorepeatableSummary
+    sv.pvpSummary = sv.solorepeatableSummary
 end
 
 renamedSettings = {

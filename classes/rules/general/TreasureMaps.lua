@@ -23,10 +23,8 @@ end
 
 function class.TreasureMaps:Match(data)
     
-    if knownIds[data.itemId] -- Match preloaded ids
-       or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_TREASURE_MAP_LOWER)
-    then
-        return self:IsUnboxableMatch()
+    if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_TREASURE_MAP_LOWER) then
+        return true
     end
 end
 

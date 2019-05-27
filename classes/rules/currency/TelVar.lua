@@ -12,25 +12,22 @@ function class.TelVar:New()
     return addon.classes.Rule.New(
         self, 
         {
-            name          = "telvar",
-            exampleItemId = 69413, -- Light Tel Var Satchel
-            dependencies  = { "excluded" },
-            submenu       = submenu,
-            title         = GetString(SI_UNBOXER_TEL_VAR_STONES),
-            knownIds      = knownIds,
+            name           = "telvar",
+            exampleItemIds = {
+                69413, -- [Light Tel Var Satchel]
+                69433, -- [Scamp's Tel Var Sack]
+            },
+            dependencies   = { "excluded" },
+            submenu        = submenu,
+            title          = GetString(SI_UNBOXER_TEL_VAR_STONES),
+            knownIds       = knownIds,
         })
 end
 
 function class.TelVar:Match(data)
-  
-    -- Match preloaded ids
-    if knownIds[data.itemId] then 
-        return self:IsUnboxableMatch()
-    end
-  
+    
     -- Exclude PTS containers
     if data.flavorText == "" 
-       or addon:StringContainsPunctuationColon(data.name) 
        or data.bindType ~= BIND_TYPE_ON_PICKUP
     then
         return
@@ -38,7 +35,7 @@ function class.TelVar:Match(data)
     
     -- Light, Medium and Heavy Tel Var sacks
     if addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_TEL_VAR_LOWER) then
-        return self:IsUnboxableMatch()
+        return true
     end
 end
 

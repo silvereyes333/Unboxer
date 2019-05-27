@@ -5,8 +5,8 @@
 
 local addon = Unboxer
 local class = addon.classes
-local exampleFormat = GetString(SI_UNBOXER_TOOLTIP_EXAMPLE)
 local debug = false
+local itemlinkFormat = "|H1:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h"
 class.Rule = ZO_Object:Subclass()
 
 function class.Rule:New(...)
@@ -23,7 +23,10 @@ function class.Rule:Initialize(options)
         addon.Debug("options parameter to Rule:New() missing required table entry 'name', specifying the rule id / setting name.")
     end
     self.name = options.name
-    self.exampleItemId = options.exampleItemId
+    self.exampleItemIds = options.exampleItemIds or {}
+    if options.exampleItemId then
+        table.insert(self.exampleItemIds, options.exampleItemId)
+    end
     self.autolootSettingName = self.name .. "Autoloot"
     self.summarySettingName = self.name .. "Summary"
     self.title = options.title or options.name
@@ -45,9 +48,6 @@ function class.Rule:CreateLAM2Options()
     if not self.name or self.hidden then return end
     local title = self.title
     local tooltip = self.tooltip
-    if self.exampleItemId then
-        tooltip = tooltip .. string.format(exampleFormat, self.exampleItemId)
-    end
     local optionsTable = {}
     table.insert(optionsTable, { type = "divider" })
     table.insert(optionsTable,
@@ -59,6 +59,19 @@ function class.Rule:CreateLAM2Options()
             setFunc  = function(value) self:SetEnabled(value) end,
             default  = false,
         })
+    if #self.exampleItemIds then
+        local exampleItemLinks = {}
+        for _, itemId in ipairs(self.exampleItemIds) do
+            local itemLink = string.format(itemlinkFormat, itemId)
+            table.insert(exampleItemLinks, itemLink)
+        end
+        table.insert(optionsTable,
+            {
+                type        = "description",
+                text        = ZO_GenerateCommaSeparatedListWithoutAnd(exampleItemLinks) .. GetString(SI_UNBOXER_ETC),
+                enableLinks = true,
+            })
+    end
     table.insert(optionsTable,
         {
             type     = "checkbox",
@@ -100,8 +113,10 @@ function class.Rule:Match(data)
     error("Unboxer.Rule:Match() must be overriden in child class for rule '" .. self.name .. "'")
 end
 
-function class.Rule:MatchKnownIds(itemId)
-    return self.knownIds[itemId]
+function class.Rule:MatchKnownIds(data)
+    if self.knownIds[data.itemId] then
+        return true
+    end
 end
 
 function class.Rule:GetKnownIds()
@@ -135,11 +150,6 @@ end
 function class.Rule:OnAutolootSet(value)
     -- Optional: Override this in your child class
 end
-
-function class.Rule:IsUnboxableMatch()
-    return true, true
-end
-
 
 function class.Rule:SetAutolootEnabled(value) 
     addon.settings[self.autolootSettingName] = value

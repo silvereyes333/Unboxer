@@ -13,7 +13,10 @@ function class.Fishing:New()
         self, 
         {
             name          = "fishing",
-            exampleItemId = 43757, -- [Wet Gunny Sack]
+            exampleItemIds = {
+                43757,  -- [Wet Gunny Sack]
+                139011, -- [Waterlogged Psijic Satchel]
+            },
             dependencies  = { "excluded" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_FISHING),
@@ -23,14 +26,12 @@ end
 
 function class.Fishing:Match(data)
     
-    if knownIds[data.itemId] -- Match preloaded ids
-       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FISHING_LOWER)
-    then
-        return self:IsUnboxableMatch()
+    if addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FISHING_LOWER) then
+        return true
     end
 end
 
 knownIds = {
-  [139011] = true, -- Waterlogged Psijic Satchel
+  [139011] = 1, -- Waterlogged Psijic Satchel
   [43757]=1,[140443]=1
 }

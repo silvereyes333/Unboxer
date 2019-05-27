@@ -14,7 +14,10 @@ function class.Furnisher:New()
         self, 
         {
             name          = "furnisher",
-            exampleItemId = 134683, -- [Morrowind Master Furnisher's Document]
+            exampleItemIds = {
+                134682, -- [Clockwork Journeyman Furnisher's Document]
+                134683, -- [Morrowind Master Furnisher's Document]
+            },
             dependencies = { "excluded" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_FURNISHER),
@@ -23,16 +26,11 @@ function class.Furnisher:New()
 end
 
 function class.Furnisher:Match(data)
-  
-    -- Match preloaded ids
-    if knownIds[data.itemId] then 
-        return self:IsUnboxableMatch()
-    end
     
     if data.bindType == BIND_TYPE_ON_PICKUP 
        and addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FURNISHING_LOWER)
     then
-        return self:IsUnboxableMatch()
+        return true
     end
 end
 
