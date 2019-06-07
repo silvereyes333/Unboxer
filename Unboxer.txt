@@ -1,11 +1,11 @@
 ## Title: Unboxer
 ## Author: silvereyes
 ## Description: Adds an Unbox All command that loots all containers of a configured type in the player inventory.
-## Version: 3.2.0
+## Version: 3.3.0
 ## APIVersion: 100027 100028
-## AddOnVersion: 30200
+## AddOnVersion: 30300
 ## DependsOn: LibSavedVars LibAddonMenu-2.0 LibLootSummary LibCustomMenu
-## OptionalDependsOn: DolgubonsLazyWritCreator LibStub
+## OptionalDependsOn: DolgubonsLazyWritCreator LibStub FCOItemSaver
 ## SavedVariables: Unboxer_Account
 ## SavedVariables: Unboxer_Character
 
@@ -24,6 +24,7 @@ Unboxer.lua
 classes\Settings.lua
 classes\Rule.lua
 classes\BoxOpener.lua
+classes\BoxProtector.lua
 classes\UnboxAll.lua
 
 ; Rules engines for different categories

@@ -2,7 +2,7 @@ Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "silvereyes",
-    version = "3.2.0",
+    version = "3.3.0",
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
@@ -105,30 +105,40 @@ function addon:IsItemLinkUnboxable(itemLink, slotData, autolooting)
     -- not sure why there's no item id, but return false to be safe
     if not data.itemId then return false end
     
+    -- Detect containers that are protected due to a cooldown (e.g. Rewards for the Worthy)
+    if self.protector:IsCooldownProtected(data.itemId) 
+       and self.protector:GetCooldownRemaining(data.itemId)
+    then
+        return false, data.rule
+    end
+    
     -- No rules matched
     if not data.rule then
         return false
     end
     
     local isUnboxable = data.isUnboxable and data.rule:IsEnabled()
-    if isUnboxable then
-        if autolooting then
-            isUnboxable = data.rule:IsAutolootEnabled()
-        end
-        -- Check inventory for any known unique items that the container contains
-        if isUnboxable and self.settings.containerUniqueItemIds[data.itemId] then
-            local slotUniqueItemIds = {}
-            
-            for bagId, itemIds in pairs(self.unboxAll.uniqueItemSlotIndexes) do
-                for _, slotUniqueItemId in pairs(itemIds) do
-                    slotUniqueItemIds[slotUniqueItemId] = true
-                end
+    if not isUnboxable then
+        return false, data.rule
+    end
+    
+    if autolooting and not data.rule:IsAutolootEnabled() then
+        return false, data.rule
+    end
+    
+    -- Check inventory for any known unique items that the container contains
+    if self.settings.containerUniqueItemIds[data.itemId] then
+        local slotUniqueItemIds = {}
+        
+        for bagId, itemIds in pairs(self.unboxAll.uniqueItemSlotIndexes) do
+            for _, slotUniqueItemId in pairs(itemIds) do
+                slotUniqueItemIds[slotUniqueItemId] = true
             end
-            for uniqueItemId, _ in pairs(addon.settings.containerUniqueItemIds[data.itemId]) do
-                if slotUniqueItemIds[uniqueItemId] then
-                    isUnboxable = false
-                    break
-                end
+        end
+        for uniqueItemId, _ in pairs(addon.settings.containerUniqueItemIds[data.itemId]) do
+            if slotUniqueItemIds[uniqueItemId] then
+                isUnboxable = false
+                break
             end
         end
     end
@@ -288,7 +298,7 @@ function addon.UnboxAll()
         return false
     end
     
-    self.unboxAll:SetAutoQueue(true)
+    self.unboxAll:SetAutoQueueManual(true)
     self.unboxAll:Start()
     return true
     
@@ -337,29 +347,6 @@ function addon:Namespace(ns)
     end
     return nsTable
 end
-local function tableMultiInsertSorted(targetTable, newEntry, key, startIndex, endIndex, compareIndexOffset)
-    local self = addon
-    if not compareIndexOffset then
-        compareIndexOffset = 1
-    end
-    local step = #newEntry
-    local insertAtIndex
-    for optionIndex = startIndex + compareIndexOffset - 1, endIndex, step do
-        local entry = targetTable[optionIndex]
-        if entry[key] > newEntry[compareIndexOffset][key] then
-            insertAtIndex = optionIndex - compareIndexOffset + 1
-            break
-        end
-    end
-    if not insertAtIndex then
-        insertAtIndex = endIndex + 1
-    end
-    for i = 1, step do
-        local option = newEntry[i]
-        self.Debug("Adding "..tostring(option.type)..(option.name and " with name "..tostring(option.name) or "").." at index "..tostring(insertAtIndex + i - 1))
-        table.insert(targetTable, insertAtIndex + i - 1, newEntry[i])
-    end
-end
 function addon:RegisterCategoryRule(class)
     if type(class) == "string" then
         class = self.classes[class]
@@ -393,31 +380,7 @@ function addon:RegisterCategoryRule(class)
     -- Register the new rule
     table.insert(self.rules, insertIndex, rule)
     
-    -- The remaining logic pertains to creating LAM options.
-    -- Skip if the rule is marked hidden.
-    if rule.hidden then return end
-    
-    local sub
-    
-    -- If this is the first rule in its sub-menu, initialize it
-    if not self.submenuOptions[rule.submenu] then
-        self.submenuOptions[rule.submenu] = {}
-        local submenu = { type = "submenu", name = rule.submenu, controls = self.submenuOptions[rule.submenu] }
-        tableMultiInsertSorted(self.optionsTable, { submenu }, "name", self.firstSubmenuOptionIndex, #self.optionsTable)
-    end
-    
-    -- Create the new sub-menu option control config
-    local ruleSubmenuOption = rule:CreateLAM2Options()
-    local compareIndexOffset
-    for i, option in ipairs(ruleSubmenuOption) do
-        if option.name == rule.title then
-            compareIndexOffset = i
-            break
-        end
-    end
-    
-    -- Insert the new sub-menu option config into its sub-menu's "controls" table.
-    tableMultiInsertSorted(self.submenuOptions[rule.submenu], ruleSubmenuOption, "name", 1, #self.submenuOptions[rule.submenu], compareIndexOffset)
+    return rule
 end
 
 local function AddContextMenu(inventorySlot, slotActions)
@@ -464,7 +427,7 @@ local function OnAddonLoaded(event, name)
     EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_ADD_ON_LOADED)
 
     self:AddKeyBind()
-    self:SetupSettings()
+    self:SetupSavedVars()
     
     local rules = self.classes.rules
     self:RegisterCategoryRule(rules.hidden.Excluded)
@@ -475,7 +438,8 @@ local function OnAddonLoaded(event, name)
     self:RegisterCategoryRule(rules.crafting.CraftingRewards)
     self:RegisterCategoryRule(rules.crafting.Materials)
     self:RegisterCategoryRule(rules.currency.TelVar)
-    self:RegisterCategoryRule(rules.currency.Transmutation)
+    local transmutationRule = 
+        self:RegisterCategoryRule(rules.currency.Transmutation)
     self:RegisterCategoryRule(rules.general.Festival)
     self:RegisterCategoryRule(rules.general.Fishing)
     self:RegisterCategoryRule(rules.general.Legerdemain)
@@ -491,12 +455,30 @@ local function OnAddonLoaded(event, name)
     self:RegisterCategoryRule(rules.vendor.LoreLibraryReprints)
     self:RegisterCategoryRule(rules.vendor.VendorGear)
     
-    self.unboxAll = self.classes.UnboxAll:New()
+    self.unboxAll = self.classes.UnboxAll:New(self.unboxAll)
     self.unboxAll:RegisterCallback("Stopped", self.CancelUnboxAll)
     self.unboxAll:RegisterCallback("Opened", OnContainerOpened)
     self.unboxAll:RegisterCallback("BeforeOpen", RefreshUnboxAllKeybind)
     
+    -- Protect Rewards for the Worthy containers when their transmutation geode loot is on cooldown
+    self.protector = self.classes.BoxProtector:New(self.unboxAll)
+    local rewardsForTheWorthyItemIds = { 145577, 134619 }
+    local transmutationItemIds = {}
+    for itemId, _ in pairs(transmutationRule:GetKnownIds()) do
+        table.insert(transmutationItemIds, itemId)
+    end
+    table.sort(transmutationItemIds, function(a, b) return a > b end)
+    self.protector:Protect( rewardsForTheWorthyItemIds, transmutationItemIds, ZO_ONE_DAY_IN_SECONDS )
     
+    --[[ Testing cooldown protection w/ Unfathomable Wooden Weapon boxes
+    if false then
+        local itemLinkFormatStringId = _G["SI_UNBOXER_ITEMLINK_FORMAT"]
+        SafeAddVersion(itemLinkFormatStringId, 1)
+        SafeAddString(itemLinkFormatStringId, "|H1:item:%u:424:50:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h", 1)
+        self.protector:Protect( {71230}, {43549,43556,43557,43558,43559,43560,45051,45052,45086,45087,45110,45118,45151,45154,45156,45189,45192,45285,45297}, ZO_ONE_DAY_IN_SECONDS )
+    end]]
+    
+    self:SetupSettings()
     LCM:RegisterContextMenu(AddContextMenu, LCM.CATEGORY_LATE)
 end
 

@@ -6,7 +6,6 @@ local addon = Unboxer
 local class = addon.classes
 local debug = false
 local suppressLootWindow = function() end
-local HandleEventLootClosed, HandleEventLootReceived, HandleEventLootUpdated, HandleEventNewCollectible
 
 class.BoxOpener = ZO_CallbackObject:Subclass()
 
@@ -20,6 +19,7 @@ function class.BoxOpener:Initialize(slotIndex)
     self.slotIndex = slotIndex
     self.isUnboxable, self.matchedRule = addon:IsItemUnboxable(BAG_BACKPACK, self.slotIndex)
     self.itemLink = GetItemLink(BAG_BACKPACK, self.slotIndex)
+    self.itemId = GetItemLinkItemId(self.itemLink)
     self.lootReceived = {}
     addon.Debug("BoxOpener:New("..tostring(self.slotIndex).."), name = " .. self.name, debug)
 end
@@ -51,6 +51,12 @@ function class.BoxOpener:Open()
     EVENT_MANAGER:UnregisterForUpdate(self.name)
     
     if not self.isUnboxable then
+        return
+    end
+    
+    if addon.protector:IsCooldownProtected(self.itemId) 
+       and addon.protector:GetCooldownRemaining(self.itemId)
+    then
         return
     end
     

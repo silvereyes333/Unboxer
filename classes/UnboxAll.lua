@@ -135,7 +135,7 @@ function class.UnboxAll:CreateSlotUpdateCallback()
         if not addon.containerItemTypes[itemType] then
             return
         end
-        if self:GetAutoQueue() and addon:IsItemUnboxable(bagId, slotIndex, true) then
+        if self:GetAutoQueue() and addon:IsItemUnboxable(bagId, slotIndex, not self.autoQueueManual) then
             self:Queue({ slotIndex = slotIndex, itemLink = GetItemLink(bagId, slotIndex) })
             if self.state == "stopped" and #self.queue < 2 then
                 local remaining, duration = GetItemCooldownInfo(BAG_BACKPACK, self.slotIndex)
@@ -178,8 +178,17 @@ function class.UnboxAll:DelayStart(milliseconds)
     self:FireCallbacks("DelayStart")
     EVENT_MANAGER:RegisterForUpdate(self.name .. "_Start", milliseconds, function() self:Start() end)
 end
+function class.UnboxAll:DequeueByItemIds(itemIds)
+    for index=#self.queue,1,-1 do
+        local item = self.queue[index]
+        local itemId = GetItemLinkItemId(item.itemLink)
+        if itemIds[itemId] then
+            table.remove(self.queue, index)
+        end
+    end
+end
 function class.UnboxAll:GetAutoQueue(value)
-    return addon.settings.autoloot or self.autoQueue
+    return addon.settings.autoloot or self.autoQueueManual
 end
 function class.UnboxAll:GetDelayMilliseconds()
     local delay = math.max(40, addon.settings.autolootDelay * 1000)
@@ -261,7 +270,7 @@ function class.UnboxAll:ListenForPause()
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MOUNT_FAILURE, self:CreateMountFailureHandler())
 end
 function class.UnboxAll:IsActive()
-    return #self.queue > 0 or self.state ~= "stopped"
+    return #self.queue > 0 or self.state == "active" or self.state == "delayed_start"
 end
 function class.UnboxAll:OnPausedEvent(name, combatEventFilters)
     local unpause, events
@@ -401,7 +410,7 @@ end
 function class.UnboxAll:Reset()
     self.state = "stopped"
     self.queue = {}
-    self.autoQueue = nil
+    self.autoQueueManual = nil
     EVENT_MANAGER:UnregisterForUpdate(self.name .. "_Start")
     for name, handlers in pairs(self.eventHandlers) do
         local unpause = handlers.unpause
@@ -496,8 +505,8 @@ function class.UnboxAll:RegisterPauseCallbacks(name, pauseCallbacks, unpauseCall
         end
     end
 end
-function class.UnboxAll:SetAutoQueue(value)
-    self.autoQueue = value
+function class.UnboxAll:SetAutoQueueManual(value)
+    self.autoQueueManual = value
 end
 function class.UnboxAll:Start()
     EVENT_MANAGER:UnregisterForUpdate(self.name .. "_Start")
@@ -517,6 +526,8 @@ function class.UnboxAll:Start()
     if self.state ~= "stopped" and self.state ~= "delayed_start" then
         return
     end
+    
+    self.state = "active"
     
     local item = table.remove(self.queue, 1)
     

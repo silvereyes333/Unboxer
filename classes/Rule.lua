@@ -6,7 +6,7 @@
 local addon = Unboxer
 local class = addon.classes
 local debug = false
-local itemlinkFormat = "|H1:item:%u:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0|h|h"
+local itemlinkFormat = GetString(SI_UNBOXER_ITEMLINK_FORMAT)
 class.Rule = ZO_Object:Subclass()
 
 function class.Rule:New(...)
@@ -45,6 +45,9 @@ end
 
 --[[ Generates LibAddonMenu2 configuration options for enabling/disabling this rule ]]--
 function class.Rule:CreateLAM2Options()
+    if self.optionsTable then
+        return self.optionsTable
+    end
     if not self.name or self.hidden then return end
     local title = self.title
     local tooltip = self.tooltip
@@ -99,6 +102,8 @@ function class.Rule:CreateLAM2Options()
         })
     
     self:OnAutolootSet(self:IsAutolootEnabled())
+    
+    self.optionsTable = optionsTable
     
     return optionsTable
 end

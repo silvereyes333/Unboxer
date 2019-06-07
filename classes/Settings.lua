@@ -4,12 +4,12 @@ local LAM2 = LibAddonMenu2 or LibStub("LibAddonMenu-2.0")
 
 -- Local variables
 local debug = false
-local renamedSettings, removedSettings, refreshPrefix, version5
+local renamedSettings, removedSettings, refreshPrefix, tableMultiInsertSorted, version5
 
 ----------------- Settings -----------------------
-function addon:SetupSettings()
+function addon:SetupSavedVars()
     
-    self.Debug("SetupSettings()", debug)
+    self.Debug("SetupSavedVars()", debug)
     
     self.defaults = 
     {
@@ -22,7 +22,10 @@ function addon:SetupSettings()
         chatContainerOpen = true,
         chatContentsSummary = true,
         containerUniqueItemIds = {},
+        cooldownProtected = {},
+        cooldownEnd = {},
     }
+    
     
     for _, rule in ipairs(self.rules) do
         if not self.defaults[rule.name] then
@@ -38,9 +41,21 @@ function addon:SetupSettings()
          :RenameSettings(4, renamedSettings)
          :RemoveSettings(4, removedSettings)
          :Version(5, version5)
+    
+    -- always track the following saved vars at the account-level
+    self.settings.__dataSource.pinnedAccountKeys = {
+        containerUniqueItemIds = true,
+        cooldownProtected = true,
+        cooldownEnd = true,
+    }
                   
     self.chatColor = ZO_ColorDef:New(unpack(self.settings.chatColor))
     refreshPrefix()
+end
+
+function addon:SetupSettings()
+    
+    self.Debug("SetupSettings()", debug)
     
     local panelData = {
         type = "panel",
@@ -178,6 +193,34 @@ function addon:SetupSettings()
     LAM2:RegisterAddonPanel(self.name.."Options", panelData)
     
     LAM2:RegisterOptionControls(self.name.."Options", self.optionsTable)
+    
+    for _, rule in ipairs(self.rules) do
+    
+        -- The remaining logic pertains to creating LAM options.
+        -- Skip if the rule is marked hidden.
+        if not rule.hidden then
+            
+            -- If this is the first rule in its sub-menu, initialize it
+            if not self.submenuOptions[rule.submenu] then
+                self.submenuOptions[rule.submenu] = {}
+                local submenu = { type = "submenu", name = rule.submenu, controls = self.submenuOptions[rule.submenu] }
+                tableMultiInsertSorted(self.optionsTable, { submenu }, "name", self.firstSubmenuOptionIndex, #self.optionsTable)
+            end
+            
+            -- Create the new sub-menu option control config
+            local ruleSubmenuOption = rule:CreateLAM2Options()
+            local compareIndexOffset
+            for i, option in ipairs(ruleSubmenuOption) do
+                if option.name == rule.title then
+                    compareIndexOffset = i
+                    break
+                end
+            end
+            
+            -- Insert the new sub-menu option config into its sub-menu's "controls" table.
+            tableMultiInsertSorted(self.submenuOptions[rule.submenu], ruleSubmenuOption, "name", 1, #self.submenuOptions[rule.submenu], compareIndexOffset)
+        end
+    end
 end
 
 ----------------------------------------------------------------------------
@@ -198,6 +241,32 @@ function refreshPrefix()
             .. " "
     end
     self.suffix = self.settings.chatUseSystemColor and "" or "|r"
+end
+
+function tableMultiInsertSorted(targetTable, newEntry, key, startIndex, endIndex, compareIndexOffset)
+    local self = addon
+    if not compareIndexOffset then
+        compareIndexOffset = 1
+    end
+    local insertAtIndex
+    for optionIndex = startIndex + compareIndexOffset - 1, endIndex do
+        local entry = targetTable[optionIndex]
+        if ((entry.type == "checkbox" and entry.disabled == nil) 
+               or entry.type == "submenu")
+           and entry[key] > newEntry[compareIndexOffset][key]
+        then
+            insertAtIndex = optionIndex - compareIndexOffset + 1
+            break
+        end
+    end
+    if not insertAtIndex then
+        insertAtIndex = endIndex + 1
+    end
+    for i = 1, #newEntry do
+        local option = newEntry[i]
+        self.Debug("Adding "..tostring(option.type)..(option.name and " with name "..tostring(option.name) or "").." at index "..tostring(insertAtIndex + i - 1))
+        table.insert(targetTable, insertAtIndex + i - 1, newEntry[i])
+    end
 end
 
 function version5(sv)
