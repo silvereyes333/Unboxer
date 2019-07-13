@@ -20,7 +20,7 @@ function class.SoloRepeatable:New()
                 151620, -- [Elsweyr Daily Merit Coffer]
                 121220, -- [Yokudan Coffer of Distinction]
             },
-            dependencies  = { "crafting", "colon", "excluded", "excluded2", "festival", "furnisher", "materials", "legerdemain", "pvp", "trial", "vendorgear", "telvar" },
+            dependencies  = { "crafting", "excluded3", "festival", "furnisher", "materials", "legerdemain", "pvp", "trial", "vendorgear", "telvar" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_REPEATABLE),
             knownIds      = knownIds
@@ -85,5 +85,5 @@ knownIds = {
   [94122]=1,[95826]=1,[95827]=1,[96385]=1,[96386]=1,[96387]=1,
   [121220]=1,[126030]=1,[126031]=1,[126032]=1,[126033]=1,[133225]=1,
   [133559]=1,[138800]=1,[141741]=1,[147287]=1,[151620]=1,
-  [151623]=1
+  [151623]=1,[153606]=1,[153605]=1,
 }

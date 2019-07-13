@@ -112,4 +112,5 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_CITIZENS_LOWER"] =          "市民から受け取った",
     ["SI_UNBOXER_GLADIATOR_LOWER"] =         "剣闘士",
     ["SI_UNBOXER_CHAMPION_LOWER"] =          "チャンピオン",
+    ["SI_UNBOXER_FESTIVAL_LOWER"] =          "フェスティバル",
 }

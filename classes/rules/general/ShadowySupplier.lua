@@ -18,7 +18,7 @@ function class.ShadowySupplier:New()
                 79675, -- [Toxin Satchel]
                 79504, -- [Unmarked Sack]
             },
-            dependencies   = { "excluded" },
+            dependencies   = { "excluded2" },
             submenu        = submenu,
             title          = GetString(SI_UNBOXER_SHADOWY_SUPPLIER),
             knownIds       = knownIds,

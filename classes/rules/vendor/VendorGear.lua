@@ -20,7 +20,7 @@ function class.VendorGear:New()
                 118541, -- [Unknown Rift Item]
                 126100, -- [Unknown Battleground Bow]
             },
-            dependencies  = { "excluded" },
+            dependencies  = { "excluded2" },
             title         = GetString(SI_UNBOXER_VENDOR_GEAR),
             submenu       = submenu,
             knownIds      = knownIds,

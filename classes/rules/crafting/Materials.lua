@@ -17,7 +17,7 @@ function class.Materials:New()
                 142147, -- [Shipment of Cloth V]
                 115712, -- [Waxed Apothecary's Parcel]
             },
-            dependencies  = { "excluded" },
+            dependencies  = { "excluded2" },
             submenu       = submenu,
             title         = GetString("SI_SMITHINGFILTERTYPE", SMITHING_FILTER_TYPE_RAW_MATERIALS),
             knownIds      = knownIds,

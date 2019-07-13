@@ -17,7 +17,7 @@ function class.Fishing:New()
                 43757,  -- [Wet Gunny Sack]
                 139011, -- [Waterlogged Psijic Satchel]
             },
-            dependencies  = { "excluded" },
+            dependencies  = { "excluded2" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_FISHING),
             knownIds      = knownIds,

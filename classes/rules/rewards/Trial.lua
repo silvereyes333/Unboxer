@@ -17,7 +17,7 @@ function class.Trial:New()
                 151970, -- [Dragon God's Time-Worn Hoard]
                 139668, -- [Mage's Knowledgeable Coffer]
             },
-            dependencies   = { "excluded" },
+            dependencies   = { "excluded2" },
             submenu        = submenu,
             title          = GetString("SI_RAIDCATEGORY", RAID_CATEGORY_TRIAL),
             knownIds       = knownIds,

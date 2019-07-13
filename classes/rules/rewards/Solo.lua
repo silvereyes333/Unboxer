@@ -20,7 +20,7 @@ function class.Solo:New()
                 79502,  -- [Bloody Bag]
                 146037, -- [Recovered Murkmire Weapon]
             },
-            dependencies   = { "crafting", "colon", "excluded", "excluded2", "festival", "furnisher", "materials", "legerdemain", "pvp", "trial", "vendorgear", "shadowysupplier", "solorepeatable", "telvar" },
+            dependencies   = { "crafting", "excluded3", "festival", "furnisher", "materials", "legerdemain", "pvp", "trial", "vendorgear", "shadowysupplier", "solorepeatable", "telvar" },
             submenu        = submenu,
             title          = GetString(SI_UNBOXER_SOLO),
             knownIds       = knownIds

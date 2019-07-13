@@ -17,7 +17,7 @@ function class.CraftingRewards:New()
                 55827,  -- [Cooking Supplies]
                 138810, -- [Enchanter's Coffer X]
             },
-            dependencies  = { "excluded" },
+            dependencies  = { "excluded2" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_CRAFTING_REWARDS),
             knownIds      = knownIds,

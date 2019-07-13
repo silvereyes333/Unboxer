@@ -98,4 +98,6 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_CITIZENS_LOWER"] =          "от жителей города",
     ["SI_UNBOXER_GLADIATOR_LOWER"] =         "гладиатора",
     ["SI_UNBOXER_CHAMPION_LOWER"] =          "победителя",
+    ["SI_UNBOXER_FESTIVAL_LOWER"] =          "фестивал",
+
 }

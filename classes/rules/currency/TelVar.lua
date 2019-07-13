@@ -17,7 +17,7 @@ function class.TelVar:New()
                 69413, -- [Light Tel Var Satchel]
                 69433, -- [Scamp's Tel Var Sack]
             },
-            dependencies   = { "excluded" },
+            dependencies   = { "excluded2" },
             submenu        = submenu,
             title          = GetString(SI_UNBOXER_TEL_VAR_STONES),
             knownIds       = knownIds,

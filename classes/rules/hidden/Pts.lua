@@ -12,7 +12,7 @@ function class.Pts:New()
             name = "pts",
             dependencies = { 
                 "dungeon",
-                "excluded",
+                "excluded2",
                 "fishing",
                 "materials",
                 "outfitstyles",

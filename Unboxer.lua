@@ -2,7 +2,7 @@ Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "silvereyes",
-    version = "3.3.0",
+    version = "3.4.0",
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
@@ -432,6 +432,7 @@ local function OnAddonLoaded(event, name)
     local rules = self.classes.rules
     self:RegisterCategoryRule(rules.hidden.Excluded)
     self:RegisterCategoryRule(rules.hidden.Excluded2)
+    self:RegisterCategoryRule(rules.hidden.Excluded3)
     self:RegisterCategoryRule(rules.hidden.Pts)
     self:RegisterCategoryRule(rules.collectibles.Runeboxes)
     self:RegisterCategoryRule(rules.collectibles.StylePages)

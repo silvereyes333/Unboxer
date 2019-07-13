@@ -14,7 +14,7 @@ function class.TreasureMaps:New()
         {
             name          = "treasuremaps",
             exampleItemId = 45882,	-- [Coldharbour Treasure Map]
-            dependencies  = { "excluded" },
+            dependencies  = { "excluded2" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_TREASURE_MAPS),
             knownIds      = knownIds,

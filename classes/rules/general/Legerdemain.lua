@@ -17,7 +17,7 @@ function class.Legerdemain:New()
                 78003,  -- [Large Laundered Shipment]
                 74651,  -- [Satchel of Laundered Goods]
             },
-            dependencies  = { "excluded" },
+            dependencies  = { "excluded2" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_LEGERDEMAIN),
             knownIds      = knownIds,

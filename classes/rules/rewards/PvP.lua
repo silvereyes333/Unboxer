@@ -18,7 +18,7 @@ function class.PvP:New()
                 145577, -- [Rewards for the Worthy]
                 140252, -- [Battlemaster Rivyn's Reward Box]
             },
-            dependencies    = { "excluded" },
+            dependencies    = { "excluded2" },
             submenu        = submenu,
             title          = GetString(SI_CUSTOMERSERVICESUBMITFEEDBACKCATEGORIES1),
             knownIds       = knownIds

@@ -18,7 +18,7 @@ function class.Furnisher:New()
                 134682, -- [Clockwork Journeyman Furnisher's Document]
                 134683, -- [Morrowind Master Furnisher's Document]
             },
-            dependencies = { "excluded" },
+            dependencies = { "excluded2" },
             submenu       = submenu,
             title         = GetString(SI_UNBOXER_FURNISHER),
             knownIds      = knownIds,
@@ -35,5 +35,6 @@ function class.Furnisher:Match(data)
 end
 
 knownIds = {
-  [121364]=1,[127106]=1,[134681]=1,[134682]=1,[134683]=1,[134684]=1
+  [121364]=1,[127106]=1,[134681]=1,[134682]=1,[134683]=1,[134684]=1,
+  [153621]=1,[153622]=1,[153623]=1,
 }

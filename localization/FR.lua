@@ -112,4 +112,5 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_CITIZENS_LOWER"] =          "habitants de la ville",
     ["SI_UNBOXER_GLADIATOR_LOWER"] =         "gladiateur",
     ["SI_UNBOXER_CHAMPION_LOWER"] =          "champion",
+    ["SI_UNBOXER_FESTIVAL_LOWER"] =          "festival",
 }

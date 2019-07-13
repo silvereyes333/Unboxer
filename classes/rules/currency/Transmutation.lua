@@ -18,7 +18,7 @@ function class.Transmutation:New()
                 134588, -- [Transmutation Geode]
                 134623, -- [Uncracked Transmutation Geode]
             },
-            dependencies   = { "excluded" },
+            dependencies   = { "excluded2" },
             submenu        = submenu,
             title          = GetString(SI_UNBOXER_TRANSMUTATION),
             knownIds       = knownIds,
