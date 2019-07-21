@@ -45,6 +45,8 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_VENDOR_GEAR"] =             "коробка со снаряжением, которые продаются торговцами",
     ["SI_UNBOXER_SHADOWY_SUPPLIER"] =        "Темное Братство: Завещатель",
     ["SI_UNBOXER_DRAGONS"] =                 "Драконы",
+    ["SI_UNBOXER_IGNORING"] =                "игнорирует <<1>>. Он содержит уникальный предмет <<2>>, который уже находится в вашей инвентаря.",
+    ["SI_UNBOXER_NOT_IGNORING"] =            "больше не игнорирует <<1>>. Уникальный предмет <<2>> был удален из вашего инвентаря.",
     ["SI_UNBOXER_LEGACY_QUEST_FLAVOR"] =     "Внутри этого большого ящика находится какой%-то неизвестный предмет.",
      -- not translated, but try to put some future-proofing in
     ["SI_UNBOXER_BATTLEGROUND_LOWER"] =      LocaleAwareToLower(zo_strformat("<<1>>", GetString("SI_INSTANCEDISPLAYTYPE", INSTANCE_DISPLAY_TYPE_BATTLEGROUND))),

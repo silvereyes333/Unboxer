@@ -1,6 +1,6 @@
 local addon = Unboxer
-local LSV  = LibSavedVars or LibStub("LibSavedVars")
-local LAM2 = LibAddonMenu2 or LibStub("LibAddonMenu-2.0")
+local LSV  = LibSavedVars
+local LAM2 = LibAddonMenu2
 
 -- Local variables
 local debug = false
@@ -8,8 +8,6 @@ local renamedSettings, removedSettings, refreshPrefix, tableMultiInsertSorted, v
 
 ----------------- Settings -----------------------
 function addon:SetupSavedVars()
-    
-    self.Debug("SetupSavedVars()", debug)
     
     self.defaults = 
     {
@@ -21,9 +19,9 @@ function addon:SetupSavedVars()
         chatUseSystemColor = true,
         chatContainerOpen = true,
         chatContentsSummary = true,
-        containerUniqueItemIds = {},
         cooldownProtected = {},
         cooldownEnd = {},
+        slotUniqueContentItemIds = {}
     }
     
     
@@ -41,16 +39,17 @@ function addon:SetupSavedVars()
          :RenameSettings(4, renamedSettings)
          :RemoveSettings(4, removedSettings)
          :Version(5, version5)
+         :RemoveSettings(6, "containerUniqueItemIds")
     
     -- always track the following saved vars at the account-level
     self.settings.__dataSource.pinnedAccountKeys = {
-        containerUniqueItemIds = true,
         cooldownProtected = true,
         cooldownEnd = true,
     }
                   
     self.chatColor = ZO_ColorDef:New(unpack(self.settings.chatColor))
     refreshPrefix()
+    self.Debug("SetupSavedVars()", debug)
 end
 
 function addon:SetupSettings()

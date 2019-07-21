@@ -2,7 +2,7 @@ Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "silvereyes",
-    version = "3.4.0",
+    version = "3.4.1",
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
@@ -35,7 +35,7 @@ Unboxer = {
 }
 
 local addon = Unboxer
-local LCM = LibCustomMenu or LibStub("LibCustomMenu")
+local LCM = LibCustomMenu
 
 -- Output formatted message to chat window, if configured
 function addon.Print(input)
@@ -43,6 +43,17 @@ function addon.Print(input)
     local output = self.prefix .. input .. self.suffix
     d(output)
 end
+
+-- Same as Print, but successive messages with the same text are not printed
+local printOnceLastInput
+function addon.PrintOnce(input)
+    if printOnceLastInput and input == printOnceLastInput then
+        return
+    end
+    addon.Print(input)
+    printOnceLastInput = input
+end
+
 function addon.Debug(input, force)
     if not force and not addon.debugMode then
         return
@@ -127,7 +138,7 @@ function addon:IsItemLinkUnboxable(itemLink, slotData, autolooting)
     end
     
     -- Check inventory for any known unique items that the container contains
-    if self.settings.containerUniqueItemIds[data.itemId] then
+    if slotData and slotData.slotIndex and self.settings.slotUniqueContentItemIds[slotData.slotIndex] then
         local slotUniqueItemIds = {}
         
         for bagId, itemIds in pairs(self.unboxAll.uniqueItemSlotIndexes) do
@@ -135,7 +146,7 @@ function addon:IsItemLinkUnboxable(itemLink, slotData, autolooting)
                 slotUniqueItemIds[slotUniqueItemId] = true
             end
         end
-        for uniqueItemId, _ in pairs(addon.settings.containerUniqueItemIds[data.itemId]) do
+        for uniqueItemId, _ in pairs(self.settings.slotUniqueContentItemIds[slotData.slotIndex]) do
             if slotUniqueItemIds[uniqueItemId] then
                 isUnboxable = false
                 break
@@ -208,7 +219,7 @@ function addon:GetItemLinkData(itemLink, language, slotData)
     for _, rule in ipairs(self.rules) do
         if rule:MatchKnownIds(data) then
             data["containerType"] = rule.name
-            data["isUnboxable"] = slotData["collectibleUnlocked"] == nil or slotData["collectibleUnlocked"]
+            data["isUnboxable"] = slotData["collectibleUnlocked"] == nil or not slotData["collectibleUnlocked"]
             data.rule = rule
             break
         end
@@ -217,7 +228,7 @@ function addon:GetItemLinkData(itemLink, language, slotData)
         for _, rule in ipairs(self.rules) do
             if rule:Match(data) then
                 data["containerType"] = rule.name
-                data["isUnboxable"] = slotData["collectibleUnlocked"] == nil or slotData["collectibleUnlocked"]
+                data["isUnboxable"] = slotData["collectibleUnlocked"] == nil or not slotData["collectibleUnlocked"]
                 data.rule = rule
                 break
             end

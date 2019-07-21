@@ -24,6 +24,7 @@ function class.UnboxAll:Initialize(name)
         [BAG_WORN]     = {},
         [BAG_BACKPACK] = {},
     }
+    self.notified = {}
     for name, config in pairs(defaultStates) do
         if config.events then
             self:RegisterPauseEvents(name, config.events.pause, config.events.unpause, config.active, config.interactionTypes, config.combatEventFilters)
@@ -86,7 +87,7 @@ function class.UnboxAll:CreatePlayerActivatedHandler()
     return function()
         EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_PLAYER_ACTIVATED)
         SHARED_INVENTORY:RegisterCallback("SlotAdded", self:CreateSharedSlotUpdatedCallback())
-        SHARED_INVENTORY:RegisterCallback("SlotUpdated", self:CreateSharedSlotUpdatedCallback())
+        SHARED_INVENTORY:RegisterCallback("SlotUpdated", self:CreateSharedSlotUpdatedCallback(true))
         SHARED_INVENTORY:RegisterCallback("SlotRemoved", self:CreateSharedSlotRemovedCallback())
         local originalDebug = debug
         debug = false
@@ -102,12 +103,45 @@ function class.UnboxAll:CreateSharedSlotRemovedCallback()
             return
         end
         self.containerSlotIndexes[slotIndex] = nil
-        self.uniqueItemSlotIndexes[bagId][slotIndex] = nil
         addon.Debug("SharedSlotRemoved "..tostring(bagId).." "..tostring(slotIndex).." "..tostring(existingSlotData.itemLink), debug)
+        local uniqueItemIdRemoved = self.uniqueItemSlotIndexes[bagId][slotIndex]
+        self.uniqueItemSlotIndexes[bagId][slotIndex] = nil
+        if bagId ~= BAG_BACKPACK then
+            return
+        end
+        addon.settings.slotUniqueContentItemIds[slotIndex] = nil
+        -- only display "no longer ignoring" alert when all unique items in the container have been removed
+        if not uniqueItemIdRemoved then
+            return
+        end
+        
+        for containerWithUniqueItemsSlotIndex, uniqueItems in pairs(addon.settings.slotUniqueContentItemIds) do
+            if uniqueItems[uniqueItemIdRemoved] then
+                local allRemoved = true
+                for uniqueItemId, _ in pairs(uniqueItems) do
+                    for _, itemId in pairs(self.uniqueItemSlotIndexes[bagId]) do
+                        if itemId == uniqueItemId then
+                            allRemoved = false
+                            break
+                        end
+                    end
+                    if not allRemoved then
+                        break
+                    end
+                end
+                if allRemoved then
+                    local containerItemLink = GetItemLink(BAG_BACKPACK, containerWithUniqueItemsSlotIndex)
+                    addon.PrintOnce(zo_strformat(GetString(SI_UNBOXER_NOT_IGNORING), containerItemLink, existingSlotData.itemLink))
+                    if self.notified[containerWithUniqueItemsSlotIndex] then
+                        self.notified[containerWithUniqueItemsSlotIndex][slotIndex] = nil
+                    end
+                end
+            end
+        end
     end
 end
 
-function class.UnboxAll:CreateSharedSlotUpdatedCallback()
+function class.UnboxAll:CreateSharedSlotUpdatedCallback(wasSameItemInSlotBefore)
     return function(bagId, slotIndex, slotData)
         if not self.uniqueItemSlotIndexes[bagId] then
             return
@@ -116,6 +150,9 @@ function class.UnboxAll:CreateSharedSlotUpdatedCallback()
             self.containerSlotIndexes[slotIndex] = true
         else
             self.containerSlotIndexes[slotIndex] = nil
+            if bagId == BAG_BACKPACK then
+                addon.settings.slotUniqueContentItemIds[slotIndex] = nil
+            end
         end
         slotData.itemLink = GetItemLink(bagId, slotIndex)
         slotData.itemId   = GetItemLinkItemId(slotData.itemLink)
@@ -125,6 +162,21 @@ function class.UnboxAll:CreateSharedSlotUpdatedCallback()
         slotData.collectibleId = nil
         slotData.collectibleCategoryType = nil
         self.uniqueItemSlotIndexes[bagId][slotIndex] = slotData.isUnique and slotData.itemId or nil
+        local uniqueItemId = self.uniqueItemSlotIndexes[bagId][slotIndex]
+        if bagId == BAG_BACKPACK and uniqueItemId and not wasSameItemInSlotBefore then
+            for containerWithUniqueItemsSlotIndex, uniqueItems in pairs(addon.settings.slotUniqueContentItemIds) do
+                local containerItemLink = GetItemLink(BAG_BACKPACK, containerWithUniqueItemsSlotIndex)
+                if uniqueItems[uniqueItemId] and containerItemLink ~= "" then
+                    if not self.notified[containerWithUniqueItemsSlotIndex] then
+                        self.notified[containerWithUniqueItemsSlotIndex] = {}
+                    end
+                    if not self.notified[containerWithUniqueItemsSlotIndex][slotIndex] then
+                        addon.PrintOnce(zo_strformat(GetString(SI_UNBOXER_IGNORING), containerItemLink, slotData.itemLink))
+                        self.notified[containerWithUniqueItemsSlotIndex][slotIndex] = 1
+                    end
+                end
+            end
+        end
         addon.Debug("SharedSlotUpdate "..tostring(bagId).." "..tostring(slotIndex).." "..tostring(slotData.itemLink), debug)
     end
 end
@@ -151,16 +203,24 @@ end
 
 function class.UnboxAll:CreateUniqueLootFoundCallback()
     return function(boxOpener, lootInfo)
-        local containerItemId = GetItemLinkItemId(boxOpener.itemLink)
+        local containerSlotIndex = boxOpener.slotIndex
         local lootItemId = GetItemLinkItemId(lootInfo.itemLink)
-        if not addon.settings.containerUniqueItemIds[containerItemId] then
-            addon.settings.containerUniqueItemIds[containerItemId] = {}
+        
+        if not addon.settings.slotUniqueContentItemIds[containerSlotIndex] then
+            addon.settings.slotUniqueContentItemIds[containerSlotIndex] = {}
         end
-        addon.settings.containerUniqueItemIds[containerItemId][lootItemId] = 1
+        addon.settings.slotUniqueContentItemIds[containerSlotIndex][lootItemId] = 1
         
         for bagId, itemIds in pairs(self.uniqueItemSlotIndexes) do
-            for _, itemId in pairs(itemIds) do
-                if lootItemId == itemId then
+            for uniqueItemSlotIndex, itemId in pairs(itemIds) do
+                if lootItemId == itemId and boxOpener.itemLink ~= "" then
+                    if not self.notified[containerSlotIndex] then
+                        self.notified[containerSlotIndex] = {}
+                    end
+                    if not self.notified[containerSlotIndex][uniqueItemSlotIndex] then
+                        addon.PrintOnce(zo_strformat(GetString(SI_UNBOXER_IGNORING), boxOpener.itemLink, lootInfo.itemLink))
+                        self.notified[containerSlotIndex][uniqueItemSlotIndex] = 1
+                    end
                     boxOpener:Reset()
                     break
                 end
@@ -340,7 +400,7 @@ function class.UnboxAll:OnUnpausedEvent(name)
     self.state = "stopped"
     addon.Debug("Unpaused ("..tostring(name)..")", debug)
     self:FireCallbacks("Unpaused", name)
-    if #self.queue then
+    if #self.queue > 0 then
         self:DelayStart()
     end
 end
@@ -378,7 +438,7 @@ function class.UnboxAll:OnUnpausedCallback(name)
     self.state = "stopped"
     addon.Debug("Unpaused ("..tostring(name)..")", debug)
     self:FireCallbacks("Unpaused", name)
-    if #self.queue then
+    if #self.queue > 0 then
         self:DelayStart()
     end
 end

@@ -62,7 +62,7 @@ function class.Rule:CreateLAM2Options()
             setFunc  = function(value) self:SetEnabled(value) end,
             default  = false,
         })
-    if #self.exampleItemIds then
+    if #self.exampleItemIds > 0 then
         local exampleItemLinks = {}
         for _, itemId in ipairs(self.exampleItemIds) do
             local itemLink = string.format(itemlinkFormat, itemId)
