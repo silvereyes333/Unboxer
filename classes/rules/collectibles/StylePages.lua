@@ -29,6 +29,9 @@ end
 
 function class.StylePages:Match(data)
     
+    if data.specializedItemType and data.specializedItemType == SPECIALIZED_ITEMTYPE_CONTAINER_STYLE_PAGE then
+        return true
+    end
     if data.collectibleCategoryType 
        and data.collectibleCategoryType == COLLECTIBLE_CATEGORY_TYPE_OUTFIT_STYLE
     then

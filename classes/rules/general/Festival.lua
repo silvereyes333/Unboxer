@@ -27,6 +27,9 @@ end
 
 function class.Festival:Match(data)
     
+    if data.specializedItemType and data.specializedItemType == SPECIALIZED_ITEMTYPE_CONTAINER_EVENT then
+        return true
+    end
     if string.find(data.icon, 'event_') -- Icons with "event_" in them
        or string.find(data.icon, 'gift') -- Icons with "gift" in them 
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_FESTIVAL_LOWER) -- Name includes "festival"

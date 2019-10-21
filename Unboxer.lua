@@ -2,7 +2,7 @@ Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "silvereyes",
-    version = "3.4.1",
+    version = "3.4.2",
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
@@ -36,6 +36,8 @@ Unboxer = {
 
 local addon = Unboxer
 local LCM = LibCustomMenu
+local LibLootSummary = LibLootSummary.New and LibLootSummary:New(addon.name) 
+                       or LibLootSummary
 
 -- Output formatted message to chat window, if configured
 function addon.Print(input)
@@ -205,6 +207,8 @@ function addon:GetItemLinkData(itemLink, language, slotData)
     local data = {
         ["itemId"]                  = itemId,
         ["itemLink"]                = itemLink,
+        ["itemType"]                = itemType,
+        ["specializedItemType"]     = specializedItemType,
         ["bindType"]                = bindType,
         ["name"]                    = name,
         ["flavorText"]              = flavorText,
@@ -293,6 +297,9 @@ function addon.CancelUnboxAll()
     -- Print summary
     LibLootSummary:SetPrefix(self.prefix)
     LibLootSummary:SetSuffix(self.suffix)
+    if LibLootSummary.SetSorted then
+        LibLootSummary:SetSorted(true)
+    end
     LibLootSummary:Print()
     return true
 end
