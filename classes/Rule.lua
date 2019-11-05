@@ -98,7 +98,7 @@ function class.Rule:CreateLAM2Options()
             getFunc  = function() return self:IsSummaryEnabled() end,
             setFunc  = function(value) self:SetSummaryEnabled(value) end,
             default  = self:IsSummaryDefault(),
-            disabled = function() return not self:IsEnabled() or not addon.settings.chatContentsSummary end,
+            disabled = function() return not self:IsEnabled() or not addon.settings.chatContentsSummary.enabled end,
         })
     
     self:OnAutolootSet(self:IsAutolootEnabled())

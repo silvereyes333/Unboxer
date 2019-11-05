@@ -4,7 +4,7 @@ local LAM2 = LibAddonMenu2
 
 -- Local variables
 local debug = false
-local renamedSettings, removedSettings, refreshPrefix, tableMultiInsertSorted, version5
+local libLootSummaryWarning, renamedSettings, removedSettings, refreshPrefix, tableMultiInsertSorted, version5, version7
 
 ----------------- Settings -----------------------
 function addon:SetupSavedVars()
@@ -18,12 +18,18 @@ function addon:SetupSavedVars()
         shortPrefix = true,
         chatUseSystemColor = true,
         chatContainerOpen = true,
-        chatContentsSummary = true,
+        chatContainerIcons = true,
+        chatContentsSummary = {
+            enabled = true,
+            minQuality = ITEM_QUALITY_MIN_VALUE,
+            showIcon = true,
+            showTrait = true,
+            hideSingularQuantities = true
+        },
         cooldownProtected = {},
         cooldownEnd = {},
         slotUniqueContentItemIds = {}
     }
-    
     
     for _, rule in ipairs(self.rules) do
         if not self.defaults[rule.name] then
@@ -40,13 +46,18 @@ function addon:SetupSavedVars()
          :RemoveSettings(4, removedSettings)
          :Version(5, version5)
          :RemoveSettings(6, "containerUniqueItemIds")
+         :Version(7, version7)
     
     -- always track the following saved vars at the account-level
     self.settings.__dataSource.pinnedAccountKeys = {
         cooldownProtected = true,
         cooldownEnd = true,
     }
-                  
+    
+    self.chat = self.classes.ChatProxy:New()
+    self.summary = LibLootSummary({ chat = self.chat, sortedByQuality = true })
+    self.summary:SetOptions(self.settings.chatContentsSummary, self.defaults.chatContentsSummary)
+    
     self.chatColor = ZO_ColorDef:New(unpack(self.settings.chatColor))
     refreshPrefix()
     self.Debug("SetupSavedVars()", debug)
@@ -77,18 +88,6 @@ function addon:SetupSettings()
             name     = GetString(SI_UNBOXER_CHAT_MESSAGES),
             controls = {
           
-                -- Short prefix
-                {
-                    type = "checkbox",
-                    name = GetString(SI_UNBOXER_SHORT_PREFIX),
-                    tooltip = GetString(SI_UNBOXER_SHORT_PREFIX_TOOLTIP),
-                    getFunc = function() return self.settings.shortPrefix end,
-                    setFunc = function(value)
-                                  self.settings.shortPrefix = value
-                                  refreshPrefix()
-                              end,
-                    default = self.defaults.shortPrefix,
-                },
                 -- Use default system color
                 {
                     type = "checkbox",
@@ -113,6 +112,23 @@ function addon:SetupSettings()
                     default = self.defaults.chatColor,
                     disabled = function() return self.settings.chatUseSystemColor end,
                 },
+                -- Prefix header
+                {
+                    type = "header",
+                    name = GetString(SI_UNBOXER_PREFIX_HEADER),
+                },
+                -- Short prefix
+                {
+                    type = "checkbox",
+                    name = GetString(SI_UNBOXER_SHORT_PREFIX),
+                    tooltip = GetString(SI_UNBOXER_SHORT_PREFIX_TOOLTIP),
+                    getFunc = function() return self.settings.shortPrefix end,
+                    setFunc = function(value)
+                                  self.settings.shortPrefix = value
+                                  refreshPrefix()
+                              end,
+                    default = self.defaults.shortPrefix,
+                },
                 -- Old Prefix Colors
                 {
                     type = "checkbox",
@@ -134,19 +150,26 @@ function addon:SetupSettings()
                 {
                     type = "checkbox",
                     name = GetString(SI_UNBOXER_CHAT_CONTAINERS),
+                    tooltip = zo_strformat(SI_UNBOXER_CHAT_CONTAINERS_TOOLTIP, self.name),
                     getFunc = function() return self.settings.chatContainerOpen end,
                     setFunc = function(value) self.settings.chatContainerOpen = value end,
                     default = self.defaults.chatContainerOpen,
                 },
-                -- Log container contents to chat
+                -- Show container icons
                 {
                     type = "checkbox",
-                    name = GetString(SI_UNBOXER_CHAT_CONTENTS),
-                    tooltip = GetString(SI_UNBOXER_CHAT_CONTENTS_TOOLTIP),
-                    getFunc = function() return self.settings.chatContentsSummary end,
-                    setFunc = function(value) self.settings.chatContentsSummary = value end,
-                    default = self.defaults.chatContentsSummary,
+                    name = GetString(SI_UNBOXER_CHAT_CONTAINERS_ICONS),
+                    tooltip = GetString(SI_UNBOXER_CHAT_CONTAINERS_ICONS_TOOLTIP),
+                    getFunc = function() return self.settings.chatContainerIcons end,
+                    setFunc = function(value) self.settings.chatContainerIcons = value end,
+                    width = "full",
+                    default = self.defaults.chatContainerIcons,
+                    disabled = function() return not self.settings.chatContainerOpen end
                 },
+                -- divider
+                { type = "divider", width = "full" },
+                -- Log container contents to chat
+                self.summary:GenerateLam2LootOptions(self.title, self.settings.chatContentsSummary, self.defaults.chatContentsSummary),
             },
         },
         
@@ -227,19 +250,25 @@ end
 --       Local methods
 -- 
 ----------------------------------------------------------------------------
+
 function refreshPrefix()
     local self = addon
-    local stringId
-    local startColor = self.settings.chatUseSystemColor and "" or "|c" .. self.chatColor:ToHex()
-    if self.settings.coloredPrefix then
-        self.prefix = GetString(self.settings.shortPrefix and SI_UNBOXER_COLORED_SHORT or SI_UNBOXER_COLORED)
-            .. (self.settings.chatUseSystemColor and "|r" or "") .. startColor .. " "
+    local shortTag = self.settings.coloredPrefix and GetString(SI_UNBOXER_COLORED_SHORT) or GetString(SI_UNBOXER_SHORT)
+    self.chat:SetShortTag(shortTag)
+    local longTag = self.settings.coloredPrefix and GetString(SI_UNBOXER_COLORED) or GetString(SI_UNBOXER_PREFIX)
+    self.chat:SetLongTag(longTag)
+    self.chat:SetShortTagPrefixEnabled(self.settings.shortPrefix)
+    
+    if self.settings.chatUseSystemColor or self.settings.coloredPrefix then
+        self.chat:SetTagColor(nil)
     else
-        self.prefix = startColor
-            .. GetString(self.settings.shortPrefix and SI_UNBOXER_SHORT or SI_UNBOXER_PREFIX)
-            .. " "
+        self.chat:SetTagColor(self.chatColor)
     end
+    
+    self.prefix = self.settings.chatUseSystemColor and "" or "|c" .. self.chatColor:ToHex()
     self.suffix = self.settings.chatUseSystemColor and "" or "|r"
+    self.summary:SetPrefix(self.prefix)
+    self.summary:SetSuffix(self.suffix)
 end
 
 function tableMultiInsertSorted(targetTable, newEntry, key, startIndex, endIndex, compareIndexOffset)
@@ -275,6 +304,12 @@ function version5(sv)
     sv.pvpAutoloot = sv.solorepeatableAutoloot
     sv.dragonsSummary = sv.solorepeatableSummary
     sv.pvpSummary = sv.solorepeatableSummary
+end
+
+function version7(sv)
+    sv.chatContentsSummary = {
+        enabled = sv.chatContentsSummary
+    }
 end
 
 renamedSettings = {

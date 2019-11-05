@@ -2,7 +2,7 @@ Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "silvereyes",
-    version = "3.4.2",
+    version = "3.5.0",
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
@@ -36,14 +36,12 @@ Unboxer = {
 
 local addon = Unboxer
 local LCM = LibCustomMenu
-local LibLootSummary = LibLootSummary.New and LibLootSummary:New(addon.name) 
-                       or LibLootSummary
 
 -- Output formatted message to chat window, if configured
 function addon.Print(input)
     local self = addon
     local output = self.prefix .. input .. self.suffix
-    d(output)
+    self.chat:Print(output)
 end
 
 -- Same as Print, but successive messages with the same text are not printed
@@ -57,10 +55,11 @@ function addon.PrintOnce(input)
 end
 
 function addon.Debug(input, force)
-    if not force and not addon.debugMode then
+    local self = addon
+    if not force and not self.debugMode then
         return
     end
-    addon.Print(input)
+    d("[UB-DEBUG] " .. input)
 end
 function addon:StringContainsStringIdOrDefault(searchIn, stringId, ...)
     if not stringId then
@@ -188,7 +187,10 @@ function addon:GetItemLinkData(itemLink, language, slotData)
             slotData.flavorText = GetItemLinkFlavorText(itemLink)
         end
         if not slotData.collectibleId then
-            slotData.collectibleId = GetItemLinkContainerCollectibleId(itemLink)
+            local collectibleId = GetItemLinkContainerCollectibleId(itemLink)
+            if collectibleId > 0 then
+                slotData.collectibleId = collectibleId
+            end
         end
     else
         slotData = {}
@@ -248,6 +250,9 @@ function addon.PrintUnboxedLink(itemLink)
     then
         return
     end
+    if self.settings.chatContainerIcons then
+        itemLink = string.format("|t90%%:90%%:%s|t%s", GetItemLinkIcon(itemLink), itemLink)
+    end
     self.Print(zo_strformat(SI_UNBOXER_UNBOXED, itemLink))
 end
 local function InventoryStateChange(oldState, newState)
@@ -272,7 +277,7 @@ local function OnContainerOpened(itemLink, lootReceived, rule)
     self.PrintUnboxedLink(itemLink)
     if not rule then
         self.Debug("No match rule passed to 'Opened' callback")
-    elseif not addon.settings.chatContentsSummary then
+    elseif not addon.settings.chatContentsSummary.enabled then
         self.Debug("All chat summaries are disabled.")
     elseif not rule:IsSummaryEnabled() then
         self.Debug("Rule "..rule.name.." is not configured to output summaries.")
@@ -282,7 +287,7 @@ local function OnContainerOpened(itemLink, lootReceived, rule)
         end
         for _, loot in ipairs(lootReceived) do
             if loot.lootedBySelf and loot.lootType == LOOT_TYPE_ITEM then
-                LibLootSummary:AddItemLink(loot.itemLink, loot.quantity)
+                self.summary:AddItemLink(loot.itemLink, loot.quantity)
             end
         end
     end
@@ -295,12 +300,7 @@ function addon.CancelUnboxAll()
     self.unboxAll:Reset()
     RefreshUnboxAllKeybind()
     -- Print summary
-    LibLootSummary:SetPrefix(self.prefix)
-    LibLootSummary:SetSuffix(self.suffix)
-    if LibLootSummary.SetSorted then
-        LibLootSummary:SetSorted(true)
-    end
-    LibLootSummary:Print()
+    self.summary:Print()
     return true
 end
 function addon.UnboxAll()
