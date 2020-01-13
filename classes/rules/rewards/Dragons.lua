@@ -30,6 +30,5 @@ function class.Dragons:Match(data)
 end
 
 knownIds = {
-  [151936] = 1, -- Wax-Sealed Heavy Sack
-  [150700]=1,[150721]=1
+  [150700]=1,[150721]=1,[151936]=1,[156535]=1,[156810]=1,
 }

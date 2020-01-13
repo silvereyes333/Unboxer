@@ -19,7 +19,5 @@ function class.Excluded:Match(data)
 end
 
 knownIds = {
-  [147759] = 1,
-  [153755] = 1,
-  [153756] = 1,
+  [153756]=1,[153755]=1,[147759]=1,
 }
