@@ -5,7 +5,7 @@
 local addon = Unboxer
 local class = addon.classes
 local debug = false
-local suppressLootWindow = function() end
+local suppressLootWindow
 
 class.BoxOpener = ZO_CallbackObject:Subclass()
 
@@ -198,3 +198,40 @@ end
         table.insert(self.collectiblesReceived, collectibleId)
     end
 end]]
+
+---------------------------------------
+--
+--          Private Members
+-- 
+---------------------------------------
+
+--[[
+    Temporarily replaces SYSTEMS:GetObject("loot").UpdateLootWindow during Unboxing, to make sure that the default
+    loot window doesn't appear.
+  ]]--
+function suppressLootWindow(event)
+    
+    ---------------------------------------
+    -- Lazy Writ Crafter loot stats 
+    -- compatibility patch
+    ---------------------------------------
+    if not WritCreater then
+        return
+    end
+    
+    -- Save Lazy Writ Crafter settings
+    local writCreaterSettings = WritCreater:GetSettings();
+    local ignoreAuto = writCreaterSettings.ignoreAuto
+    local autoLoot = writCreaterSettings.autoLoot
+    
+    -- Suppress auto loot
+    writCreaterSettings.ignoreAuto = true
+    writCreaterSettings.autoLoot = false
+    
+    -- Call Lazy Writ Crafter loot updated hook, to update stats
+    WritCreater.OnLootUpdated(event)
+    
+    -- Restore settings (not sure if this is needed, since we really want it disabled anyways)
+    writCreaterSettings.ignoreAuto = ignoreAuto
+    writCreaterSettings.autoLoot = autoLoot
+end
