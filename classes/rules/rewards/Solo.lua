@@ -32,7 +32,7 @@ function class.Solo:Match(data)
     -- All the vendor-supplied "Unidentified" weapon and armor boxes are already matched
     -- because of the "vendorGear" dependency in the constructor.
     -- Any others are zone quest drops, so match them here.
-    if data.quality > ITEM_QUALITY_NORMAL
+    if data.quality > (ITEM_QUALITY_NORMAL or ITEM_FUNCTIONAL_QUALITY_NORMAL)
        and (addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_UNIDENTIFIED_LOWER)
             or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_UNIDENTIFIED2_LOWER))
     then
@@ -42,7 +42,7 @@ function class.Solo:Match(data)
     -- Matches containers like 81226 [Unidentified Craglorn Weapon] and 87704 [Serpent's Celestial Recompense],
     -- which have no flavor text.  This is needed to keep them from being categorized as PTS containers.
     if data.flavorText == "" and string.find(data.icon, "quest_container_001") 
-       and data.quality < ITEM_QUALITY_ARTIFACT
+       and data.quality < (ITEM_QUALITY_ARTIFACT or ITEM_FUNCTIONAL_QUALITY_ARTIFACT)
     then
         return true
     end
@@ -134,7 +134,7 @@ knownIds = {
   [140289]=1,[140290]=1,[140291]=1,[140292]=1,[140293]=1,[140294]=1,
   [140295]=1,[140296]=1,[145546]=1,[145558]=1,[145559]=1,[145560]=1,
   [145561]=1,[145562]=1,[145563]=1,[145564]=1,[145565]=1,[145566]=1,
-  [145567]=1,[145568]=1,[146037]=1,[152242]=1,
+  [145567]=1,[145568]=1,[146037]=1,[152242]=1,[157507]=1,
 }
 
   

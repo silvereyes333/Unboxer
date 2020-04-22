@@ -17,7 +17,7 @@ function class.Excluded3:New()
 end
 
 function class.Excluded3:Match(data)
-    if data.quality == ITEM_QUALITY_LEGENDARY -- gold-quality
+    if data.quality == (ITEM_QUALITY_LEGENDARY or ITEM_FUNCTIONAL_QUALITY_LEGENDARY) -- gold-quality
        or data.bindType == BIND_TYPE_ON_PICKUP_BACKPACK -- character-bound
        or data.bindType == BIND_TYPE_ON_EQUIP -- boe
        or string.find(data.name, "[0-9]") -- numbers in name

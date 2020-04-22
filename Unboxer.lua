@@ -2,7 +2,7 @@ Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "silvereyes",
-    version = "3.6.0",
+    version = "3.7.0",
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
@@ -36,6 +36,7 @@ Unboxer = {
 
 local addon = Unboxer
 local LCM = LibCustomMenu
+local GetItemLinkQuality = GetItemLinkFunctionalQuality or GetItemLinkQuality
 
 -- Output formatted message to chat window, if configured
 function addon.Print(input)

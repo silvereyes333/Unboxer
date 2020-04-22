@@ -15,7 +15,7 @@ function class.CraftingRewards:New()
             name          = "crafting",
             exampleItemIds = {
                 55827,  -- [Cooking Supplies]
-                138810, -- [Enchanter's Coffer X]
+                147615, -- [Clothier's Satchel (Leather) IX]
             },
             dependencies  = { "excluded2" },
             submenu       = submenu,
