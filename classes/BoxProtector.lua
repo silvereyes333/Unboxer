@@ -26,13 +26,13 @@ function class.BoxProtector:Initialize(unboxAll)
     -- Clean up expired cooldowns
     local now = GetTimeStamp()
     local containerIdsToRemove = {}
-    for mainContainerItemId, cooldownEnd in pairs(addon.settings.cooldownEnd) do
+    for mainContainerItemId, cooldownEnd in pairs(addon.tracking.cooldownEnd) do
         if cooldownEnd < now then
             table.insert(containerIdsToRemove, mainContainerItemId)
         end
     end
     for _, mainContainerItemId in ipairs(containerIdsToRemove) do
-        addon.settings.cooldownEnd[mainContainerItemId] = nil
+        addon.tracking.cooldownEnd[mainContainerItemId] = nil
     end
     
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_LOOT_UPDATED, self:CreateLootUpdatedHandler())
@@ -80,13 +80,13 @@ function class.BoxProtector:CreateLootReceivedHandler(protectedItem)
         
         local now = GetTimeStamp()
         local mainContainerItemId = protectedItem.mainContainerItemId
-        if addon.settings.cooldownEnd[mainContainerItemId] and addon.settings.cooldownEnd[mainContainerItemId] > now then
+        if addon.tracking.cooldownEnd[mainContainerItemId] and addon.tracking.cooldownEnd[mainContainerItemId] > now then
             return
         end
         
-        addon.settings.cooldownEnd[mainContainerItemId] = now + protectedItem.cooldownSeconds
+        addon.tracking.cooldownEnd[mainContainerItemId] = now + protectedItem.cooldownSeconds
         
-        if self.unboxAll and #self.unboxAll.queue and addon.settings.cooldownProtected[mainContainerItemId] then
+        if self.unboxAll and #self.unboxAll.queue and addon.tracking.cooldownProtected[mainContainerItemId] then
             self.unboxAll:DequeueByItemIds(protectedItem.containersByItemIds)
         end
     end
@@ -136,14 +136,14 @@ end
 
 function class.BoxProtector:GetCooldownRemaining(itemId)
     local mainContainerItemId = self.mainContainerIdLookup[itemId] or itemId
-    if not addon.settings.cooldownEnd[mainContainerItemId] then
+    if not addon.tracking.cooldownEnd[mainContainerItemId] then
         return
     end
     local now = GetTimeStamp()
-    if addon.settings.cooldownEnd[mainContainerItemId] <= now then
+    if addon.tracking.cooldownEnd[mainContainerItemId] <= now then
         return
     end
-    return addon.settings.cooldownEnd[mainContainerItemId] - now, self.protectedItems[mainContainerItemId]
+    return addon.tracking.cooldownEnd[mainContainerItemId] - now, self.protectedItems[mainContainerItemId]
 end
 
 function class.BoxProtector:GetCooldownRemainingFormatted(itemId)
@@ -168,7 +168,7 @@ end
 
 function class.BoxProtector:IsCooldownProtected(itemId)
     local mainContainerItemId = self.mainContainerIdLookup[itemId] or itemId
-    return addon.settings.cooldownProtected[mainContainerItemId]
+    return addon.tracking.cooldownProtected[mainContainerItemId]
 end
 
 function class.BoxProtector:Protect(containerItemIds, lootItemIds, cooldownSeconds, icon)
@@ -276,7 +276,7 @@ function class.BoxProtector:RegisterDialog()
 end
 
 function class.BoxProtector:SetCooldownProtected(mainContainerItemId, value)
-    addon.settings.cooldownProtected[mainContainerItemId] = value
+    addon.tracking.cooldownProtected[mainContainerItemId] = value
 end
 
 function class.BoxProtector:ShowDialog(mainContainerItemId)

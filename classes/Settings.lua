@@ -4,7 +4,7 @@ local LAM2 = LibAddonMenu2
 
 -- Local variables
 local debug = false
-local libLootSummaryWarning, renamedSettings, removedSettings, refreshPrefix, tableMultiInsertSorted, version5, version7
+local libLootSummaryWarning, renamedSettings, removedSettings, refreshPrefix, tableMultiInsertSorted, version5, version7, version8
 
 ----------------- Settings -----------------------
 function addon:SetupSavedVars()
@@ -19,26 +19,28 @@ function addon:SetupSavedVars()
         chatUseSystemColor = true,
         chatContainerOpen = true,
         chatContainerIcons = true,
+        coloredPrefix = false,
         chatContentsSummary = {
             enabled = true,
             minQuality = ITEM_QUALITY_MIN_VALUE or ITEM_FUNCTIONAL_QUALITY_MIN_VALUE,
             showIcon = true,
             showTrait = true,
-            hideSingularQuantities = true
+            hideSingularQuantities = true,
+            iconSize = 90
         },
+    }
+    self.trackingDefaults = {
         cooldownProtected = {},
         cooldownEnd = {},
-        slotUniqueContentItemIds = {}
     }
     
     for _, rule in ipairs(self.rules) do
-        if not self.defaults[rule.name] then
-            self.defaults[rule.name] = false
-        end
-        self.defaults[rule.autolootSettingName] = self.defaults[rule.name]
-        self.defaults[rule.summarySettingName] = false
+        self.defaults[rule.name] = false
+        self.defaults[rule.autolootSettingName] = self.defaults.autoloot
+        self.defaults[rule.summarySettingName] = true
     end
 
+    self.tracking = LSV:NewAccountWide(self.name .. "_Tracking", self.trackingDefaults)
     self.settings =
       LSV:NewAccountWide(self.name .. "_Account", self.defaults)
          :AddCharacterSettingsToggle(self.name .. "_Character")
@@ -47,12 +49,11 @@ function addon:SetupSavedVars()
          :Version(5, version5)
          :RemoveSettings(6, "containerUniqueItemIds")
          :Version(7, version7)
+         :Version(8, version8)
     
-    -- always track the following saved vars at the account-level
-    self.settings.__dataSource.pinnedAccountKeys = {
-        cooldownProtected = true,
-        cooldownEnd = true,
-    }
+    if LSV_Data.EnableDefaultsTrimming then
+        self.settings:EnableDefaultsTrimming()
+    end
     
     self.chat = self.classes.ChatProxy:New()
     self.summary = LibLootSummary({ chat = self.chat, sortedByQuality = true })
@@ -77,6 +78,16 @@ function addon:SetupSettings()
         registerForRefresh = true,
         registerForDefaults = true,
     }
+    
+    self.chatContentsSummaryProxy = setmetatable({},
+        {
+            __index = function(_, key)
+                return addon.settings.chatContentsSummary[key]
+            end,
+            __newindex = function(_, key, value)
+                addon.settings.chatContentsSummary[key] = value
+            end,
+        })
   
     self.optionsTable = {
         
@@ -109,7 +120,10 @@ function addon:SetupSettings()
                                   self.chatColor = ZO_ColorDef:New(r, g, b, a)
                                   refreshPrefix()
                               end,
-                    default = self.defaults.chatColor,
+                    default = function()
+                                  local r, g, b, a = unpack(self.defaults.chatColor)
+                                  return { r=r, g=g, b=b, a=a }
+                              end,
                     disabled = function() return self.settings.chatUseSystemColor end,
                 },
                 -- Prefix header
@@ -169,7 +183,7 @@ function addon:SetupSettings()
                 -- divider
                 { type = "divider", width = "full" },
                 -- Log container contents to chat
-                self.summary:GenerateLam2LootOptions(self.title, self.settings.chatContentsSummary, self.defaults.chatContentsSummary),
+                self.summary:GenerateLam2LootOptions(self.title, self.chatContentsSummaryProxy, self.defaults.chatContentsSummary),
             },
         },
         
@@ -310,6 +324,22 @@ function version7(sv)
     sv.chatContentsSummary = {
         enabled = sv.chatContentsSummary
     }
+end
+
+function version8(sv)
+    if type(sv.chatContentsSummary) == "table" then
+        sv.chatContentsSummary.icons = nil
+        sv.chatContentsSummary.traits = nil
+    end
+    addon.tracking.cooldownProtected = sv.cooldownProtected or {}
+    addon.tracking.cooldownEnd = sv.cooldownEnd or {}
+    sv.cooldownProtected = nil
+    sv.cooldownEnd = nil
+    sv.slotUniqueContentItemIds = nil
+    sv.chatContentsQuality = nil
+    sv.chatContentsHideSingularQuantities = nil
+    sv.chatContentsIcons = nil
+    sv.chatContentsTraits = nil
 end
 
 renamedSettings = {

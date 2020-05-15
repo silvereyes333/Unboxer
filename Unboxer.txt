@@ -1,12 +1,13 @@
 ## Title: Unboxer
 ## Author: silvereyes
 ## Description: Adds an Unbox All command that loots all containers of a configured type in the player inventory.
-## Version: 3.7.0
+## Version: 3.7.1
 ## APIVersion: 100030 100031
-## DependsOn: LibSavedVars>=40200 LibAddonMenu-2.0>=28 LibLootSummary>=20000 LibCustomMenu LibChatMessage
+## DependsOn: LibSavedVars>=50000 LibAddonMenu-2.0>=28 LibLootSummary>=20000 LibCustomMenu LibChatMessage
 ## OptionalDependsOn: DolgubonsLazyWritCreator FCOItemSaver
 ## SavedVariables: Unboxer_Account
 ## SavedVariables: Unboxer_Character
+## SavedVariables: Unboxer_Tracking
 
 ## This Add-On is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates. 
 ## The Elder Scrolls® and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the 

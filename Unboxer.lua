@@ -2,7 +2,7 @@ Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "silvereyes",
-    version = "3.7.0",
+    version = "3.7.1",
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
@@ -32,6 +32,7 @@ Unboxer = {
         [SLOT_TYPE_CRAFT_BAG_ITEM]             = true,
         [SLOT_TYPE_PENDING_RETRAIT_ITEM]       = true,
     },
+    slotUniqueContentItemIds = {},
 }
 
 local addon = Unboxer
@@ -140,7 +141,7 @@ function addon:IsItemLinkUnboxable(itemLink, slotData, autolooting)
     end
     
     -- Check inventory for any known unique items that the container contains
-    if slotData and slotData.slotIndex and self.settings.slotUniqueContentItemIds[slotData.slotIndex] then
+    if slotData and slotData.slotIndex and self.slotUniqueContentItemIds[slotData.slotIndex] then
         local slotUniqueItemIds = {}
         
         for bagId, itemIds in pairs(self.unboxAll.uniqueItemSlotIndexes) do
@@ -148,7 +149,7 @@ function addon:IsItemLinkUnboxable(itemLink, slotData, autolooting)
                 slotUniqueItemIds[slotUniqueItemId] = true
             end
         end
-        for uniqueItemId, _ in pairs(self.settings.slotUniqueContentItemIds[slotData.slotIndex]) do
+        for uniqueItemId, _ in pairs(self.slotUniqueContentItemIds[slotData.slotIndex]) do
             if slotUniqueItemIds[uniqueItemId] then
                 isUnboxable = false
                 break
@@ -446,7 +447,6 @@ local function OnAddonLoaded(event, name)
     EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_ADD_ON_LOADED)
 
     self:AddKeyBind()
-    self:SetupSavedVars()
     
     local rules = self.classes.rules
     self:RegisterCategoryRule(rules.hidden.Excluded)
@@ -474,6 +474,8 @@ local function OnAddonLoaded(event, name)
     self:RegisterCategoryRule(rules.vendor.Furnisher)
     self:RegisterCategoryRule(rules.vendor.LoreLibraryReprints)
     self:RegisterCategoryRule(rules.vendor.VendorGear)
+    
+    self:SetupSavedVars()
     
     self.unboxAll = self.classes.UnboxAll:New(self.unboxAll)
     self.unboxAll:RegisterCallback("Stopped", self.CancelUnboxAll)
