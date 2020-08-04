@@ -33,6 +33,7 @@ function class.Festival:Match(data)
     if string.find(data.icon, 'event_') -- Icons with "event_" in them
        or string.find(data.icon, 'gift') -- Icons with "gift" in them 
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_FESTIVAL_LOWER) -- Name includes "festival"
+       or string.find(data.icon, 'scrimshawbox001') -- Go-to icon for new festival coffers
     then
         return true
     end
@@ -48,5 +49,6 @@ knownIds = {
   [153508]=1,[153509]=1,[153534]=1,[153538]=1,[153616]=1,[153617]=1,
   [153618]=1,[153635]=1,[153804]=1,[153805]=1,[153806]=1,[153807]=1,
   [153808]=1,[153809]=1,[153810]=1,[153811]=1,[153812]=1,[153813]=1,
-  [156679]=1,[156680]=1,[156717]=1,[156779]=1,[156780]=1,
+  [156679]=1,[156680]=1,[156717]=1,[156779]=1,[156780]=1,[165946]=1,
+  [165972]=1,[167210]=1,[167211]=1,[167226]=1,[167227]=1
 }
