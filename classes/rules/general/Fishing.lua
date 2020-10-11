@@ -32,6 +32,5 @@ function class.Fishing:Match(data)
 end
 
 knownIds = {
-  [139011] = 1, -- Waterlogged Psijic Satchel
-  [43757]=1,[140443]=1
+  [43757]=1,[139011]=1,[140443]=1,
 }

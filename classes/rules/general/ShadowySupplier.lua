@@ -30,7 +30,5 @@ function class.ShadowySupplier:Match(data)
 end
 
 knownIds = {
-  [79504] = 1, -- [Unmarked Sack]
-  [79675] = 1, -- [Toxin Satchel]
-  [79677] = 1, -- [Assassin's Potion Kit]
+  [79504]=1,[79675]=1,[79677]=1,
 }

@@ -29,5 +29,5 @@ function class.TreasureMaps:Match(data)
 end
 
 knownIds = {
-  [45879]=1,[45880]=1,[45881]=1,[45882]=1
+  [45879]=1,[45880]=1,[45881]=1,[45882]=1,
 }
