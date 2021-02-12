@@ -28,7 +28,8 @@ end
 function class.Furnisher:Match(data)
     
     if data.bindType == BIND_TYPE_ON_PICKUP 
-       and addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FURNISHING_LOWER)
+       and (addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_FURNISHING_LOWER)
+            or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_FOLIO_LOWER))
     then
         return true
     end

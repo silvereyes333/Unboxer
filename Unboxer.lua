@@ -2,7 +2,7 @@ Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "silvereyes",
-    version = "3.7.3",
+    version = "3.7.4",
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
@@ -482,7 +482,7 @@ local function OnAddonLoaded(event, name)
     self.unboxAll:RegisterCallback("Opened", OnContainerOpened)
     self.unboxAll:RegisterCallback("BeforeOpen", RefreshUnboxAllKeybind)
     
-    -- Protect Rewards for the Worthy containers when their transmutation geode loot is on cooldown
+    -- Protect Rewards for the Worthy containers when their transmutation geode loot is on 20-hour cooldown
     self.protector = self.classes.BoxProtector:New(self.unboxAll)
     local rewardsForTheWorthyItemIds = { 145577, 134619 }
     local transmutationItemIds = {}
@@ -490,7 +490,7 @@ local function OnAddonLoaded(event, name)
         table.insert(transmutationItemIds, itemId)
     end
     table.sort(transmutationItemIds, function(a, b) return a > b end)
-    self.protector:Protect( rewardsForTheWorthyItemIds, transmutationItemIds, ZO_ONE_DAY_IN_SECONDS )
+    self.protector:Protect( rewardsForTheWorthyItemIds, transmutationItemIds, ZO_ONE_HOUR_IN_SECONDS * 20 )
     
     --[[ Testing cooldown protection w/ Unfathomable Wooden Weapon boxes
     if false then
