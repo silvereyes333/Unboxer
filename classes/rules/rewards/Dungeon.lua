@@ -46,7 +46,7 @@ end
 
 function class.Dungeon:Match(data)
     
-    if data.quality < (ITEM_QUALITY_LEGENDARY or ITEM_FUNCTIONAL_QUALITY_LEGENDARY)
+    if data.quality < ITEM_FUNCTIONAL_QUALITY_LEGENDARY
        and (self:MatchDlcDungeonByNameAndFlavorText(data)
             or self:MatchUndauntedCoffers(data))
     then

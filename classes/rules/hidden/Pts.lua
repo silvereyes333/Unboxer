@@ -33,7 +33,7 @@ end
 
 function class.Pts:Match(data)
     if (string.find(data.icon, "quest_container_001") -- misc containers
-        and data.quality < (ITEM_QUALITY_ARTIFACT or ITEM_FUNCTIONAL_QUALITY_ARTIFACT))
+        and data.quality < ITEM_FUNCTIONAL_QUALITY_ARTIFACT)
        or GetItemLinkSetInfo(data.itemLink) -- if item set information is displayed on the container, even after all the tel-var merchant containers are processed, assume PTS box
        or data.flavorText == "" -- if flavorText is still empty after processing dependencies, assume PTS box
        or data.bindType == BIND_TYPE_NONE -- character-bound

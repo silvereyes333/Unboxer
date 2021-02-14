@@ -56,7 +56,7 @@ function class.VendorGear:Match(data)
     
     -- Match generic leveling containers like 55328	[Secret Heavy Armor], which have no flavor text
     if data.flavorText == "" and string.find(data.icon, "quest_container_001") 
-       and data.quality < (ITEM_QUALITY_ARTIFACT or ITEM_FUNCTIONAL_QUALITY_ARTIFACT)
+       and data.quality < ITEM_FUNCTIONAL_QUALITY_ARTIFACT
        and self:MatchGenericEquipmentText(data.name)
     then
         return true
