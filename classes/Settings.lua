@@ -32,6 +32,7 @@ function addon:SetupSavedVars()
             combineDuplicates = true,
             sortedByQuality = true,
             linkStyle = LINK_STYLE_DEFAULT,
+            showCounter = true,
         },
     }
     self.trackingDefaults = {
@@ -62,6 +63,12 @@ function addon:SetupSavedVars()
     
     self.chat = self.classes.ChatProxy:New()
     self.summary = LibLootSummary({ chat = self.chat })
+    
+    local counterText = GetString(SI_ITEMTYPE18)
+    if GetCVar("Language.2") ~= "de" then
+        counterText = zo_strlower(counterText)
+    end
+    self.summary:SetCounterText(counterText)
     
     self.chatColor = ZO_ColorDef:New(unpack(self.settings.chatColor))
     refreshPrefix()

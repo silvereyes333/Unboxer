@@ -2,7 +2,7 @@ Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "silvereyes",
-    version = "3.7.5",
+    version = "3.8.0",
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
@@ -227,7 +227,9 @@ function addon:GetItemLinkData(itemLink, language, slotData)
     for _, rule in ipairs(self.rules) do
         if rule:MatchKnownIds(data) then
             data["containerType"] = rule.name
-            data["isUnboxable"] = slotData["collectibleUnlocked"] == nil or not slotData["collectibleUnlocked"]
+            if data["isUnboxable"] == nil then
+                data["isUnboxable"] = slotData["collectibleUnlocked"] == nil or not slotData["collectibleUnlocked"]
+            end
             data.rule = rule
             break
         end
@@ -236,7 +238,9 @@ function addon:GetItemLinkData(itemLink, language, slotData)
         for _, rule in ipairs(self.rules) do
             if rule:Match(data) then
                 data["containerType"] = rule.name
-                data["isUnboxable"] = slotData["collectibleUnlocked"] == nil or not slotData["collectibleUnlocked"]
+                if data["isUnboxable"] == nil then
+                    data["isUnboxable"] = slotData["collectibleUnlocked"] == nil or not slotData["collectibleUnlocked"]
+                end
                 data.rule = rule
                 break
             end
@@ -292,6 +296,7 @@ local function OnContainerOpened(itemLink, lootReceived, rule)
                 self.summary:AddItemLink(loot.itemLink, loot.quantity)
             end
         end
+        self.summary:IncrementCounter()
     end
     addon.Debug("Opened " .. tostring(itemLink) .. " containing " .. tostring(#lootReceived) .. " items. Matched rule "
                 .. (rule and rule.name or ""))
