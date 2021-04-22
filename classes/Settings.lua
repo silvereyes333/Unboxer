@@ -4,14 +4,14 @@ local LAM2 = LibAddonMenu2
 
 -- Local variables
 local debug = false
-local libLootSummaryWarning, renamedSettings, removedSettings, refreshPrefix, tableMultiInsertSorted, version5, version7, version8
+local libLootSummaryWarning, renamedSettings, removedSettings, refreshPrefix, tableMultiInsertSorted, version5, version7, version8, version9
 
 ----------------- Settings -----------------------
 function addon:SetupSavedVars()
     
     self.defaults = 
     {
-        autoloot = tonumber(GetSetting(SETTING_TYPE_LOOT,LOOT_SETTING_AUTO_LOOT)) ~= 0,
+        autoloot = true,
         autolootDelay = 2,
         reservedSlots = 0,
         chatColor = { 1, 1, 1, 1 },
@@ -56,6 +56,7 @@ function addon:SetupSavedVars()
          :RemoveSettings(6, "containerUniqueItemIds")
          :Version(7, version7)
          :Version(8, version8)
+         :Version(9, version9)
     
     if LSV_Data.EnableDefaultsTrimming then
         self.settings:EnableDefaultsTrimming()
@@ -341,6 +342,18 @@ function version8(sv)
     sv.chatContentsHideSingularQuantities = nil
     sv.chatContentsIcons = nil
     sv.chatContentsTraits = nil
+end
+
+function version9(sv)
+    local oldAutoLootDefault = tonumber(GetSetting(SETTING_TYPE_LOOT,LOOT_SETTING_AUTO_LOOT)) ~= 0
+    if sv.autoloot == nil then
+        sv.autoloot = oldAutoLootDefault
+    end
+    for _, rule in ipairs(addon.rules) do
+        if sv[rule.autolootSettingName] == nil then
+            sv[rule.autolootSettingName] = oldAutoLootDefault
+        end
+    end
 end
 
 renamedSettings = {

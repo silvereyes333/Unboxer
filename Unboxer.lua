@@ -2,7 +2,7 @@ Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "silvereyes",
-    version = "3.8.0",
+    version = "3.9.0",
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
@@ -465,6 +465,9 @@ local function OnAddonLoaded(event, name)
     self:RegisterCategoryRule(rules.currency.TelVar)
     local transmutationRule = 
         self:RegisterCategoryRule(rules.currency.Transmutation)
+    if ITEMFILTERTYPE_COMPANION then
+        self:RegisterCategoryRule(rules.general.Companions)
+    end
     self:RegisterCategoryRule(rules.general.Festival)
     self:RegisterCategoryRule(rules.general.Fishing)
     self:RegisterCategoryRule(rules.general.Legerdemain)
