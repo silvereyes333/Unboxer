@@ -254,21 +254,6 @@ function class.UnboxAll:GetDelayMilliseconds()
     local delay = math.max(40, addon.settings.autolootDelay * 1000)
     return delay
 end
-function class.UnboxAll:GetInventorySlotsNeeded(inventorySlotsNeeded)
-    if addon.settings.reservedSlots and type(addon.settings.reservedSlots) == "number" then
-        inventorySlotsNeeded = inventorySlotsNeeded + addon.settings.reservedSlots
-    end
-    return inventorySlotsNeeded
-end
-function class.UnboxAll:HasEnoughSlots(inventorySlotsNeeded)
-    -- For performance reasons, just assume each box has 2 items, until the box is actually open.
-    -- Then we will pass in the exact number.
-    if not inventorySlotsNeeded then
-        inventorySlotsNeeded = 2
-    end
-    inventorySlotsNeeded = self:GetInventorySlotsNeeded(inventorySlotsNeeded)
-    return CheckInventorySpaceSilently(inventorySlotsNeeded)
-end
 function class.UnboxAll:HasUnboxableSlots()
     
     for state, config in pairs(self.states) do

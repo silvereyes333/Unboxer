@@ -45,6 +45,7 @@ function class.PvP:Match(data)
        or addon:StringContainsStringIdOrDefault(data.name, SI_UNBOXER_CYRODIIL_LOWER) -- Cyrodiil in name
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_CITIZENS_LOWER) -- Cyrodiil town rewards
        or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_BATTLEGROUND_LOWER) -- Battlegrounds rewards
+       or addon:StringContainsStringIdOrDefault(data.flavorText, SI_UNBOXER_YOUR_ALLIANCE_LOWER) -- "your alliance" in flavor text
     then
         return true
     end

@@ -211,4 +211,5 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_FESTIVAL_LOWER"] =          "festival",
     ["SI_UNBOXER_TO_BE_INTRODUCED"] =        "to be introduced",]]
     ["SI_UNBOXER_FOLIO_LOWER"] =             "の家具目録",
+    ["SI_UNBOXER_YOUR_ALLIANCE_LOWER"] =     "同盟",
 }

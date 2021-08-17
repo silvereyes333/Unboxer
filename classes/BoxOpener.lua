@@ -164,6 +164,7 @@ function class.BoxOpener:CreateLootUpdatedHandler()
         EVENT_MANAGER:UnregisterForEvent(self.name, EVENT_LOOT_UPDATED)
         
         local inventorySlotsNeeded = 0
+        local autoCraftBag = GetSetting(SETTING_TYPE_LOOT,LOOT_SETTING_AUTO_ADD_TO_CRAFT_BAG) == "1" and HasCraftBagAccess()
         for lootIndex = 1, GetNumLootItems() do
             local lootId = GetLootItemInfo(lootIndex)
             local lootInfo = {
@@ -172,7 +173,7 @@ function class.BoxOpener:CreateLootUpdatedHandler()
                 itemLink     = GetLootItemLink(lootId)
             }
             if lootInfo.lootItemType == LOOT_TYPE_ITEM 
-               and not (CanItemLinkBeVirtual(lootInfo.itemLink) and HasCraftBagAccess())
+               and (not autoCraftBag or not CanItemLinkBeVirtual(lootInfo.itemLink))
             then
                 inventorySlotsNeeded = inventorySlotsNeeded + 1
             end

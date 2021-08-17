@@ -119,4 +119,5 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_FESTIVAL_LOWER"] =          "festival",
     ["SI_UNBOXER_TO_BE_INTRODUCED"] =        "introduits par",
     ["SI_UNBOXER_FOLIO_LOWER"] =             "de mobilier",
+    ["SI_UNBOXER_YOUR_ALLIANCE_LOWER"] =     "votre alliance",
 }

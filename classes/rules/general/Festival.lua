@@ -27,6 +27,9 @@ end
 
 function class.Festival:Match(data)
     
+    if data.quality == ITEM_FUNCTIONAL_QUALITY_TRASH then
+        return
+    end
     if data.specializedItemType and data.specializedItemType == SPECIALIZED_ITEMTYPE_CONTAINER_EVENT then
         return true
     end

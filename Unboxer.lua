@@ -2,7 +2,7 @@ Unboxer = {
     name = "Unboxer",
     title = GetString(SI_UNBOXER),
     author = "silvereyes",
-    version = "3.9.0",
+    version = "3.9.1",
     itemSlotStack = {},
     defaultLanguage = "en",
     debugMode = false,
@@ -492,7 +492,7 @@ local function OnAddonLoaded(event, name)
     
     -- Protect Rewards for the Worthy containers when their transmutation geode loot is on 20-hour cooldown
     self.protector = self.classes.BoxProtector:New(self.unboxAll)
-    local rewardsForTheWorthyItemIds = { 145577, 134619 }
+    local rewardsForTheWorthyItemIds = { 145577, 134619, 181436 }
     local transmutationItemIds = {}
     for itemId, _ in pairs(transmutationRule:GetKnownIds()) do
         table.insert(transmutationItemIds, itemId)

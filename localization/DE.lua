@@ -117,4 +117,5 @@ UNBOXER_STRINGS = {
     ["SI_UNBOXER_FESTIVAL_LOWER"] =          "fest",
     ["SI_UNBOXER_TO_BE_INTRODUCED"] =        "aus „",
     ["SI_UNBOXER_FOLIO_LOWER"] =             "einrichtungsmappe",
+    ["SI_UNBOXER_YOUR_ALLIANCE_LOWER"] =     "allianzkrieg",
 }
