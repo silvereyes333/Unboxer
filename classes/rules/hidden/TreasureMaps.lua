@@ -2,7 +2,7 @@
 -- Treasure Maps
 
 local addon = Unboxer
-local class = addon:Namespace("rules.general")
+local class = addon:Namespace("rules.hidden")
 local knownIds
 local debug = false
 local submenu = GetString(SI_GAMEPLAY_OPTIONS_GENERAL)

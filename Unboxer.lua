@@ -14,6 +14,7 @@ Unboxer = {
     containerItemTypes = {
         [ITEMTYPE_CONTAINER]          = true,
         [ITEMTYPE_CONTAINER_CURRENCY] = true,
+        [ITEMTYPE_COLLECTIBLE]        = true,
     },
     slotTypes = {
         [SLOT_TYPE_ITEM]                       = true,
@@ -458,6 +459,7 @@ local function OnAddonLoaded(event, name)
     self:RegisterCategoryRule(rules.hidden.Excluded2)
     self:RegisterCategoryRule(rules.hidden.Excluded3)
     self:RegisterCategoryRule(rules.hidden.Pts)
+    self:RegisterCategoryRule(rules.hidden.TreasureMaps)
     self:RegisterCategoryRule(rules.collectibles.Runeboxes)
     self:RegisterCategoryRule(rules.collectibles.StylePages)
     self:RegisterCategoryRule(rules.crafting.CraftingRewards)
@@ -472,7 +474,6 @@ local function OnAddonLoaded(event, name)
     self:RegisterCategoryRule(rules.general.Fishing)
     self:RegisterCategoryRule(rules.general.Legerdemain)
     self:RegisterCategoryRule(rules.general.ShadowySupplier)
-    self:RegisterCategoryRule(rules.general.TreasureMaps)
     self:RegisterCategoryRule(rules.rewards.Dragons)
     self:RegisterCategoryRule(rules.rewards.Dungeon)
     self:RegisterCategoryRule(rules.rewards.PvP)
